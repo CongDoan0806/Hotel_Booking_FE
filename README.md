@@ -1,5 +1,5 @@
 //Cấu trúc file và vai trò của từng file trong project
-.
+```.
 ├── node_modules/                    # Thư viện cài từ npm (tự động tạo)
 │
 ├── src/                             # Thư mục chính chứa mã nguồn backend
@@ -33,7 +33,7 @@
 ├── package-lock.json                # Ghi chính xác phiên bản package được cài
 ├── README.md                        # Tài liệu mô tả project: cấu trúc, cách chạy,...
 └── server.js                        # Entry point khởi động server (import từ app.js)
-
+```
 //
 
 - Node.js  
