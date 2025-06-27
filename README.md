@@ -28,6 +28,7 @@
 │   │   └── app.js                   # Tạo đối tượng Express app, gắn middleware, routes
 │
 ├── .env                             # Lưu biến môi trường như DB, PORT, JWT_SECRET
+├── .env.example                     # Tài liệu các biến môi trường cho lập trình viên khác tham khảo như DB, PORT, JWT_SECRET
 ├── .gitignore                       # Bỏ qua file/thư mục không đẩy lên Git (node_modules, .env,...)
 ├── package.json                     # Thông tin project + dependencies + scripts
 ├── package-lock.json                # Ghi chính xác phiên bản package được cài
