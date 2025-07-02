@@ -1,6 +1,6 @@
 const RoomModel = require("../models/room.model");
 
-const AdminController = {
+const RoomController = {
   getAllRooms: async (req, res, next) => {
     try {
       const rooms = await RoomModel.getAllRooms();
@@ -50,4 +50,4 @@ const AdminController = {
   },
 };
 
-module.exports = AdminController;
+module.exports = RoomController;
