@@ -1,0 +1,91 @@
+const db = require("../config/db");
+
+const RoomModel = {
+  getAllRooms: async () => {
+    const result = await db.query(
+      `
+        SELECT 
+          r.room_id, r.name, r.description, r.price, r.status,
+          r.room_type_id, r.room_level_id, r.floor_id,
+          rt.name AS room_type_name, rt.description AS room_type_description,
+          rt.max_people, rt.default_price
+        FROM rooms r
+        LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
+        ORDER BY r.room_id DESC
+      `
+    );
+    return result.rows;
+  },
+
+  getRoomById: async (id) => {
+    const result = await db.query(
+      `
+        SELECT 
+          r.room_id, r.name, r.description, r.price, r.status,
+          r.room_type_id, r.room_level_id, r.floor_id,
+          rt.name AS room_type_name, rt.description AS room_type_description,
+          rt.max_people, rt.default_price
+        FROM rooms r
+        LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
+        WHERE r.room_id = $1
+      `,
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  createRoom: async ({
+    name,
+    description,
+    price,
+    status,
+    room_type_id,
+    room_level_id,
+    floor_id,
+  }) => {
+    const result = await db.query(
+      `INSERT INTO rooms (name, description, price, status, room_type_id, room_level_id, floor_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [name, description, price, status, room_type_id, room_level_id, floor_id]
+    );
+    return result.rows[0];
+  },
+
+  updateRoom: async (
+    id,
+    { name, description, price, status, room_type_id, room_level_id, floor_id }
+  ) => {
+    const result = await db.query(
+      `UPDATE rooms SET 
+        name = $1, 
+        description = $2, 
+        price = $3, 
+        status = $4, 
+        room_type_id = $5,
+        room_level_id = $6,
+        floor_id = $7
+       WHERE room_id = $8 RETURNING *`,
+      [
+        name,
+        description,
+        price,
+        status,
+        room_type_id,
+        room_level_id,
+        floor_id,
+        id,
+      ]
+    );
+    return result.rows[0];
+  },
+
+  deleteRoom: async (id) => {
+    const result = await db.query(
+      "DELETE FROM rooms WHERE room_id = $1 RETURNING *",
+      [id]
+    );
+    return result.rows[0];
+  },
+};
+
+module.exports = RoomModel;
