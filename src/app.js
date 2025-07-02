@@ -4,6 +4,7 @@ const logger = require('./middlewares/logger');
 const errorHandler = require('./middlewares/errorHandle');
 const app = express();
 const path = require('path');
+const roomRoutes = require('./routes/room.routes');
 
 const userRoutes = require('./routes/user.routes')
 
@@ -16,6 +17,8 @@ app.use(logger);
 app.use(errorHandler);
 
 app.use('/api', userRoutes)
+app.use('/api/rooms', roomRoutes);
+
 
 module.exports = app;
 
