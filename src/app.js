@@ -5,6 +5,8 @@ const errorHandler = require("./middlewares/errorHandle");
 const roomRoutes = require("./routes/room.routes");
 const app = express();
 const path = require("path");
+const path = require("path");
+const roomRoutes = require("./routes/room.routes");
 
 const userRoutes = require("./routes/user.routes");
 
@@ -21,5 +23,7 @@ app.use(errorHandler);
 
 app.use("/api/room", roomRoutes);
 app.use("/api", userRoutes);
+app.use("/api", userRoutes);
+app.use("/api/rooms", roomRoutes);
 
 module.exports = app;
