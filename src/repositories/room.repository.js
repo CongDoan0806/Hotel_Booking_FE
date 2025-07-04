@@ -65,11 +65,26 @@ const roomRepository = {
   },
 
   remove: async function (id) {
-    const result = await pool.query(
-      `DELETE FROM rooms WHERE room_id = $1 RETURNING *`,
-      [id]
-    );
-    return result.rows[0];
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      await client.query(`DELETE FROM room_images WHERE room_id = $1`, [id]);
+
+      const result = await client.query(
+        `DELETE FROM rooms WHERE room_id = $1 RETURNING *`,
+        [id]
+      );
+
+      await client.query("COMMIT");
+
+      return result.rows[0];
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   },
 
   getFilteredRooms: async function (filters) {
