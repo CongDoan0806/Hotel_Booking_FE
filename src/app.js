@@ -1,15 +1,15 @@
 const express = require("express");
 const cors = require("cors");
-const path = require('path');
+const path = require("path");
 const logger = require("./middlewares/logger");
 const errorHandler = require("./middlewares/errorHandle");
 const app = express();
-const roomRoutes = require("./routes/room.routes");
+
 const adminRoutes = require("./routes/admin.routes");
 
-const roomRoutes = require('./routes/room.routes');
+const roomRoutes = require("./routes/room.routes");
 
-const authRoutes = require('./routes/auth.routes')
+const authRoutes = require("./routes/auth.routes");
 
 // Serve ảnh trong public/uploads qua đường dẫn /uploads
 app.use(
@@ -23,8 +23,7 @@ app.use(logger);
 app.use(errorHandler);
 
 app.use("/api/rooms", roomRoutes);
-app.use("/api/rooms", adminRoutes);
-app.use('/api', authRoutes)
-
+app.use("/api/admin/rooms", adminRoutes);
+app.use("/api", authRoutes);
 
 module.exports = app;
