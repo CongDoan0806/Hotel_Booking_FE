@@ -1,19 +1,19 @@
-const { body, validationResult } = require("express-validator");
+// validations/auth.validate.js
+const Joi = require("joi");
 
-// Ví dụ: validate khi tạo user
-const validateCreateUser = [
-  body("name").notEmpty().withMessage("Name is required"),
-  body("email").isEmail().withMessage("Email is invalid"),
+const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+});
 
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
-    }
-    next();
-  },
-];
+const registerSchema = Joi.object({
+  name: Joi.string().min(2).required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+  role: Joi.string().valid("user", "admin").optional(),
+});
 
 module.exports = {
-  validateCreateUser,
+  loginSchema,
+  registerSchema,
 };
