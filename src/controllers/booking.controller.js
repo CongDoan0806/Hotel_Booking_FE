@@ -1,25 +1,22 @@
 const roomRepository = require('../repositories/room.repository');
 const bookingService = require('../services/booking.service');
 const { validateBookingInput } = require('../validations/booking.validate');
+const { success, sendError } = require('../utils/response');
 
 exports.createBooking = async (req, res) => {
   try {
     const { roomId, checkInDate, checkOutDate } = req.body;
-    const userId = req.user?.user_id; // lấy từ middleware JWT
+    const userId = req.user?.user_id;
 
-    const errors = await validateBookingInput({
-      roomId,
-      checkInDate,
-      checkOutDate,
-    });
+    const errors = await validateBookingInput({ roomId, checkInDate, checkOutDate });
 
     if (errors.length > 0) {
-      return res.status(400).json({ errors });
+      return sendError(res, 400, "Invalid booking input", errors);
     }
 
     const room = await roomRepository.getRoomDetail(roomId);
     if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+      return sendError(res, 404, "Room not found");
     }
 
     const booking = await bookingService.createBookingWithDetails(
@@ -29,9 +26,9 @@ exports.createBooking = async (req, res) => {
       checkOutDate
     );
 
-    res.status(201).json({ booking_id: booking.booking_id });
+    return success(res, { booking_id: booking.booking_id }, "Booking created successfully", 201);
   } catch (err) {
-    console.error('Booking error:', err);
-    res.status(500).json({ message: 'Server error', detail: err.message });
+    console.error("Booking error:", err);
+    return sendError(res, 500, "Server error", [err.message]);
   }
 };

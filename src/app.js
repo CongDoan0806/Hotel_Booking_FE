@@ -1,26 +1,29 @@
-const express = require('express');
-const cors = require('cors');
-const logger = require('./middlewares/logger');
-const errorHandler = require('./middlewares/errorHandle');
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const logger = require("./middlewares/logger");
+const errorHandler = require("./middlewares/errorHandle");
 const app = express();
-const path = require('path');
-const roomRoutes = require('./routes/room.routes');
-const bookingRoutes = require('./routes/booking.routes')
-const userRoutes = require('./routes/user.routes')
+
+const adminRoutes = require("./routes/admin.routes");
+const authRoutes = require("./routes/auth.routes");
+const roomRoutes = require("./routes/room.routes");
+const bookingRoutes = require("./routes/booking.routes");
 
 // Serve ảnh trong public/uploads qua đường dẫn /uploads
-app.use('/uploads/rooms', express.static(path.join(__dirname, 'public/uploads/rooms')));
+app.use(
+  "/uploads/rooms",
+  express.static(path.join(__dirname, "public/uploads/rooms"))
+);
 
 app.use(cors());
 app.use(express.json());
 app.use(logger);
 app.use(errorHandler);
 
-app.use('/api', userRoutes)
-app.use('/api/rooms', roomRoutes);
-app.use('/api', bookingRoutes);
-
+app.use("/api/rooms", roomRoutes);
+app.use("/api/admin/rooms", adminRoutes);
+app.use("/api", authRoutes);
+app.use("/api", bookingRoutes);
 
 module.exports = app;
-
-

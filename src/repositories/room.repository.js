@@ -71,14 +71,15 @@ const roomRepository = {
     return result.rows;
   },
 
-  findRoomById: async (id) => {
+  findRoomById: async function (id) {
     return await Room.findById(id);
   },
 
-  createRoom: async (roomData) => {
+  createRoom: async function (roomData) {
     return await Room.create(roomData);
   },
 };
 
 /* -------------------- EXPORT -------------------- */
 module.exports = roomRepository;
+
