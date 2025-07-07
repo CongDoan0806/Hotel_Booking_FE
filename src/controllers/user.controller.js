@@ -53,7 +53,7 @@ exports.login = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { first_name, last_name, email, password, role } = req.body;
 
   try {
     const existing = await findByEmail(email);
@@ -63,7 +63,7 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await createUser(name, email, hashedPassword, role || 'user');
+    await createUser(first_name,last_name, email, hashedPassword, role || 'user');
 
     res.status(201).json({ message: 'Đăng ký thành công' });
   } catch (error) {
