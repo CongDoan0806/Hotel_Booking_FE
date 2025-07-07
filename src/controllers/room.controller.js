@@ -59,6 +59,20 @@ const roomController = {
       return response.sendError(res, 500, error.message);
     }
   },
+   getRoomDetail: async (req, res, next) => {
+  try {
+    const roomId = Number(req.params.id);
+    const room = await roomService.getRoomDetail(roomId);
+
+    if (!room) {
+      return response.sendError(res, 404, "Room not found");
+    }
+
+    return response.success(res, room, "Room details fetched successfully");
+  } catch (err) {
+    return response.sendError(res, 500, err.message);
+  }
+},
 };
 
 module.exports = roomController;

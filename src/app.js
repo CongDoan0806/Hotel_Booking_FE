@@ -6,14 +6,13 @@ const errorHandler = require("./middlewares/errorHandle");
 const app = express();
 
 const adminRoutes = require("./routes/admin.routes");
-
-const roomRoutes = require("./routes/room.routes");
-
 const authRoutes = require("./routes/auth.routes");
+const roomRoutes = require("./routes/room.routes");
+const bookingRoutes = require("./routes/booking.routes");
 
 // Serve ảnh trong public/uploads qua đường dẫn /uploads
 app.use(
-  "/uploads",
+  "/uploads/rooms",
   express.static(path.join(__dirname, "public/uploads/rooms"))
 );
 
@@ -25,5 +24,6 @@ app.use(errorHandler);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/admin/rooms", adminRoutes);
 app.use("/api", authRoutes);
+app.use("/api", bookingRoutes);
 
 module.exports = app;
