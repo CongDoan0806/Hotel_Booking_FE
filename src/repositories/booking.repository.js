@@ -1,4 +1,6 @@
-const pool = require('../config/db');
+const pool = require('../config/db')
+const { getBookingDetailQuery } = require('../models/booking.model');
+
 
 async function findConflictingBooking(roomId, checkIn, checkOut) {
   const { rows } = await pool.query(
@@ -31,4 +33,8 @@ async function createBookingDetail(bookingId, detail, client) {
   );
 }
 
-module.exports = { findConflictingBooking, createBooking, createBookingDetail };
+const getBookingInfoById = async (booking_id) => {
+  return await getBookingDetailQuery(booking_id);
+};
+
+module.exports = { findConflictingBooking, createBooking, createBookingDetail, getBookingInfoById, };

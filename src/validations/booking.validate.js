@@ -1,4 +1,5 @@
 const roomRepo = require('../repositories/room.repository');
+const Joi = require('joi');
 
 exports.validateBookingInput = async ({ roomId, checkInDate, checkOutDate, totalGuests = 1 }) => {
   const errors = [];
@@ -24,4 +25,11 @@ exports.validateBookingInput = async ({ roomId, checkInDate, checkOutDate, total
   if (!isFree) errors.push('Room is unavailable for the selected dates');
 
   return errors;
+};
+const bookingIdParamSchema = Joi.object({
+  booking_id: Joi.number().integer().positive().required()
+});
+
+module.exports = {
+  bookingIdParamSchema,
 };
