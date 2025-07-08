@@ -112,3 +112,12 @@ VALUES
   (22, '/uploads/rooms/room_22.4.jpg'),
   (22, '/uploads/rooms/room_22.5.jpg');
 
+INSERT INTO amenities (name, icon, description)
+VALUES 
+  ('Free Wifi', 'wifi', 'High-speed internet access'),
+  ('Air Conditioning', 'air-conditioner', 'Cool your room with ease'),
+  ('Room Service', 'room-service', 'Order meals and services from your room'),
+  ('Fitness Center', 'dumbbell', 'Access to a full gym'),
+  ('Parking', 'car', 'Free on-site parking'),
+  ('Restaurant', 'utensils', 'On-site dining options'),
+  ('Tea/Coffee Machine', 'coffee', 'Brew your favorite beverages');

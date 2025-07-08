@@ -17,7 +17,6 @@ const roomRepository = {
     `;
     const values = [];
 
-    // Lọc theo giá
     if (filters.min_price) {
       values.push(filters.min_price);
       query += ` AND r.price >= $${values.length}`;
@@ -35,16 +34,15 @@ const roomRepository = {
       query += ` AND rt.max_people >= $${values.length}`;
     }
 
-    // Lọc theo ngày có phòng trống
     if (filters.check_in_date && filters.check_out_date) {
       query += ` AND r.room_id NOT IN (
         SELECT bd.room_id 
         FROM booking_details bd
         JOIN bookings b ON bd.booking_id = b.booking_id
         WHERE 
-          NOT (bd.check_in_date >= $${values.length + 2} AND bd.check_out_date <= $${values.length + 1})
+          NOT (bd.check_in_date > $${values.length + 2} OR bd.check_out_date < $${values.length + 1})
       )`;
-      values.push(filters.check_out_date, filters.check_in_date);
+      values.push(filters.check_in_date, filters.check_out_date);
     }
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
