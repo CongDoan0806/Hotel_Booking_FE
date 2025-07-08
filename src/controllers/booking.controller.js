@@ -1,4 +1,5 @@
 const roomRepository = require('../repositories/room.repository');
+const bookingRepo = require('../repositories/booking.repository');
 const bookingService = require('../services/booking.service');
 const { validateBookingInput } = require('../validations/booking.validate');
 const { success, sendError } = require('../utils/response');
@@ -29,6 +30,21 @@ exports.createBooking = async (req, res) => {
     return success(res, { booking_id: booking.booking_id }, "Booking created successfully", 201);
   } catch (err) {
     console.error("Booking error:", err);
+    return sendError(res, 500, "Server error", [err.message]);
+  }
+};
+exports.getBookingDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const detail = await bookingRepo.getBookingDetail(id);
+
+    if (!detail) {
+      return sendError(res, 404, "Booking not found");
+    }
+
+    return success(res, detail, "Booking detail fetched");
+  } catch (err) {
+    console.error("Error fetching booking:", err);
     return sendError(res, 500, "Server error", [err.message]);
   }
 };

@@ -16,7 +16,6 @@ async function getDealDiscount(roomTypeId, inDate, outDate) {
 }
 
 exports.createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
-  // 1. Check trùng lịch
   const isConflict = await bookingRepo.findConflictingBooking(
     room.room_id,
     checkIn,
@@ -24,14 +23,12 @@ exports.createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
   );
   if (isConflict) throw new Error("Room is unavailable for the selected dates");
 
-  // 2. Tính giá
   const nights = dayjs(checkOut).diff(dayjs(checkIn), "day");
   if (nights <= 0) throw new Error("Invalid date range");
 
   const discount = await getDealDiscount(room.room_type_id, checkIn, checkOut);
   const totalPrice = nights * room.price * (1 - discount);
 
-  // 3. Transaction
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -46,6 +43,11 @@ exports.createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
       bookingId,
       { roomId: room.room_id, pricePerUnit: room.price, checkIn, checkOut },
       client
+    );
+
+    await client.query(
+      `UPDATE rooms SET status = 'booked' WHERE room_id = $1`,
+      [room.room_id]
     );
 
     await client.query("COMMIT");
