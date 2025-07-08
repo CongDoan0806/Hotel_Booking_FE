@@ -13,8 +13,8 @@ const roomService = {
   createRoom: async (roomData) => {
     return await roomRepository.createRoom(roomData);
   },
-  getAllRooms: async () => {
-    return await roomRepository.getAll();
+  getAllRooms: async (page, perPage) => {
+    return await roomRepository.getAll(page, perPage);
   },
 
   getRoomById: async (id) => {

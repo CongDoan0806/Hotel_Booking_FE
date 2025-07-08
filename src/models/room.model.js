@@ -8,21 +8,78 @@ const Room = {
     return result.rows[0];
   },
 
-  create: async (roomData) => {
+  create: async (roomData, client) => {
     const query = `
-      INSERT INTO rooms (name, room_type_id, room_level_id, floor_id, status, price, description)
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`;
+      INSERT INTO rooms (name, status, price, description, room_type_id, floor_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING room_id
+    `;
     const values = [
       roomData.name,
-      roomData.room_type_id,
-      roomData.room_level_id,
-      roomData.floor_id,
       roomData.status || "available",
       roomData.price,
       roomData.description,
+      roomData.room_type_id,
+      roomData.floor_id,
     ];
-    const result = await pool.query(query, values);
+    const result = await client.query(query, values);
+    return result.rows[0].room_id;
+  },
+
+  insertRoomImage: async (roomId, imageUrl, client) => {
+    const query = `INSERT INTO room_images (room_id, image_url) VALUES ($1, $2)`;
+    await client.query(query, [roomId, imageUrl]);
+  },
+
+  createAmenity: async (amenityName, client) => {
+    const query = `
+      INSERT INTO amenities (name)
+      VALUES ($1)
+      RETURNING amenity_id
+    `;
+    const result = await client.query(query, [amenityName]);
+    return result.rows[0].amenity_id;
+  },
+
+  insertRoomAmenity: async (roomId, amenityId, client) => {
+    const query = `
+      INSERT INTO room_amenities (room_id, amenity_id)
+      VALUES ($1, $2)
+    `;
+    await client.query(query, [roomId, amenityId]);
+  },
+  update: async (roomId, roomData, client) => {
+    const query = `
+      UPDATE rooms SET 
+        name = $1, 
+        description = $2, 
+        price = $3, 
+        status = $4, 
+        room_type_id = $5,
+        room_level_id = $6,
+        floor_id = $7
+      WHERE room_id = $8
+      RETURNING *
+    `;
+
+    const values = [
+      roomData.name,
+      roomData.description,
+      roomData.price,
+      roomData.status,
+      roomData.room_type_id,
+      roomData.room_level_id,
+      roomData.floor_id,
+      roomId,
+    ];
+
+    const result = await client.query(query, values);
     return result.rows[0];
+  },
+
+  deleteRoomAmenities: async (roomId, client) => {
+    const query = `DELETE FROM room_amenities WHERE room_id = $1`;
+    await client.query(query, [roomId]);
   },
 };
 

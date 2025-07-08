@@ -4,8 +4,15 @@ const response = require("../utils/response");
 const roomController = {
   getAllRooms: async (req, res, next) => {
     try {
-      const rooms = await roomService.getAllRooms();
-      return response.success(res, rooms, "Fetched all rooms");
+      const page = parseInt(req.query.page, 10) || 1;
+      const perPage = parseInt(req.query.perPage, 10) || 10;
+      const result = await roomService.getAllRooms(page, perPage);
+      return res.status(200).json({
+        status: "success",
+        message: "Fetched data",
+        data: result.data,
+        pagination: result.pagination,
+      });
     } catch (err) {
       return response.sendError(res, 500, err.message);
     }
@@ -23,7 +30,11 @@ const roomController = {
 
   createRoom: async (req, res, next) => {
     try {
-      const newRoom = await roomService.createRoom(req.body);
+      const roomData = { ...req.body };
+      if (req.file) {
+        roomData.image_url = "/uploads/" + req.file.filename;
+      }
+      const newRoom = await roomService.createRoom(roomData);
       return response.success(res, newRoom, "Room created", 201);
     } catch (err) {
       return response.sendError(res, 400, err.message);
@@ -32,7 +43,11 @@ const roomController = {
 
   updateRoom: async (req, res, next) => {
     try {
-      const updated = await roomService.updateRoom(req.params.id, req.body);
+      const roomData = { ...req.body };
+      if (req.file) {
+        roomData.image_url = "/uploads/" + req.file.filename;
+      }
+      const updated = await roomService.updateRoom(req.params.id, roomData);
       if (!updated) return response.sendError(res, 404, "Room not found");
       return response.success(res, updated, "Room updated");
     } catch (err) {
