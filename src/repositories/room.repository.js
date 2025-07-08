@@ -14,10 +14,10 @@ const roomRepository = {
       JOIN room_types rt ON r.room_type_id = rt.room_type_id
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       JOIN floors f ON r.floor_id = f.floor_id
-      WHERE 1=1
     `;
     const values = [];
 
+    // Lọc theo giá
     if (filters.min_price) {
       values.push(filters.min_price);
       query += ` AND r.price >= $${values.length}`;
@@ -35,13 +35,24 @@ const roomRepository = {
       query += ` AND rt.max_people >= $${values.length}`;
     }
 
+    // Lọc theo ngày có phòng trống
+    if (filters.check_in_date && filters.check_out_date) {
+      query += ` AND r.room_id NOT IN (
+        SELECT bd.room_id 
+        FROM booking_details bd
+        JOIN bookings b ON bd.booking_id = b.booking_id
+        WHERE 
+          NOT (bd.check_in_date >= $${values.length + 2} AND bd.check_out_date <= $${values.length + 1})
+      )`;
+      values.push(filters.check_out_date, filters.check_in_date);
+    }
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
     if (rooms.length === 0) return [];
 
     const roomIds = rooms.map((room) => room.room_id);
 
-    // Truy vấn amenities
+    // Lấy thông tin tiện nghi
     const amenityQuery = `
       SELECT ra.room_id, a.amenity_id, a.name, a.icon, a.description
       FROM room_amenities ra
@@ -50,7 +61,7 @@ const roomRepository = {
     `;
     const amenityResult = await pool.query(amenityQuery, [roomIds]);
 
-    // Truy vấn images
+    // Lấy thông tin hình ảnh
     const imageQuery = `
       SELECT room_id, image_url
       FROM room_images
@@ -58,7 +69,6 @@ const roomRepository = {
     `;
     const imageResult = await pool.query(imageQuery, [roomIds]);
 
-    // Nhóm amenities
     const amenitiesMap = {};
     for (const row of amenityResult.rows) {
       if (!amenitiesMap[row.room_id]) amenitiesMap[row.room_id] = [];
@@ -70,14 +80,12 @@ const roomRepository = {
       });
     }
 
-    // Nhóm images
     const imagesMap = {};
     for (const row of imageResult.rows) {
       if (!imagesMap[row.room_id]) imagesMap[row.room_id] = [];
       imagesMap[row.room_id].push(row.image_url);
     }
 
-    // Gắn amenities và images vào từng room
     const roomsWithData = rooms.map((room) => ({
       room_id: room.room_id,
       name: room.name,
