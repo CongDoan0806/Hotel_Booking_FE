@@ -7,13 +7,24 @@ const {
 } = require("../validations/room.validate");
 const { authenticateToken } = require("../middlewares/auth");
 const { adminOnly } = require("../middlewares/role");
+const upload = require("../utils/upload");
 
 router.use(authenticateToken, adminOnly);
 
 router.get("/", roomController.getAllRooms);
 router.get("/:id", validateRoomId, roomController.getRoomById);
-router.post("/", validateRoom, roomController.createRoom);
-router.put("/:id", validateRoomId, validateRoom, roomController.updateRoom);
+router.post(
+  "/",
+  validateRoom,
+  upload.single("img_url"),
+  roomController.createRoom
+);
+router.put(
+  "/:id",
+  validateRoomId,
+  validateRoom,
+  upload.single("img_url"),
+  roomController.updateRoom
+);
 router.delete("/:id", validateRoomId, roomController.deleteRoom);
-
 module.exports = router;

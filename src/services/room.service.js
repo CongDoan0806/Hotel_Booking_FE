@@ -1,8 +1,7 @@
 const roomRepository = require("../repositories/room.repository");
 
 const roomService = {
-
-    async getRoomDetail(id) {
+  async getRoomDetail(id) {
     const room = await roomRepository.getRoomDetail(id);
     if (!room) throw new Error("ROOM_NOT_FOUND");
     return room;
@@ -19,8 +18,8 @@ const roomService = {
   createRoom: async (roomData) => {
     return await roomRepository.createRoom(roomData);
   },
-  getAllRooms: async () => {
-    return await roomRepository.getAll();
+  getAllRooms: async (page, perPage) => {
+    return await roomRepository.getAll(page, perPage);
   },
 
   getRoomById: async (id) => {
