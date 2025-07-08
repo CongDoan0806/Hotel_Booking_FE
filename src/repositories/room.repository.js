@@ -1,5 +1,51 @@
-const pool = require('../config/db');
-const Room = require('../models/room.model');
+const Room = require("../models/room.model");
+const pool = require("../config/db");
+
+/* -------------------- CHECK AVAILABILITY -------------------- */
+async function isRoomAvailable(roomId, checkIn, checkOut) {
+  const { rows } = await pool.query(
+    `
+    SELECT 1
+    FROM booking_details
+    WHERE room_id = $1
+      AND NOT (
+        check_out_date <= $2 OR
+        check_in_date >= $3
+      )
+    `,
+    [roomId, checkIn, checkOut]
+  );
+  return rows.length === 0;
+}
+
+async function getRoomDetail(roomId) {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      r.room_id,
+      r.description,
+      r.price,
+      COALESCE(img.images, '[]')     AS images,
+      COALESCE(am.amenities, '[]')   AS amenities
+    FROM rooms r
+    LEFT JOIN LATERAL (
+      SELECT json_agg(image_url) AS images
+      FROM room_images
+      WHERE room_id = r.room_id
+    ) img ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
+      FROM room_amenities ra
+      JOIN amenities a ON a.amenity_id = ra.amenity_id
+      WHERE ra.room_id = r.room_id
+    ) am ON TRUE
+    WHERE r.room_id = $1
+    `,
+    [roomId]
+  );
+
+  return rows[0] || null;
+}
 
 const roomRepository = {
   getFilteredRooms: async (filters) => {
@@ -15,6 +61,7 @@ const roomRepository = {
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       JOIN floors f ON r.floor_id = f.floor_id
     `;
+
     const values = [];
 
     if (filters.min_price) {
@@ -110,4 +157,6 @@ const roomRepository = {
   },
 };
 
+/* -------------------- EXPORT -------------------- */
 module.exports = roomRepository;
+
