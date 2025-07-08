@@ -67,11 +67,39 @@ const roomController = {
 
   filterRooms: async (req, res, next) => {
     try {
-      const filters = req.query;
+      const filters = {
+        min_price: req.query.min_price
+          ? parseFloat(req.query.min_price)
+          : undefined,
+        max_price: req.query.max_price
+          ? parseFloat(req.query.max_price)
+          : undefined,
+        room_type: req.query.room_type
+          ? parseInt(req.query.room_type)
+          : undefined,
+        people: req.query.people ? parseInt(req.query.people) : undefined,
+        check_in_date: req.query.check_in_date || undefined,
+        check_out_date: req.query.check_out_date || undefined,
+      };
+
       const rooms = await roomService.getFilteredRooms(filters);
       return response.success(res, rooms, "Filtered rooms");
     } catch (error) {
       return response.sendError(res, 500, error.message);
+    }
+  },
+  getRoomDetail: async (req, res, next) => {
+    try {
+      const roomId = Number(req.params.id);
+      const room = await roomService.getRoomDetail(roomId);
+
+      if (!room) {
+        return response.sendError(res, 404, "Room not found");
+      }
+
+      return response.success(res, room, "Room details fetched successfully");
+    } catch (err) {
+      return response.sendError(res, 500, err.message);
     }
   },
 };
