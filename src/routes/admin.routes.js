@@ -13,17 +13,12 @@ router.use(authenticateToken, adminOnly);
 
 router.get("/", roomController.getAllRooms);
 router.get("/:id", validateRoomId, roomController.getRoomById);
-router.post(
-  "/",
-  validateRoom,
-  upload.single("img_url"),
-  roomController.createRoom
-);
+router.post("/", validateRoom, upload.multiImages, roomController.createRoom);
 router.put(
   "/:id",
   validateRoomId,
   validateRoom,
-  upload.single("img_url"),
+  upload.multiImages,
   roomController.updateRoom
 );
 router.delete("/:id", validateRoomId, roomController.deleteRoom);
