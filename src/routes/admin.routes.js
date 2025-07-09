@@ -8,7 +8,7 @@ const {
 const { authenticateToken } = require("../middlewares/auth");
 const { adminOnly } = require("../middlewares/role");
 const upload = require("../utils/upload");
-
+const {getUserListController} = require('../controllers/admin.controller')
 router.use(authenticateToken, adminOnly);
 
 router.get("/", roomController.getAllRooms);
@@ -22,4 +22,7 @@ router.put(
   roomController.updateRoom
 );
 router.delete("/:id", validateRoomId, roomController.deleteRoom);
+
+router.get('/admin/user-list', getUserListController)
+
 module.exports = router;
