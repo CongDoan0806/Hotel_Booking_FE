@@ -7,6 +7,9 @@ const { bookingIdParamSchema } = require('../validations/booking.validate');
 
 
 router.post('/bookings', authenticate, bookingController.createBooking);
-router.get('/booking/:booking_id/details', authenticate, validateParams(bookingIdParamSchema), bookingController.getBookingDetailController);
+router.get('/bookings/:booking_id/details', authenticate, validateParams(bookingIdParamSchema), bookingController.getBookingDetailController);
+router.patch('/bookings/:booking_id/confirm', authenticate, validateParams(bookingIdParamSchema),bookingController.confirmBookingController);
+
+
 
 module.exports = router;
