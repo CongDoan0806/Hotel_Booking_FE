@@ -100,10 +100,14 @@ const roomController = {
         people: req.query.people ? parseInt(req.query.people) : undefined,
         check_in_date: req.query.check_in_date || undefined,
         check_out_date: req.query.check_out_date || undefined,
+        amenities: req.query.amenities || undefined,
       };
 
       const rooms = await roomService.getFilteredRooms(filters);
-      return response.success(res, rooms, "Filtered rooms");
+
+      const hasDeals = rooms.some(room => room.deal !== null);
+
+      return response.success(res, { rooms, hasDeals }, "Filtered rooms");
     } catch (error) {
       return response.sendError(res, 500, error.message);
     }

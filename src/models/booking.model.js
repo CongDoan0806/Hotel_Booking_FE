@@ -46,8 +46,16 @@ const getBookingDetailQuery = async (booking_id) => {
   const result = await pool.query(query, values);
   return result.rows; 
 };
+
+const updateStatusById = async (bookingId, status = 'confirmed') => {
+  const query = `UPDATE bookings SET status = $1 WHERE booking_id = $2`;
+  const result = await pool.query(query, [status, bookingId]);
+  return result;
+};
+
 module.exports = {
   getBookingDetailQuery,
+  updateStatusById,
   Booking
 };
 

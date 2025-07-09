@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const {findByEmail,createUser,updateRefreshToken } = require('../models/auth.model')
 const { login, resetPassword, register } = require('../services/auth.service')
-const {success, sendErro} = require('../utils/response')
+const {success, sendError} = require('../utils/response')
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
