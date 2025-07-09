@@ -1,5 +1,5 @@
 const pool = require("../config/db");
-const { bookingRepo, getBookingInfoById } = require("../repositories/booking.repository");
+const { bookingRepo, getBookingInfoById, updateBookingStatusToConfirmed} = require("../repositories/booking.repository");
 
 const dayjs = require("dayjs");
 
@@ -75,6 +75,7 @@ const getBookingDetails = async (booking_id) => {
     booking_id: rows[0].booking_id,
     user_id: rows[0].user_id,
     total_price: total_price,
+    status: rows[0].status,
     check_in_date: rows[0].check_in_date,
     check_out_date: rows[0].check_out_date,
     nights,
@@ -91,6 +92,19 @@ const getBookingDetails = async (booking_id) => {
 };
 
 
+const confirmBookingService = async (booking_id) => {
+  const result = await updateBookingStatusToConfirmed(booking_id);
+
+  if (result.affectedRows === 0) {
+    throw new Error('Booking not found');
+  }
+
+  return {
+    success: true,
+    message: 'Booking confirmed successfully',
+  };
+};
 module.exports = {
   getBookingDetails,
+  confirmBookingService
 };

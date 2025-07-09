@@ -1,5 +1,5 @@
 const roomRepository = require('../repositories/room.repository');
-const { bookingService, getBookingDetails } = require('../services/booking.service');
+const { bookingService, getBookingDetails,confirmBookingService } = require('../services/booking.service');
 const { validateBookingInput } = require('../validations/booking.validate');
 const { success, sendError } = require('../utils/response');
 const validateParams = require('../middlewares/validateParams');
@@ -45,7 +45,16 @@ const getBookingDetailController = async (req, res) => {
   }
 };
 
+const confirmBookingController = async (req, res) => {
+  try {
+    const result = await confirmBookingService(req.params.booking_id);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   createBooking,
   getBookingDetailController,
+  confirmBookingController
 };
