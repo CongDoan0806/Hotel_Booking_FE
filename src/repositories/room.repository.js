@@ -301,7 +301,11 @@ const roomRepository = {
     try {
       await client.query("BEGIN");
       const roomId = await Room.create(roomData, client);
-      if (roomData.image_url) {
+      if (Array.isArray(roomData.image_urls)) {
+        for (const url of roomData.image_urls) {
+          await Room.insertRoomImage(roomId, url, client);
+        }
+      } else if (roomData.image_url) {
         await Room.insertRoomImage(roomId, roomData.image_url, client);
       }
       let amenityId = null;

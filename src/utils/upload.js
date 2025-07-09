@@ -38,4 +38,7 @@ const upload = multer({
   limits: { fileSize: 2 * 1024 * 1024 },
 });
 
+upload.singleImage = upload.single("image_url");
+upload.multiImages = upload.array("image_url", 5);
+
 module.exports = upload;
