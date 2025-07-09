@@ -51,7 +51,8 @@ const roomRepository = {
   getFilteredRooms: async (filters) => {
     let query = `
       SELECT 
-        r.*,
+        r.*, 
+        r.room_type_id,
         rt.name AS room_type_name,
         rt.max_people,
         rl.name AS room_level_name,
@@ -60,9 +61,11 @@ const roomRepository = {
       JOIN room_types rt ON r.room_type_id = rt.room_type_id
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       JOIN floors f ON r.floor_id = f.floor_id
+      WHERE 1=1
     `;
 
     const values = [];
+    const amenityFilters = filters.amenities ? filters.amenities.split(',') : [];
 
     if (filters.min_price) {
       values.push(filters.min_price);
@@ -86,18 +89,28 @@ const roomRepository = {
         SELECT bd.room_id 
         FROM booking_details bd
         JOIN bookings b ON bd.booking_id = b.booking_id
-        WHERE 
-          NOT (bd.check_in_date > $${values.length + 2} OR bd.check_out_date < $${values.length + 1})
+        WHERE NOT (bd.check_in_date > $${values.length + 2} OR bd.check_out_date < $${values.length + 1})
       )`;
       values.push(filters.check_in_date, filters.check_out_date);
     }
+
+    if (amenityFilters.length > 0) {
+      query += ` AND r.room_id IN (
+        SELECT ra.room_id
+        FROM room_amenities ra
+        WHERE ra.amenity_id = ANY($${values.length + 1}::int[])
+        GROUP BY ra.room_id
+        HAVING COUNT(DISTINCT ra.amenity_id) = $${values.length + 2}
+      )`;
+      values.push(amenityFilters, amenityFilters.length);
+    }
+
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
     if (rooms.length === 0) return [];
 
     const roomIds = rooms.map((room) => room.room_id);
 
-    // Lấy thông tin tiện nghi
     const amenityQuery = `
       SELECT ra.room_id, a.amenity_id, a.name, a.icon, a.description
       FROM room_amenities ra
@@ -106,13 +119,27 @@ const roomRepository = {
     `;
     const amenityResult = await pool.query(amenityQuery, [roomIds]);
 
-    // Lấy thông tin hình ảnh
     const imageQuery = `
       SELECT room_id, image_url
       FROM room_images
       WHERE room_id = ANY($1::int[])
     `;
     const imageResult = await pool.query(imageQuery, [roomIds]);
+
+    const dealQuery = `
+      SELECT d.room_type, d.discount_rate
+      FROM deals d
+      WHERE d.start_date <= CURRENT_DATE AND d.end_date >= CURRENT_DATE
+        AND d.room_type IN (
+          SELECT DISTINCT room_type_id FROM rooms WHERE room_type_id = ANY($1::int[])
+        )
+    `;
+    const dealResult = await pool.query(dealQuery, [rooms.map(r => r.room_type_id)]);
+
+    const dealsMap = {};
+    dealResult.rows.forEach(deal => {
+      dealsMap[deal.room_type] = deal.discount_rate;
+    });
 
     const amenitiesMap = {};
     for (const row of amenityResult.rows) {
@@ -131,19 +158,28 @@ const roomRepository = {
       imagesMap[row.room_id].push(row.image_url);
     }
 
-    const roomsWithData = rooms.map((room) => ({
-      room_id: room.room_id,
-      name: room.name,
-      description: room.description,
-      price: room.price,
-      status: room.status,
-      roomType: room.room_type_name,
-      roomLevel: room.room_level_name,
-      floor: room.floor_name,
-      max_people: room.max_people,
-      amenities: amenitiesMap[room.room_id] || [],
-      images: imagesMap[room.room_id] || [],
-    }));
+    const roomsWithData = rooms.map((room) => {
+      const deal = dealsMap[room.room_type_id] ? {
+        discount_rate: dealsMap[room.room_type_id],
+        final_price: room.price * (1 - dealsMap[room.room_type_id]),
+      } : null;
+      console.log(`Room ID: ${room.room_id}, Price: ${room.price}, Deal: ${deal}`);
+      return {
+        room_id: room.room_id,
+        name: room.name,
+        description: room.description,
+        price: room.price,
+        status: room.status,
+        roomType: room.room_type_name,
+        room_type_id: room.room_type_id,
+        roomLevel: room.room_level_name,
+        floor: room.floor_name,
+        max_people: room.max_people,
+        amenities: amenitiesMap[room.room_id] || [],
+        images: imagesMap[room.room_id] || [],
+        deal: deal,
+      };
+    });
 
     return roomsWithData;
   },
