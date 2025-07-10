@@ -1,5 +1,5 @@
 const pool = require('../config/db')
-const { getBookingDetailQuery,updateStatusById } = require('../models/booking.model');
+const { getBookingByUserId ,updateStatusById } = require('../models/booking.model');
 
 
 async function findConflictingBooking(roomId, checkIn, checkOut) {
@@ -33,8 +33,8 @@ async function createBookingDetail(bookingId, detail, client) {
   );
 }
 
-const getBookingInfoById = async (booking_id) => {
-  return await getBookingDetailQuery(booking_id);
+const getBookingInfoById = async (user_id) => {
+  return await getBookingByUserId(user_id);
 };
 
 const updateBookingStatusToConfirmed = async (bookingId) => {

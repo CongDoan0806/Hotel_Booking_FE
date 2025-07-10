@@ -1,6 +1,6 @@
 const { getUserListModel } = require('../models/admin.model');
 
-const getUserlistService = async () => {
+const getUserlistService = async (page = 1, perPage = 10) => {
   const rawData = await getUserListModel();
   const groupedData = {};
 
@@ -57,7 +57,7 @@ const getUserlistService = async () => {
     }
   });
 
-  const result = Object.values(groupedData).map(user => ({
+  const fullResult = Object.values(groupedData).map(user => ({
     ...user,
     bookings: Object.values(user.bookings).map(b => ({
       ...b,
@@ -65,8 +65,22 @@ const getUserlistService = async () => {
     }))
   }));
 
-  return result;
+  const totalItems = fullResult.length;
+  const totalPages = Math.ceil(totalItems / perPage);
+  const startIndex = (page - 1) * perPage;
+  const paginatedUsers = fullResult.slice(startIndex, startIndex + perPage);
+
+  return {
+    users: paginatedUsers,
+    pagination: {
+      currentPage: page,
+      perPage,
+      totalPages,
+      totalItems
+    }
+  };
 };
+
 
 module.exports = {
   getUserlistService,
