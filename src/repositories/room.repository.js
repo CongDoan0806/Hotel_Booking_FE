@@ -69,8 +69,45 @@ const roomRepository = {
       [perPage, offset]
     );
 
+    const rooms = result.rows;
+    if (rooms.length === 0) {
+      return {
+        data: [],
+        pagination: {
+          currentPage: page,
+          perPage: perPage,
+          totalPages: totalPages,
+          totalItems: totalItems,
+        },
+      };
+    }
+
+    const roomIds = rooms.map((room) => room.id);
+    const amenityQuery = `
+      SELECT ra.room_id, a.amenity_id, a.name
+      FROM room_amenities ra
+      JOIN amenities a ON ra.amenity_id = a.amenity_id
+      WHERE ra.room_id = ANY($1::int[])
+    `;
+    const amenityResult = await pool.query(amenityQuery, [roomIds]);
+
+    const amenitiesMap = {};
+    for (const row of amenityResult.rows) {
+      if (!amenitiesMap[row.room_id]) amenitiesMap[row.room_id] = [];
+      amenitiesMap[row.room_id].push({
+        amenity_id: row.amenity_id,
+        name: row.name,
+        icon: row.icon,
+        description: row.description,
+      });
+    }
+    const roomsWithAmenities = rooms.map((room) => ({
+      ...room,
+      amenities: amenitiesMap[room.id] || [],
+    }));
+
     return {
-      data: result.rows,
+      data: roomsWithAmenities,
       pagination: {
         currentPage: page,
         perPage: perPage,
@@ -105,17 +142,10 @@ const roomRepository = {
 
       const updatedRoom = await Room.update(roomId, roomData, client);
 
-      if (roomData.amenities) {
+      if (Array.isArray(roomData.amenities)) {
         await Room.deleteRoomAmenities(roomId, client);
-
-        const amenitiesList = roomData.amenities
-          .split(",")
-          .map((item) => item.trim())
-          .filter((item) => item !== "");
-
-        for (const name of amenitiesList) {
-          const amenityId = await Room.createAmenity(name, client);
-          await Room.insertRoomAmenity(roomId, amenityId, client);
+        for (const amenity of roomData.amenities) {
+          await Room.insertRoomAmenityByName(roomId, amenity, client);
         }
       }
 
@@ -173,7 +203,9 @@ const roomRepository = {
     `;
 
     const values = [];
-    const amenityFilters = filters.amenities ? filters.amenities.split(',') : [];
+    const amenityFilters = filters.amenities
+      ? filters.amenities.split(",")
+      : [];
 
     if (filters.min_price) {
       values.push(filters.min_price);
@@ -197,7 +229,9 @@ const roomRepository = {
         SELECT bd.room_id 
         FROM booking_details bd
         JOIN bookings b ON bd.booking_id = b.booking_id
-        WHERE NOT (bd.check_in_date > $${values.length + 2} OR bd.check_out_date < $${values.length + 1})
+        WHERE NOT (bd.check_in_date > $${
+          values.length + 2
+        } OR bd.check_out_date < $${values.length + 1})
       )`;
       values.push(filters.check_in_date, filters.check_out_date);
     }
@@ -242,10 +276,12 @@ const roomRepository = {
           SELECT DISTINCT room_type_id FROM rooms WHERE room_type_id = ANY($1::int[])
         )
     `;
-    const dealResult = await pool.query(dealQuery, [rooms.map(r => r.room_type_id)]);
+    const dealResult = await pool.query(dealQuery, [
+      rooms.map((r) => r.room_type_id),
+    ]);
 
     const dealsMap = {};
-    dealResult.rows.forEach(deal => {
+    dealResult.rows.forEach((deal) => {
       dealsMap[deal.room_type] = deal.discount_rate;
     });
 
@@ -267,11 +303,15 @@ const roomRepository = {
     }
 
     const roomsWithData = rooms.map((room) => {
-      const deal = dealsMap[room.room_type_id] ? {
-        discount_rate: dealsMap[room.room_type_id],
-        final_price: room.price * (1 - dealsMap[room.room_type_id]),
-      } : null;
-      console.log(`Room ID: ${room.room_id}, Price: ${room.price}, Deal: ${deal}`);
+      const deal = dealsMap[room.room_type_id]
+        ? {
+            discount_rate: dealsMap[room.room_type_id],
+            final_price: room.price * (1 - dealsMap[room.room_type_id]),
+          }
+        : null;
+      console.log(
+        `Room ID: ${room.room_id}, Price: ${room.price}, Deal: ${deal}`
+      );
       return {
         room_id: room.room_id,
         name: room.name,
@@ -308,16 +348,15 @@ const roomRepository = {
       } else if (roomData.image_url) {
         await Room.insertRoomImage(roomId, roomData.image_url, client);
       }
-      let amenityId = null;
-      if (roomData.amenity) {
-        amenityId = await Room.createAmenity(roomData.amenity, client);
-        await Room.insertRoomAmenity(roomId, amenityId, client);
+      if (Array.isArray(roomData.amenities)) {
+        for (const amenity of roomData.amenities) {
+          await Room.insertRoomAmenityByName(roomId, amenity, client);
+        }
       }
       await client.query("COMMIT");
       return {
         message: "Room created successfully",
         room_id: roomId,
-        amenity_id: amenityId,
       };
     } catch (error) {
       await client.query("ROLLBACK");

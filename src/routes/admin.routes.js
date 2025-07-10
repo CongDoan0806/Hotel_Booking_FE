@@ -8,21 +8,26 @@ const {
 const { authenticateToken } = require("../middlewares/auth");
 const { adminOnly } = require("../middlewares/role");
 const upload = require("../utils/upload");
-const {getUserListController} = require('../controllers/admin.controller')
+const { getUserListController } = require("../controllers/admin.controller");
 router.use(authenticateToken, adminOnly);
 
-router.get("/", roomController.getAllRooms);
-router.get("/:id", validateRoomId, roomController.getRoomById);
-router.post("/", validateRoom, upload.multiImages, roomController.createRoom);
+router.get("/admin/rooms/", roomController.getAllRooms);
+router.get("/admin/rooms/:id", validateRoomId, roomController.getRoomById);
+router.post(
+  "/admin/rooms/",
+  validateRoom,
+  upload.multiImages,
+  roomController.createRoom
+);
 router.put(
-  "/:id",
+  "/admin/rooms/:id",
   validateRoomId,
   validateRoom,
   upload.multiImages,
   roomController.updateRoom
 );
-router.delete("/:id", validateRoomId, roomController.deleteRoom);
+router.delete("/admin/rooms/:id", validateRoomId, roomController.deleteRoom);
 
-router.get('/admin/user-list', getUserListController)
+router.get("/admin/user-list", getUserListController);
 
 module.exports = router;

@@ -31,14 +31,25 @@ const Room = {
     await client.query(query, [roomId, imageUrl]);
   },
 
-  createAmenity: async (amenityName, client) => {
-    const query = `
-      INSERT INTO amenities (name)
-      VALUES ($1)
-      RETURNING amenity_id
-    `;
-    const result = await client.query(query, [amenityName]);
-    return result.rows[0].amenity_id;
+  insertRoomAmenityByName: async (roomId, amenityNameOrObj, client) => {
+    const name =
+      typeof amenityNameOrObj === "string"
+        ? amenityNameOrObj
+        : amenityNameOrObj.name;
+    let query = `SELECT amenity_id FROM amenities WHERE name = $1`;
+    let result = await client.query(query, [name]);
+    let amenityId;
+    if (result.rows.length > 0) {
+      amenityId = result.rows[0].amenity_id;
+    } else {
+      query = `INSERT INTO amenities (name) VALUES ($1) RETURNING amenity_id`;
+      result = await client.query(query, [name]);
+      amenityId = result.rows[0].amenity_id;
+    }
+    await client.query(
+      `INSERT INTO room_amenities (room_id, amenity_id) VALUES ($1, $2)`,
+      [roomId, amenityId]
+    );
   },
 
   insertRoomAmenity: async (roomId, amenityId, client) => {
