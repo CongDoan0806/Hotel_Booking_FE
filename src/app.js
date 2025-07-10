@@ -9,7 +9,8 @@ const adminRoutes = require("./routes/admin.routes");
 const authRoutes = require("./routes/auth.routes");
 const roomRoutes = require("./routes/room.routes");
 const bookingRoutes = require("./routes/booking.routes");
-
+const floorRoutes = require("./routes/floor.routes");
+const amenityRoutes = require("./routes/amenity.routes");
 // Serve ảnh trong public/uploads qua đường dẫn /uploads
 app.use(
   "/uploads/rooms",
@@ -25,4 +26,6 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api", adminRoutes);
 app.use("/api", authRoutes);
 app.use("/api", bookingRoutes);
+app.use("/api", floorRoutes);
+app.use("/api", amenityRoutes);
 module.exports = app;
