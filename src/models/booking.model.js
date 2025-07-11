@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 
+
 class Booking {
   static async create({ user_id, total_price }) {
     const query = `

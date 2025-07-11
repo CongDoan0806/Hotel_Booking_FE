@@ -350,7 +350,7 @@ const roomRepository = {
   createRoom: async (roomData) => {
     return await Room.create(roomData);
   },
-
+// funs check room available and get room details
   isRoomAvailable: async (roomId, checkIn, checkOut) => {
     const { rows } = await pool.query(
       `

@@ -4,6 +4,7 @@ const { validateBookingInput } = require('../validations/booking.validate');
 const { success, sendError } = require('../utils/response');
 const validateParams = require('../middlewares/validateParams');
 
+// Create booking
 const createBooking = async (req, res) => {
   try {
     const { roomId, checkInDate, checkOutDate } = req.body;
@@ -44,7 +45,7 @@ const createBooking = async (req, res) => {
     return sendError(res, 500, "Server error", [err.message]);
   }
 };
-
+// get booking detail
 const getBookingDetailsByUserIdController = async (req, res) => {
   try {
     const user_id = parseInt(req.params.user_id, 10);
@@ -60,7 +61,6 @@ const getBookingDetailsByUserIdController = async (req, res) => {
     return sendError(res, 404, "No bookings found for this user", [err.message]);
   }
 };
-
 const confirmBookingController = async (req, res) => {
   try {
     const result = await confirmBookingService(req.params.booking_id);

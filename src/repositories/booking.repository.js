@@ -1,7 +1,7 @@
 const pool = require('../config/db')
 const { getBookingByUserId ,updateStatusById} = require('../models/booking.model');
 
-
+//  funcs create Booking
 async function findConflictingBooking(roomId, checkIn, checkOut) {
   const { rows } = await pool.query(
     `SELECT 1
@@ -43,7 +43,7 @@ const getDealDiscount = async (roomTypeId, inDate, outDate) => {
   );
   return rows[0]?.discount_rate || 0;
 }
-
+// func get booking
 const getBookingInfoById = async (user_id) => {
   return await getBookingByUserId(user_id);
 };
