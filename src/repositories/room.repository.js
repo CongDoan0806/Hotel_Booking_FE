@@ -1,52 +1,6 @@
 const Room = require("../models/room.model");
 const pool = require("../config/db");
 
-/* -------------------- CHECK AVAILABILITY -------------------- */
-async function isRoomAvailable(roomId, checkIn, checkOut) {
-  const { rows } = await pool.query(
-    `
-    SELECT 1
-    FROM booking_details
-    WHERE room_id = $1
-      AND NOT (
-        check_out_date <= $2 OR
-        check_in_date >= $3
-      )
-    `,
-    [roomId, checkIn, checkOut]
-  );
-  return rows.length === 0;
-}
-
-async function getRoomDetail(roomId) {
-  const { rows } = await pool.query(
-    `
-    SELECT
-      r.room_id,
-      r.description,
-      r.price,
-      COALESCE(img.images, '[]')     AS images,
-      COALESCE(am.amenities, '[]')   AS amenities
-    FROM rooms r
-    LEFT JOIN LATERAL (
-      SELECT json_agg(image_url) AS images
-      FROM room_images
-      WHERE room_id = r.room_id
-    ) img ON TRUE
-    LEFT JOIN LATERAL (
-      SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
-      FROM room_amenities ra
-      JOIN amenities a ON a.amenity_id = ra.amenity_id
-      WHERE ra.room_id = r.room_id
-    ) am ON TRUE
-    WHERE r.room_id = $1
-    `,
-    [roomId]
-  );
-
-  return rows[0] || null;
-}
-
 const roomRepository = {
   getAll: async function (page = 1, perPage = 10) {
     const countResult = await pool.query("SELECT COUNT(*) FROM rooms");
@@ -235,7 +189,6 @@ const roomRepository = {
       )`;
       values.push(filters.check_in_date, filters.check_out_date);
     }
-
     if (amenityFilters.length > 0) {
       query += ` AND r.room_id IN (
         SELECT ra.room_id
@@ -246,7 +199,6 @@ const roomRepository = {
       )`;
       values.push(amenityFilters, amenityFilters.length);
     }
-
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
     if (rooms.length === 0) return [];
@@ -332,11 +284,116 @@ const roomRepository = {
     return roomsWithData;
   },
 
+  getAll: async (page = 1, perPage = 10) => {
+    const offset = (page - 1) * perPage;
+
+    const query = `
+      SELECT 
+        r.room_id,
+        r.name,
+        r.description,
+        r.price,
+        rt.name AS room_type_name,
+        rt.max_people,
+        rl.name AS room_level_name,
+        f.name AS floor_name
+      FROM rooms r
+      JOIN room_types rt ON r.room_type_id = rt.room_type_id
+      JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+      JOIN floors f ON r.floor_id = f.floor_id
+      ORDER BY r.room_id
+      LIMIT $1 OFFSET $2
+    `;
+    const countQuery = `SELECT COUNT(*) FROM rooms`;
+
+    const result = await pool.query(query, [perPage, offset]);
+    const countResult = await pool.query(countQuery);
+    const total = parseInt(countResult.rows[0].count);
+    const rooms = result.rows;
+
+    const roomIds = rooms.map((room) => room.room_id);
+    const imageQuery = `
+      SELECT room_id, image_url
+      FROM room_images
+      WHERE room_id = ANY($1::int[])
+    `;
+    const imageResult = await pool.query(imageQuery, [roomIds]);
+
+    const imagesMap = {};
+    imageResult.rows.forEach(({ room_id, image_url }) => {
+      if (!imagesMap[room_id]) {
+        imagesMap[room_id] = [];
+      }
+      imagesMap[room_id].push(image_url);
+    });
+
+    const roomsWithImages = rooms.map((room) => ({
+      ...room,
+      image_url: imagesMap[room.room_id]?.[0] || null,
+    }));
+
+    return {
+      data: roomsWithImages,
+      pagination: {
+        total,
+        page,
+        perPage,
+        totalPages: Math.ceil(total / perPage),
+      },
+    };
+  },
+
   findRoomById: async (id) => {
     return await Room.findById(id);
   },
 
   createRoom: async (roomData) => {
+    return await Room.create(roomData);
+  },
+
+  isRoomAvailable: async (roomId, checkIn, checkOut) => {
+    const { rows } = await pool.query(
+      `
+      SELECT 1
+      FROM booking_details
+      WHERE room_id = $1
+        AND NOT (
+          check_out_date <= $2 OR
+          check_in_date >= $3
+        )
+      `,
+      [roomId, checkIn, checkOut]
+    );
+    return rows.length === 0;
+  },
+
+  getRoomDetail: async (roomId) => {
+    const { rows } = await pool.query(
+      `
+      SELECT
+        r.room_id,
+        r.description,
+        r.price,
+        COALESCE(img.images, '[]')     AS images,
+        COALESCE(am.amenities, '[]')   AS amenities
+      FROM rooms r
+      LEFT JOIN LATERAL (
+        SELECT json_agg(image_url) AS images
+        FROM room_images
+        WHERE room_id = r.room_id
+      ) img ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
+        FROM room_amenities ra
+        JOIN amenities a ON a.amenity_id = ra.amenity_id
+        WHERE ra.room_id = r.room_id
+      ) am ON TRUE
+      WHERE r.room_id = $1
+      `,
+      [roomId]
+    );
+
+    return rows[0] || null;
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -368,5 +425,4 @@ const roomRepository = {
   },
 };
 
-/* -------------------- EXPORT -------------------- */
 module.exports = roomRepository;
