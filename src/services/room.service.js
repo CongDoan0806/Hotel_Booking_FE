@@ -23,7 +23,6 @@ const roomService = {
   getAllRooms: async (page, perPage) => {
     return await roomRepository.getAll(page, perPage);
   },
-
   getRoomById: async (id) => {
     const room = await roomRepository.getById(id);
     if (!room) {
