@@ -1,5 +1,5 @@
+require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const {findByEmail,createUser,updateRefreshToken } = require('../models/auth.model')
 const { login, resetPassword, register } = require('../services/auth.service')
 const {success, sendError} = require('../utils/response')

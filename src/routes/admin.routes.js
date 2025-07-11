@@ -30,4 +30,6 @@ router.delete("/admin/rooms/:id", validateRoomId, roomController.deleteRoom);
 
 router.get("/admin/user-list", getUserListController);
 
+
+
 module.exports = router;

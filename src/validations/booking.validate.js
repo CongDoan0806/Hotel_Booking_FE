@@ -1,7 +1,7 @@
 const roomRepo = require('../repositories/room.repository');
 const Joi = require('joi');
 
-exports.validateBookingInput = async ({ roomId, checkInDate, checkOutDate, totalGuests = 1 }) => {
+async function validateBookingInput({ roomId, checkInDate, checkOutDate, totalGuests = 1 }) {
   const errors = [];
 
   const today = new Date().setHours(0, 0, 0, 0);
@@ -16,20 +16,20 @@ exports.validateBookingInput = async ({ roomId, checkInDate, checkOutDate, total
   const room = await roomRepo.getRoomDetail(roomId);
   if (!room) {
     errors.push('Room not found');
-    return errors;                       
+    return errors;
   }
-  // if (totalGuests > room.max_people)
-  //   errors.push(`Guests exceed room capacity (${room.max_people})`);
 
   const isFree = await roomRepo.isRoomAvailable(roomId, checkInDate, checkOutDate);
   if (!isFree) errors.push('Room is unavailable for the selected dates');
 
   return errors;
-};
+}
+
 const bookingIdParamSchema = Joi.object({
   booking_id: Joi.number().integer().positive().required()
 });
 
 module.exports = {
+  validateBookingInput,
   bookingIdParamSchema,
 };
