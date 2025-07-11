@@ -40,15 +40,15 @@ const roomRepository = {
   getAll: async (page = 1, perPage = 10) => {
     const offset = (page - 1) * perPage;
 
-    const query = `SELECT r.room_id, r.name, r.description, r.price,
-                    rt.name AS room_type_name, rt.max_people,
-                    rl.name AS room_level_name, f.name AS floor_name
-                   FROM rooms r
-                   JOIN room_types rt ON r.room_type_id = rt.room_type_id
-                   JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-                   JOIN floors f ON r.floor_id = f.floor_id
-                   ORDER BY r.room_id
-                   LIMIT $1 OFFSET $2`;
+    const query = `SELECT r.room_id, r.name, r.description, r.price, r.status,
+                rt.name AS room_type_name, rt.max_people,
+                rl.name AS room_level_name, f.name AS floor_name
+               FROM rooms r
+               JOIN room_types rt ON r.room_type_id = rt.room_type_id
+               JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+               JOIN floors f ON r.floor_id = f.floor_id
+               ORDER BY r.room_id
+               LIMIT $1 OFFSET $2`;
 
     const countQuery = `SELECT COUNT(*) FROM rooms`;
 
@@ -83,7 +83,6 @@ const roomRepository = {
       },
     };
   },
-
   getById: async (id) => {
     const result = await pool.query(
       `SELECT r.room_id, r.name, r.description, r.price, r.status,
