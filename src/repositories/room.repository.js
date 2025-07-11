@@ -2,87 +2,62 @@ const Room = require("../models/room.model");
 const pool = require("../config/db");
 
 const roomRepository = {
-  getAll: async function (page = 1, perPage = 10) {
-    const countResult = await pool.query("SELECT COUNT(*) FROM rooms");
-    const totalItems = parseInt(countResult.rows[0].count, 10);
-    const totalPages = Math.ceil(totalItems / perPage);
+  getAll: async (page = 1, perPage = 10) => {
     const offset = (page - 1) * perPage;
 
-    const result = await pool.query(
-      `
-      SELECT 
-        r.room_id AS id, r.name, r.description, r.price, r.status,
-        r.room_type_id, r.room_level_id, r.floor_id,
-        rt.name AS room_type_name, rt.description AS room_type_description,
-        rt.max_people, rt.default_price
-      FROM rooms r
-      LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
-      ORDER BY r.room_id DESC
-      LIMIT $1 OFFSET $2
-    `,
-      [perPage, offset]
-    );
+    const query = `SELECT r.room_id, r.name, r.description, r.price, r.status,
+                rt.name AS room_type_name, rt.max_people,
+                rl.name AS room_level_name, f.name AS floor_name
+               FROM rooms r
+               JOIN room_types rt ON r.room_type_id = rt.room_type_id
+               JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+               JOIN floors f ON r.floor_id = f.floor_id
+               ORDER BY r.room_id
+               LIMIT $1 OFFSET $2`;
 
+    const countQuery = `SELECT COUNT(*) FROM rooms`;
+
+    const result = await pool.query(query, [perPage, offset]);
+    const countResult = await pool.query(countQuery);
+
+    const total = parseInt(countResult.rows[0].count);
     const rooms = result.rows;
-    if (rooms.length === 0) {
-      return {
-        data: [],
-        pagination: {
-          currentPage: page,
-          perPage: perPage,
-          totalPages: totalPages,
-          totalItems: totalItems,
-        },
-      };
-    }
 
-    const roomIds = rooms.map((room) => room.id);
-    const amenityQuery = `
-      SELECT ra.room_id, a.amenity_id, a.name
-      FROM room_amenities ra
-      JOIN amenities a ON ra.amenity_id = a.amenity_id
-      WHERE ra.room_id = ANY($1::int[])
-    `;
-    const amenityResult = await pool.query(amenityQuery, [roomIds]);
+    const roomIds = rooms.map((room) => room.room_id);
+    const imageQuery = `SELECT room_id, image_url FROM room_images WHERE room_id = ANY($1::int[])`;
+    const imageResult = await pool.query(imageQuery, [roomIds]);
 
-    const amenitiesMap = {};
-    for (const row of amenityResult.rows) {
-      if (!amenitiesMap[row.room_id]) amenitiesMap[row.room_id] = [];
-      amenitiesMap[row.room_id].push({
-        amenity_id: row.amenity_id,
-        name: row.name,
-        icon: row.icon,
-        description: row.description,
-      });
-    }
-    const roomsWithAmenities = rooms.map((room) => ({
+    const imagesMap = {};
+    imageResult.rows.forEach(({ room_id, image_url }) => {
+      if (!imagesMap[room_id]) imagesMap[room_id] = [];
+      imagesMap[room_id].push(image_url);
+    });
+
+    const roomsWithImages = rooms.map((room) => ({
       ...room,
-      amenities: amenitiesMap[room.id] || [],
+      image_url: imagesMap[room.room_id]?.[0] || null,
     }));
 
     return {
-      data: roomsWithAmenities,
+      data: roomsWithImages,
       pagination: {
-        currentPage: page,
-        perPage: perPage,
-        totalPages: totalPages,
-        totalItems: totalItems,
+        total,
+        page,
+        perPage,
+        totalPages: Math.ceil(total / perPage),
       },
     };
   },
 
-  getById: async function (id) {
+  getById: async (id) => {
     const result = await pool.query(
-      `
-      SELECT 
-        r.room_id, r.name, r.description, r.price, r.status,
-        r.room_type_id, r.room_level_id, r.floor_id,
-        rt.name AS room_type_name, rt.description AS room_type_description,
-        rt.max_people, rt.default_price
-      FROM rooms r
-      LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
-      WHERE r.room_id = $1
-      `,
+      `SELECT r.room_id, r.name, r.description, r.price, r.status,
+              r.room_type_id, r.room_level_id, r.floor_id,
+              rt.name AS room_type_name, rt.description AS room_type_description,
+              rt.max_people, rt.default_price
+       FROM rooms r
+       LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
+       WHERE r.room_id = $1`,
       [id]
     );
     return result.rows[0];
@@ -90,7 +65,6 @@ const roomRepository = {
 
   update: async (roomId, roomData) => {
     const client = await pool.connect();
-
     try {
       await client.query("BEGIN");
 
@@ -104,7 +78,6 @@ const roomRepository = {
       }
 
       await client.query("COMMIT");
-
       return {
         message: "Room updated successfully",
         room: updatedRoom,
@@ -118,20 +91,16 @@ const roomRepository = {
     }
   },
 
-  remove: async function (id) {
+  remove: async (id) => {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-
       await client.query(`DELETE FROM room_images WHERE room_id = $1`, [id]);
-
       const result = await client.query(
         `DELETE FROM rooms WHERE room_id = $1 RETURNING *`,
         [id]
       );
-
       await client.query("COMMIT");
-
       return result.rows[0];
     } catch (err) {
       await client.query("ROLLBACK");
@@ -140,6 +109,7 @@ const roomRepository = {
       client.release();
     }
   },
+
   getFilteredRooms: async (filters) => {
     let query = `
       SELECT 
@@ -183,12 +153,11 @@ const roomRepository = {
         SELECT bd.room_id 
         FROM booking_details bd
         JOIN bookings b ON bd.booking_id = b.booking_id
-        WHERE NOT (bd.check_in_date > $${
-          values.length + 2
-        } OR bd.check_out_date < $${values.length + 1})
+        WHERE NOT (bd.check_in_date > $${values.length + 2} OR bd.check_out_date < $${values.length + 1})
       )`;
       values.push(filters.check_in_date, filters.check_out_date);
     }
+
     if (amenityFilters.length > 0) {
       query += ` AND r.room_id IN (
         SELECT ra.room_id
@@ -199,6 +168,7 @@ const roomRepository = {
       )`;
       values.push(amenityFilters, amenityFilters.length);
     }
+
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
     if (rooms.length === 0) return [];
@@ -261,9 +231,7 @@ const roomRepository = {
             final_price: room.price * (1 - dealsMap[room.room_type_id]),
           }
         : null;
-      console.log(
-        `Room ID: ${room.room_id}, Price: ${room.price}, Deal: ${deal}`
-      );
+
       return {
         room_id: room.room_id,
         name: room.name,
@@ -284,73 +252,41 @@ const roomRepository = {
     return roomsWithData;
   },
 
-  getAll: async (page = 1, perPage = 10) => {
-    const offset = (page - 1) * perPage;
-
-    const query = `
-      SELECT 
-        r.room_id,
-        r.name,
-        r.description,
-        r.price,
-        rt.name AS room_type_name,
-        rt.max_people,
-        rl.name AS room_level_name,
-        f.name AS floor_name
-      FROM rooms r
-      JOIN room_types rt ON r.room_type_id = rt.room_type_id
-      JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-      JOIN floors f ON r.floor_id = f.floor_id
-      ORDER BY r.room_id
-      LIMIT $1 OFFSET $2
-    `;
-    const countQuery = `SELECT COUNT(*) FROM rooms`;
-
-    const result = await pool.query(query, [perPage, offset]);
-    const countResult = await pool.query(countQuery);
-    const total = parseInt(countResult.rows[0].count);
-    const rooms = result.rows;
-
-    const roomIds = rooms.map((room) => room.room_id);
-    const imageQuery = `
-      SELECT room_id, image_url
-      FROM room_images
-      WHERE room_id = ANY($1::int[])
-    `;
-    const imageResult = await pool.query(imageQuery, [roomIds]);
-
-    const imagesMap = {};
-    imageResult.rows.forEach(({ room_id, image_url }) => {
-      if (!imagesMap[room_id]) {
-        imagesMap[room_id] = [];
-      }
-      imagesMap[room_id].push(image_url);
-    });
-
-    const roomsWithImages = rooms.map((room) => ({
-      ...room,
-      image_url: imagesMap[room.room_id]?.[0] || null,
-    }));
-
-    return {
-      data: roomsWithImages,
-      pagination: {
-        total,
-        page,
-        perPage,
-        totalPages: Math.ceil(total / perPage),
-      },
-    };
-  },
-
   findRoomById: async (id) => {
     return await Room.findById(id);
   },
 
   createRoom: async (roomData) => {
-    return await Room.create(roomData);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const roomId = await Room.create(roomData, client);
+      if (Array.isArray(roomData.image_urls)) {
+        for (const url of roomData.image_urls) {``
+          await Room.insertRoomImage(roomId, url, client);
+        }
+      } else if (roomData.image_url) {
+        await Room.insertRoomImage(roomId, roomData.image_url, client);
+      }
+      if (Array.isArray(roomData.amenities)) {
+        for (const amenity of roomData.amenities) {
+          await Room.insertRoomAmenityByName(roomId, amenity, client);
+        }
+      }
+      await client.query("COMMIT");
+      return {
+        message: "Room created successfully",
+        room_id: roomId,
+      };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Error in createRoom:", error);
+      throw error;
+    } finally {
+      client.release();
+    }
   },
-// funs check room available and get room details
+
   isRoomAvailable: async (roomId, checkIn, checkOut) => {
     const { rows } = await pool.query(
       `
@@ -392,36 +328,7 @@ const roomRepository = {
       `,
       [roomId]
     );
-
     return rows[0] || null;
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      const roomId = await Room.create(roomData, client);
-      if (Array.isArray(roomData.image_urls)) {
-        for (const url of roomData.image_urls) {
-          await Room.insertRoomImage(roomId, url, client);
-        }
-      } else if (roomData.image_url) {
-        await Room.insertRoomImage(roomId, roomData.image_url, client);
-      }
-      if (Array.isArray(roomData.amenities)) {
-        for (const amenity of roomData.amenities) {
-          await Room.insertRoomAmenityByName(roomId, amenity, client);
-        }
-      }
-      await client.query("COMMIT");
-      return {
-        message: "Room created successfully",
-        room_id: roomId,
-      };
-    } catch (error) {
-      await client.query("ROLLBACK");
-      console.error("Error in createRoom:", error);
-      throw error;
-    } finally {
-      client.release();
-    }
   },
 };
 

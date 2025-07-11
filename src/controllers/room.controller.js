@@ -6,7 +6,9 @@ const roomController = {
     try {
       const page = parseInt(req.query.page, 10) || 1;
       const perPage = parseInt(req.query.perPage, 10) || 10;
+
       const result = await roomService.getAllRooms(page, perPage);
+
       return res.status(200).json({
         status: "success",
         message: "Fetched data",
@@ -17,7 +19,6 @@ const roomController = {
       return response.sendError(res, 500, err.message);
     }
   },
-
   getRoomById: async (req, res, next) => {
     try {
       const room = await roomService.getRoomById(req.params.id);
@@ -105,7 +106,7 @@ const roomController = {
 
       const rooms = await roomService.getFilteredRooms(filters);
 
-      const hasDeals = rooms.some(room => room.deal !== null);
+      const hasDeals = rooms.some((room) => room.deal !== null);
 
       return response.success(res, { rooms, hasDeals }, "Filtered rooms");
     } catch (error) {
