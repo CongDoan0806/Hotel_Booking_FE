@@ -1,5 +1,5 @@
 const pool = require("../config/db");
-const { bookingRepo, getBookingInfoById } = require("../repositories/booking.repository");
+const { bookingRepo, getBookingInfoById, updateBookingStatusToConfirmed} = require("../repositories/booking.repository");
 
 const dayjs = require("dayjs");
 
@@ -59,38 +59,68 @@ exports.createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
   }
 };
 
-const getBookingDetails = async (booking_id) => {
-  const rows = await getBookingInfoById(booking_id);
-  if (rows.length === 0) throw new Error('Booking not found');
+const getBookingDetailsByUserId = async (user_id) => {
+  const rows = await getBookingInfoById(user_id); 
 
-  const checkInDate = new Date(rows[0].check_in_date);
-  const checkOutDate = new Date(rows[0].check_out_date);
-  const nights = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
+  if (rows.length === 0) throw new Error('No bookings found for this user');
 
-  const total_price = rows.reduce((sum, r) => {
-    return sum + Number(r.quantity) * Number(r.price_per_unit);
-  }, 0);
-  
-  return {
-    booking_id: rows[0].booking_id,
-    user_id: rows[0].user_id,
-    total_price: total_price,
-    check_in_date: rows[0].check_in_date,
-    check_out_date: rows[0].check_out_date,
-    nights,
-    room_quantity: rows.length, 
-    booking_details: rows.map(r => ({
+  const groupedBookings = {};
+
+  rows.forEach(r => {
+    const bookingId = r.booking_id;
+    const checkInDate = new Date(r.check_in_date);
+    const checkOutDate = new Date(r.check_out_date);
+    const nights = (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24);
+
+    if (!groupedBookings[bookingId]) {
+      groupedBookings[bookingId] = {
+        booking_id: r.booking_id,
+        user_id: r.user_id,
+        status: r.booking_status,
+        check_in_date: r.check_in_date,
+        check_out_date: r.check_out_date,
+        nights,
+        total_price: 0,
+        booking_details: []
+      };
+    }
+
+    const detailPrice = Number(r.quantity) * Number(r.price_per_unit);
+    groupedBookings[bookingId].total_price += detailPrice;
+
+    groupedBookings[bookingId].booking_details.push({
       room_id: r.room_id,
       service_name: r.service_name,
       quantity: r.quantity,
       price_per_unit: r.price_per_unit,
       note: r.note,
       room_type: r.room_type
-    }))
-  };
+    });
+  });
+
+  const result = Object.values(groupedBookings).map(b => ({
+    ...b,
+    total_price: Number(b.total_price.toFixed(2)),
+    room_quantity: b.booking_details.length
+  }));
+
+  return result;
 };
 
 
+const confirmBookingService = async (booking_id) => {
+  const result = await updateBookingStatusToConfirmed(booking_id);
+
+  if (result.affectedRows === 0) {
+    throw new Error('Booking not found');
+  }
+
+  return {
+    success: true,
+    message: 'Booking confirmed successfully',
+  };
+};
 module.exports = {
-  getBookingDetails,
+  getBookingDetailsByUserId,
+  confirmBookingService
 };

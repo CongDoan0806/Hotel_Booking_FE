@@ -1,5 +1,5 @@
 const roomRepository = require('../repositories/room.repository');
-const { bookingService, getBookingDetails } = require('../services/booking.service');
+const { bookingService, getBookingDetailsByUserId,confirmBookingService } = require('../services/booking.service');
 const { validateBookingInput } = require('../validations/booking.validate');
 const { success, sendError } = require('../utils/response');
 const validateParams = require('../middlewares/validateParams');
@@ -34,18 +34,32 @@ const createBooking = async (req, res) => {
   }
 };
 
-const getBookingDetailController = async (req, res) => {
+const getBookingDetailsByUserIdController = async (req, res) => {
   try {
-    const booking_id = parseInt(req.params.booking_id);
-    const data = await getBookingDetails(booking_id);
+    const user_id = parseInt(req.params.user_id, 10);
 
-    return success(res, data, "Get booking details successfully");
+    if (isNaN(user_id)) {
+      return sendError(res, 400, "Invalid user ID", ["user_id must be a number"]);
+    }
+
+    const data = await getBookingDetailsByUserId(user_id);
+
+    return success(res, data, "Get bookings for user successfully");
   } catch (err) {
-    return sendError(res, 404, "Booking not found", [err.message]);
+    return sendError(res, 404, "No bookings found for this user", [err.message]);
   }
 };
 
+const confirmBookingController = async (req, res) => {
+  try {
+    const result = await confirmBookingService(req.params.booking_id);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports = {
   createBooking,
-  getBookingDetailController,
+  getBookingDetailsByUserIdController,
+  confirmBookingController
 };

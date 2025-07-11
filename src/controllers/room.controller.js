@@ -31,8 +31,18 @@ const roomController = {
   createRoom: async (req, res, next) => {
     try {
       const roomData = { ...req.body };
-      if (req.file) {
-        roomData.image_url = "/uploads/" + req.file.filename;
+      if (Array.isArray(roomData.image_urls)) {
+        roomData.image_urls = roomData.image_urls.map((name) => {
+          if (name.startsWith("/uploads/rooms/")) return name;
+          if (name.startsWith("/uploads/"))
+            return name.replace("/uploads/", "/uploads/rooms/");
+          return "/uploads/rooms/" + name;
+        });
+      }
+      if (req.files && req.files.length > 0) {
+        roomData.image_urls = req.files.map(
+          (f) => "/uploads/rooms/" + f.filename
+        );
       }
       const newRoom = await roomService.createRoom(roomData);
       return response.success(res, newRoom, "Room created", 201);
@@ -44,8 +54,18 @@ const roomController = {
   updateRoom: async (req, res, next) => {
     try {
       const roomData = { ...req.body };
-      if (req.file) {
-        roomData.image_url = "/uploads/" + req.file.filename;
+      if (Array.isArray(roomData.image_urls)) {
+        roomData.image_urls = roomData.image_urls.map((name) => {
+          if (name.startsWith("/uploads/rooms/")) return name;
+          if (name.startsWith("/uploads/"))
+            return name.replace("/uploads/", "/uploads/rooms/");
+          return "/uploads/rooms/" + name;
+        });
+      }
+      if (req.files && req.files.length > 0) {
+        roomData.image_urls = req.files.map(
+          (f) => "/uploads/rooms/" + f.filename
+        );
       }
       const updated = await roomService.updateRoom(req.params.id, roomData);
       if (!updated) return response.sendError(res, 404, "Room not found");
@@ -80,10 +100,14 @@ const roomController = {
         people: req.query.people ? parseInt(req.query.people) : undefined,
         check_in_date: req.query.check_in_date || undefined,
         check_out_date: req.query.check_out_date || undefined,
+        amenities: req.query.amenities || undefined,
       };
 
       const rooms = await roomService.getFilteredRooms(filters);
-      return response.success(res, rooms, "Filtered rooms");
+
+      const hasDeals = rooms.some(room => room.deal !== null);
+
+      return response.success(res, { rooms, hasDeals }, "Filtered rooms");
     } catch (error) {
       return response.sendError(res, 500, error.message);
     }
