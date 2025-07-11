@@ -1,5 +1,5 @@
 const pool = require('../config/db')
-const { getBookingDetailQuery } = require('../models/booking.model');
+const { getBookingByUserId ,updateStatusById} = require('../models/booking.model');
 
 
 async function findConflictingBooking(roomId, checkIn, checkOut) {
@@ -44,8 +44,19 @@ const getDealDiscount = async (roomTypeId, inDate, outDate) => {
   return rows[0]?.discount_rate || 0;
 }
 
-const getBookingInfoById = async (booking_id) => {
-  return await getBookingDetailQuery(booking_id);
+const getBookingInfoById = async (user_id) => {
+  return await getBookingByUserId(user_id);
 };
 
-module.exports = { findConflictingBooking, createBooking, createBookingDetail,getDealDiscount, getBookingInfoById, };
+const updateBookingStatusToConfirmed = async (bookingId) => {
+  try {
+    const result = await updateStatusById(bookingId, 'confirmed');
+    return result;
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái booking:', error);
+    throw error;
+  }
+};
+
+
+module.exports = { findConflictingBooking, createBooking, createBookingDetail,getDealDiscount, getBookingInfoById,updateBookingStatusToConfirmed };

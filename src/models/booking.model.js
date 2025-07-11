@@ -19,35 +19,50 @@ class Booking {
   }
 }
 
-const getBookingDetailQuery = async (booking_id) => {
+const getBookingByUserId = async (user_id) => {
   const query = `
     SELECT
       b.booking_id,
       b.user_id,
-      bd.room_id,
       b.total_price,
+      b.status AS booking_status,
+      b.payment_status,
+      bd.booking_detail_id,
       bd.service_name,
       bd.quantity,
       bd.price_per_unit,
       bd.note,
       bd.check_in_date,
       bd.check_out_date,
+      r.room_id,
+      r.name AS room_name,
+      r.description AS room_description,
+      r.price AS room_price,
+      rt.room_type_id,
       rt.name AS room_type
     FROM bookings b
     JOIN booking_details bd ON b.booking_id = bd.booking_id
-    JOIN rooms r ON bd.room_id = r.room_id
-    JOIN room_types rt ON r.room_type_id = rt.room_type_id
-    WHERE b.booking_id = $1;
+    LEFT JOIN rooms r ON bd.room_id = r.room_id
+    LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    WHERE b.user_id = $1
+    ORDER BY b.booking_id DESC;
   `;
-  
 
-  const values = [booking_id];
-
+  const values = [user_id];
   const result = await pool.query(query, values);
-  return result.rows; 
+  return result.rows;
 };
+
+
+const updateStatusById = async (bookingId, status = 'confirmed') => {
+  const query = `UPDATE bookings SET status = $1 WHERE booking_id = $2`;
+  const result = await pool.query(query, [status, bookingId]);
+  return result;
+};
+
 module.exports = {
-  getBookingDetailQuery,
+  getBookingByUserId,
+  updateStatusById,
   Booking
 };
 

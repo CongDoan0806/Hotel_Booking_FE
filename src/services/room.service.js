@@ -1,15 +1,16 @@
 const roomRepository = require("../repositories/room.repository");
+const dealService = require("./deal.service");
 
 const roomService = {
-
-    async getRoomDetail(id) {
+  async getRoomDetail(id) {
     const room = await roomRepository.getRoomDetail(id);
     if (!room) throw new Error("ROOM_NOT_FOUND");
     return room;
   },
   getFilteredRooms: async (filters) => {
     const rooms = await roomRepository.getFilteredRooms(filters);
-    return rooms;
+    const activeDeals = await dealService.getActiveDeals();
+    return dealService.applyDealsToRooms(rooms, activeDeals);
   },
 
   findRoomById: async (id) => {
@@ -19,8 +20,8 @@ const roomService = {
   createRoom: async (roomData) => {
     return await roomRepository.createRoom(roomData);
   },
-  getAllRooms: async () => {
-    return await roomRepository.getAll();
+  getAllRooms: async (page, perPage) => {
+    return await roomRepository.getAll(page, perPage);
   },
 
   getRoomById: async (id) => {
