@@ -1,4 +1,6 @@
-const pool = require('../config/db');
+const pool = require('../config/db')
+const { getBookingDetailQuery } = require('../models/booking.model');
+
 
 async function findConflictingBooking(roomId, checkIn, checkOut) {
   const { rows } = await pool.query(
@@ -30,60 +32,20 @@ async function createBookingDetail(bookingId, detail, client) {
     [bookingId, roomId, pricePerUnit, checkIn, checkOut]
   );
 }
-
-async function getBookingDetail(bookingId) {
+const getDealDiscount = async (roomTypeId, inDate, outDate) => {
   const { rows } = await pool.query(
-    `
-    SELECT 
-      b.booking_id,
-      b.user_id,
-      b.total_price,
-      b.status,
-      b.payment_status,
-      bd.room_id,
-      bd.check_in_date,
-      bd.check_out_date,
-      bd.price_per_unit,
-      r.description AS room_description,
-      r.room_type_id,
-      r.price AS room_price
-    FROM bookings b
-    JOIN booking_details bd ON b.booking_id = bd.booking_id
-    JOIN rooms r ON bd.room_id = r.room_id
-    WHERE b.booking_id = $1
-    `,
-    [bookingId]
+    `SELECT discount_rate
+     FROM deals
+     WHERE room_type = $1
+       AND ($2, $3) OVERLAPS (start_date, end_date)
+     LIMIT 1`,
+    [roomTypeId, inDate, outDate]
   );
-
-  if (rows.length === 0) return null;
-
-  const base = {
-    booking_id: rows[0].booking_id,
-    user_id: rows[0].user_id,
-    total_price: rows[0].total_price,
-    status: rows[0].status,
-    payment_status: rows[0].payment_status,
-    created_at: rows[0].created_at,
-    details: [],
-  };
-
-  for (const row of rows) {
-    base.details.push({
-      room_id: row.room_id,
-      room_type_id: row.room_type_id,
-      price_per_unit: row.price_per_unit,
-      status:row.status,
-      check_in_date: row.check_in_date,
-      check_out_date: row.check_out_date,
-    });
-  }
-
-  return base;
+  return rows[0]?.discount_rate || 0;
 }
 
-module.exports = {
-  findConflictingBooking,
-  createBooking,
-  createBookingDetail,
-  getBookingDetail, // 👈 nhớ export
+const getBookingInfoById = async (booking_id) => {
+  return await getBookingDetailQuery(booking_id);
 };
+
+module.exports = { findConflictingBooking, createBooking, createBookingDetail,getDealDiscount, getBookingInfoById, };

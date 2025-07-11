@@ -1,10 +1,10 @@
 const roomRepository = require('../repositories/room.repository');
-const bookingRepo = require('../repositories/booking.repository');
-const bookingService = require('../services/booking.service');
+const {createBookingWithDetails, getBookingDetails} = require('../services/booking.service');
 const { validateBookingInput } = require('../validations/booking.validate');
 const { success, sendError } = require('../utils/response');
+const validateParams = require('../middlewares/validateParams');
 
-exports.createBooking = async (req, res) => {
+const createBooking = async (req, res) => {
   try {
     const { roomId, checkInDate, checkOutDate } = req.body;
     const userId = req.user?.user_id;
@@ -20,7 +20,7 @@ exports.createBooking = async (req, res) => {
       return sendError(res, 404, "Room not found");
     }
 
-    const booking = await bookingService.createBookingWithDetails(
+    const booking = await createBookingWithDetails(
       userId,
       room,
       checkInDate,
@@ -33,18 +33,19 @@ exports.createBooking = async (req, res) => {
     return sendError(res, 500, "Server error", [err.message]);
   }
 };
-exports.getBookingDetail = async (req, res) => {
+
+const getBookingDetailController = async (req, res) => {
   try {
-    const { id } = req.params;
-    const detail = await bookingRepo.getBookingDetail(id);
+    const booking_id = parseInt(req.params.booking_id);
+    const data = await getBookingDetails(booking_id);
 
-    if (!detail) {
-      return sendError(res, 404, "Booking not found");
-    }
-
-    return success(res, detail, "Booking detail fetched");
+    return success(res, data, "Get booking details successfully");
   } catch (err) {
-    console.error("Error fetching booking:", err);
-    return sendError(res, 500, "Server error", [err.message]);
+    return sendError(res, 404, "Booking not found", [err.message]);
   }
+};
+
+module.exports = {
+  createBooking,
+  getBookingDetailController,
 };

@@ -16,4 +16,6 @@ router.post("/", validateRoom, roomController.createRoom);
 router.put("/:id", validateRoomId, validateRoom, roomController.updateRoom);
 router.delete("/:id", validateRoomId, roomController.deleteRoom);
 
+
+
 module.exports = router;
