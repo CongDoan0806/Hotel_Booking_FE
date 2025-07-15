@@ -1,4 +1,5 @@
 require("dotenv").config();
+const jwt = require('jsonwebtoken');
 const PORT = process.env.PORT || 8000;
 
 const app = require("./src/app");

@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const roomController = require("../controllers/room.controller");
-router.get("/", roomController.getAllRooms);
-router.get("/filter", roomController.filterRooms);
-router.get("/:id", roomController.getRoomDetail);
+router.get("/rooms", roomController.getAllRooms);
+router.get('/rooms/filter', roomController.filterRooms);
+router.get("/rooms/:id/details", roomController.getRoomDetail);
 
 module.exports = router;

@@ -1,13 +1,16 @@
 const roomRepository = require('../repositories/room.repository');
-const { bookingService, getBookingDetailsByUserId,confirmBookingService } = require('../services/booking.service');
+const { getBookingDetailsByUserId,confirmBookingService, createBookingWithDetails, getBookingSummaryDetailService  } = require('../services/booking.service');
 const { validateBookingInput } = require('../validations/booking.validate');
 const { success, sendError } = require('../utils/response');
 const validateParams = require('../middlewares/validateParams');
 
+// Create booking
 const createBooking = async (req, res) => {
   try {
     const { roomId, checkInDate, checkOutDate } = req.body;
-    const userId = req.user?.user_id;
+   const userId = req.user?.user_id || req.user?.id;
+    // console.log('🔥 req.user =', userId);
+
 
     const errors = await validateBookingInput({ roomId, checkInDate, checkOutDate });
 
@@ -20,20 +23,29 @@ const createBooking = async (req, res) => {
       return sendError(res, 404, "Room not found");
     }
 
-    const booking = await bookingService.createBookingWithDetails(
+    const booking = await createBookingWithDetails(
       userId,
       room,
       checkInDate,
       checkOutDate
     );
 
-    return success(res, { booking_id: booking.booking_id }, "Booking created successfully", 201);
+   return success(
+  res,
+  {
+    booking_id: booking.booking_id,
+    user_id: userId // 👈 Thêm dòng này
+  },
+  "Booking created successfully",
+  201
+);
+
   } catch (err) {
     console.error("Booking error:", err);
     return sendError(res, 500, "Server error", [err.message]);
   }
 };
-
+// get booking detail
 const getBookingDetailsByUserIdController = async (req, res) => {
   try {
     const user_id = parseInt(req.params.user_id, 10);
@@ -49,7 +61,6 @@ const getBookingDetailsByUserIdController = async (req, res) => {
     return sendError(res, 404, "No bookings found for this user", [err.message]);
   }
 };
-
 const confirmBookingController = async (req, res) => {
   try {
     const result = await confirmBookingService(req.params.booking_id);
@@ -58,8 +69,21 @@ const confirmBookingController = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+const getBookingSummaryDetailController = async (req, res) => {
+  try {
+    const booking_detail_id = parseInt(req.params.booking_detail_id);
+    const data = await getBookingSummaryDetailService(booking_detail_id);
+    return success(res, data, "Get booking summary by detail_id successfully");
+  } catch (err) {
+    return sendError(res, 404, "Booking detail not found", [err.message]);
+  }
+};
+
 module.exports = {
+  createBookingWithDetails,
   createBooking,
   getBookingDetailsByUserIdController,
-  confirmBookingController
+  confirmBookingController,
+  getBookingSummaryDetailController
 };

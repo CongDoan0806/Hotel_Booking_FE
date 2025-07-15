@@ -1,7 +1,8 @@
 const pool = require('../config/db')
-const { getBookingByUserId ,updateStatusById } = require('../models/booking.model');
+const { getBookingByUserId ,updateStatusById} = require('../models/booking.model');
+const { getBookingSummaryByDetailId } = require('../models/booking.model');
 
-
+//  funcs create Booking
 async function findConflictingBooking(roomId, checkIn, checkOut) {
   const { rows } = await pool.query(
     `SELECT 1
@@ -32,7 +33,18 @@ async function createBookingDetail(bookingId, detail, client) {
     [bookingId, roomId, pricePerUnit, checkIn, checkOut]
   );
 }
-
+const getDealDiscount = async (roomTypeId, inDate, outDate) => {
+  const { rows } = await pool.query(
+    `SELECT discount_rate
+     FROM deals
+     WHERE room_type = $1
+       AND ($2, $3) OVERLAPS (start_date, end_date)
+     LIMIT 1`,
+    [roomTypeId, inDate, outDate]
+  );
+  return rows[0]?.discount_rate || 0;
+}
+// func get booking
 const getBookingInfoById = async (user_id) => {
   return await getBookingByUserId(user_id);
 };
@@ -47,5 +59,8 @@ const updateBookingStatusToConfirmed = async (bookingId) => {
   }
 };
 
+const getBookingSummaryById = async (booking_detail_id) => {
+  return await getBookingSummaryByDetailId(booking_detail_id);
+};
 
-module.exports = { findConflictingBooking, createBooking, createBookingDetail, getBookingInfoById,updateBookingStatusToConfirmed };
+module.exports = { findConflictingBooking, createBooking, createBookingDetail,getDealDiscount, getBookingInfoById,updateBookingStatusToConfirmed, getBookingSummaryById };
