@@ -59,8 +59,55 @@ const getCheckoutGuestsModel = async () => {
   return result.rows;
 };
 
+const getAdminDashboardStatusModel = async () => {
+  const query = `
+     SELECT
+      (SELECT COUNT(*) 
+      FROM booking_details 
+      WHERE check_in_date = CURRENT_DATE) AS check_in_today,
+
+      (SELECT COUNT(*) 
+      FROM booking_details 
+      WHERE check_out_date = CURRENT_DATE) AS check_out_today,
+
+      (SELECT COUNT(*) 
+       FROM rooms 
+       WHERE status = 'available') AS available_room_count,
+
+      (SELECT COUNT(*) 
+       FROM rooms 
+       WHERE status = 'occupied') AS occupied_room_count,
+
+       (SELECT COUNT(*) 
+       FROM rooms 
+       WHERE status = 'booked') AS booked_room_count;
+    `
+  const result = await pool.query(query);
+  return result.rows[0];
+  }
+
+  const getAdminDashboardDealModel = async () => {
+    const query = `
+    SELECT 
+        rt.name AS room_type_name,
+        rt.default_price,
+        COUNT(DISTINCT d.deal_id) AS total_deals,
+        COUNT(DISTINCT r.room_id) AS total_rooms,
+        SUM(CASE WHEN r.status IN ('booked', 'occupied') THEN 1 ELSE 0 END) AS used_rooms
+      FROM room_types rt
+      LEFT JOIN rooms r ON rt.room_type_id = r.room_type_id
+      LEFT JOIN deals d ON rt.room_type_id = d.room_type
+      GROUP BY rt.room_type_id, rt.name, rt.default_price
+      ORDER BY rt.name;
+      `;
+    const result = await pool.query(query);
+    return result.rows; 
+  }
+
 module.exports = {
     getUserListModel,
     getCheckinGuestsModel,
-    getCheckoutGuestsModel
+    getCheckoutGuestsModel,
+    getAdminDashboardStatusModel,
+    getAdminDashboardDealModel
 };

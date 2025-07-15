@@ -1,4 +1,4 @@
-const { getUserlistService, getCheckinGuestsService, getCheckoutGuestsService } = require('../services/admin.service');
+const { getUserlistService, getCheckinGuestsService, getCheckoutGuestsService,getAdminDashboardStatusService, getAdminDashboardDealService } = require('../services/admin.service');
 const { success, sendError } = require('../utils/response');
 
 const getUserListController = async (req, res) => {
@@ -18,40 +18,48 @@ const getUserListController = async (req, res) => {
 const getCheckinGuestsController = async (req, res) => {
   try {
     const guests = await getCheckinGuestsService();
-    res.status(200).json({
-      success: true,
-      message: 'Danh sách khách đang check-in',
-      data: guests
-    });
+    return success(res, guests, "Get check-in guests successfully");
+
   } catch (error) {
-    console.error('Lỗi check-in:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi server khi lấy danh sách khách check-in'
-    });
+    console.error('Error fetching check-in guests:', error);
+    return sendError(res, 500, "Error while getting check-in guests");
   }
 };
 
-// ✅ Controller: trả danh sách khách đã check-out
 const getCheckoutGuestsController = async (req, res) => {
   try {
     const guests = await getCheckoutGuestsService();
-    res.status(200).json({
-      success: true,
-      message: 'Danh sách khách đã check-out',
-      data: guests
-    });
+    return success(res, guests, "Get checkout guests successfully");
   } catch (error) {
-    console.error('Lỗi check-out:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi server khi lấy danh sách khách check-out'
-    });
+    console.error('Error fetching checkout guests:', error);
+    return sendError(res, 500, "Error while getting checkout guests");
   }
+};
+
+const getAdminDashboardStatusController = async (req, res) => {
+  try {
+    const status = await getAdminDashboardStatusService();
+    return success(res, status, "Get admin dashboard status successfully");
+  } catch (err) {
+    console.error('Error fetching admin dashboard status:', err);
+    return sendError(res, 500, "Error while getting admin dashboard status");
+  }
+};
+
+const getAdminDashboardDealController = async (req, res) => {
+  try { 
+    const deals = await getAdminDashboardDealService();
+    return success(res, deals, "Get admin dashboard deals successfully");
+  } catch (err) {
+    console.error('Error fetching admin dashboard deals:', err);
+    return sendError(res, 500, "Error while getting admin dashboard deals");
+  } 
 };
 
 module.exports = {
   getUserListController,
   getCheckinGuestsController,
-  getCheckoutGuestsController
+  getCheckoutGuestsController,
+  getAdminDashboardStatusController,
+  getAdminDashboardDealController
 };

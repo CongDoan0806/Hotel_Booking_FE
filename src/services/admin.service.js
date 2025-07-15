@@ -1,5 +1,5 @@
 const { getUserListModel } = require('../models/admin.model');
-const { getCheckinGuestsRepo, getCheckoutGuestsRepo } = require('../repositories/admin.repository');
+const { getCheckinGuestsRepo, getCheckoutGuestsRepo, getAdminDashboardStatusRepo, getAdminDashboardDealRepo } = require('../repositories/admin.repository');
 
 const groupGuestsByUser = (rawData) => {
   const groupedData = {};
@@ -126,8 +126,17 @@ const getCheckoutGuestsService = async (page = 1, perPage = 10) => {
   };
 };
 
+const getAdminDashboardStatusService = async () => {
+  return await getAdminDashboardStatusRepo();  
+}
+
+const getAdminDashboardDealService = async () => {
+  return await getAdminDashboardDealRepo(); 
+}
 module.exports = {
   getUserlistService,
   getCheckinGuestsService,
-  getCheckoutGuestsService
+  getCheckoutGuestsService,
+  getAdminDashboardStatusService,
+  getAdminDashboardDealService
 };
