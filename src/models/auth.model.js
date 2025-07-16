@@ -23,11 +23,21 @@ const updateRefreshToken = (userId, refreshToken) =>
 const findUserByRefreshToken = (refreshToken) =>
   db.query(`SELECT * FROM users WHERE refresh_token = $1`, [refreshToken]);
 
+ const getUserById = async (userId) => {
+  const result = await db.query('SELECT * FROM users WHERE user_id = $1', [userId]);
+  return result.rows[0];
+};
+ const requestEmailChange = async (userId, newEmail) => {
+  await db.query('UPDATE users SET email = $1 WHERE user_id = $2', [newEmail, userId]);
+};
+
 module.exports = {
     findByEmail,
     createUser,
     updateRefreshToken,
     findUserByRefreshToken,
     updatePassword,
+    getUserById,
+    requestEmailChange,
 };
 

@@ -12,6 +12,7 @@ const bookingRoutes = require("./routes/booking.routes");
 const floorRoutes = require("./routes/floor.routes");
 const amenityRoutes = require("./routes/amenity.routes");
 const userRoutes = require("./routes/user.routes");
+const paymentRoutes = require("./routes/payment.routes");
 // Serve ảnh trong public/uploads qua đường dẫn /uploads
 app.use(
   "/uploads/rooms",
@@ -30,4 +31,6 @@ app.use("/api", bookingRoutes);
 app.use("/api", floorRoutes);
 app.use("/api", amenityRoutes);
 app.use("/api", userRoutes);
+app.use("/api", paymentRoutes); 
+
 module.exports = app;

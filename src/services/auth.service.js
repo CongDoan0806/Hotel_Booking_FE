@@ -1,33 +1,39 @@
-require('dotenv').config();
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const {findByEmail, findById, updateRefreshToken, updatePassword, createUser} = require('../models/auth.model');
-
-console.log('JWT_SECRET:', process.env.JWT_SECRET);
+require("dotenv").config();
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const { connectRedis } = require("../utils/redis");
+const { sendOTPEmail } = require("../utils/emailService");
+const UserRepo = require("../repositories/user.repository");
+const {
+  findByEmail,
+  findById,
+  updateRefreshToken,
+  updatePassword,
+  createUser,
+} = require("../models/auth.model");
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 const generateAccessToken = (user) => {
   return jwt.sign(
     { id: user.user_id, role: user.role },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: '15m' }
+    { expiresIn: "15m" }
   );
 };
 
 const generateRefreshToken = (user) => {
-  return jwt.sign(
-    { id: user.user_id },
-    process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: '7d' }
-  );
+  return jwt.sign({ id: user.user_id }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
 };
 
 const login = async (email, password) => {
   const result = await findByEmail(email);
   const user = result.rows[0];
 
-  if (!user) throw new Error('Sai email hoặc mật khẩu');
+  if (!user) throw new Error("Sai email hoặc mật khẩu");
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error('Sai email hoặc mật khẩu');
+  if (!isMatch) throw new Error("Sai email hoặc mật khẩu");
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
@@ -64,43 +70,43 @@ const register = async ({ name, email, password, role }) => {
 };
 
 const refreshAccessToken = async (refreshToken) => {
-  if (!refreshToken) throw new Error('No refresh token');
+  if (!refreshToken) throw new Error("No refresh token");
 
   const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
   const result = await findById(payload.user_id);
   const user = result.rows[0];
 
   if (!user || user.refresh_token !== refreshToken) {
-    throw new Error('Refresh token không hợp lệ');
+    throw new Error("Refresh token không hợp lệ");
   }
 
   return generateAccessToken(user);
 };
 
 const resetPassword = async (email, password) => {
-  if (!email || !email.includes('@')) {
-    throw new Error('Email không hợp lệ');
+  if (!email || !email.includes("@")) {
+    throw new Error("Email không hợp lệ");
   }
 
   if (!password || password.length < 6) {
-    throw new Error('Mật khẩu phải có ít nhất 6 ký tự');
+    throw new Error("Mật khẩu phải có ít nhất 6 ký tự");
   }
 
   const result = await findByEmail(email);
   const user = result.rows[0];
   if (!user) {
-    throw new Error('Email không tồn tại');
+    throw new Error("Email không tồn tại");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
   await updatePassword(user.user_id, hashedPassword);
 
-  return { message: 'Đặt lại mật khẩu thành công' , password};
+  return { message: "Đặt lại mật khẩu thành công", password };
 };
 
 module.exports = {
   login,
   refreshAccessToken,
   resetPassword,
-  register
+  register,
 };

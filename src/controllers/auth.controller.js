@@ -1,7 +1,7 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const {findByEmail,createUser,updateRefreshToken } = require('../models/auth.model')
-const { login, resetPassword, register } = require('../services/auth.service')
+const { login, resetPassword, register,requestCredentialChange,confirmCredentialChange } = require('../services/auth.service')
 const {success, sendError} = require('../utils/response')
 
 exports.login = async (req, res) => {
