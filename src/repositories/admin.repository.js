@@ -1,4 +1,4 @@
-const {getUserListModel,getCheckinGuestsModel, getCheckoutGuestsModel, getAdminDashboardStatusModel, getAdminDashboardDealModel} = require('../models/admin.model');
+const {getUserListModel,getCheckinGuestsModel, getCheckoutGuestsModel, getAdminDashboardStatusModel, getAdminDashboardDealModel, getFeedbackModel, getMonthlyOccupancyStatsModel, getTotalRoomsModel} = require('../models/admin.model');
 
 const getUserListRepo = async () => {
     return await getUserListModel();
@@ -20,10 +20,25 @@ const getAdminDashboardDealRepo = async () => {
     return await getAdminDashboardDealModel(); 
 }
 
+const getFeedbackRepo = async () => {
+    return await getFeedbackModel();
+}
+
+const getMonthlyOccupancyStatsRepo = async (year) => {
+  return await getMonthlyOccupancyStatsModel(year);
+}
+
+const getTotalRoomsRepo = async () => {
+  return await getTotalRoomsModel();
+};
+
 module.exports = {
     getUserListRepo,
     getCheckinGuestsRepo,
     getCheckoutGuestsRepo,
     getAdminDashboardStatusRepo,
-    getAdminDashboardDealRepo
+    getAdminDashboardDealRepo,
+    getFeedbackRepo,
+    getMonthlyOccupancyStatsRepo,
+    getTotalRoomsRepo
 }
