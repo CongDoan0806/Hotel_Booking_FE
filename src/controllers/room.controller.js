@@ -98,10 +98,20 @@ const roomController = {
         room_type: req.query.room_type
           ? parseInt(req.query.room_type)
           : undefined,
-        people: req.query.people ? parseInt(req.query.people) : undefined,
+        people: req.query.people
+          ? parseInt(req.query.people)
+          : undefined,
         check_in_date: req.query.check_in_date || undefined,
         check_out_date: req.query.check_out_date || undefined,
         amenities: req.query.amenities || undefined,
+        has_deal: req.query.has_deal || undefined,
+        status: req.query.status || undefined, // new
+        room_level: req.query.room_level
+          ? parseInt(req.query.room_level)
+          : undefined, // new
+        floor: req.query.floor
+          ? parseInt(req.query.floor)
+          : undefined, // new
       };
 
       const rooms = await roomService.getFilteredRooms(filters);
