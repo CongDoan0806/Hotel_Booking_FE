@@ -168,6 +168,20 @@ const roomRepository = {
       )`;
       values.push(amenityFilters, amenityFilters.length);
     }
+    if (filters.status) {
+      values.push(filters.status);
+      query += ` AND r.status = $${values.length}`;
+    }
+
+    if (filters.room_level) {
+      values.push(filters.room_level);
+      query += ` AND r.room_level_id = $${values.length}`;
+    }
+
+    if (filters.floor) {
+      values.push(filters.floor);
+      query += ` AND r.floor_id = $${values.length}`;
+    }
 
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
@@ -225,7 +239,9 @@ const roomRepository = {
     }
 
     const roomsWithData = rooms.map((room) => {
-      const deal = dealsMap[room.room_type_id]
+      const hasDeal = dealsMap.hasOwnProperty(room.room_type_id);
+
+      const deal = hasDeal
         ? {
             discount_rate: dealsMap[room.room_type_id],
             final_price: room.price * (1 - dealsMap[room.room_type_id]),
@@ -249,8 +265,17 @@ const roomRepository = {
       };
     });
 
-    return roomsWithData;
+    let filteredRooms = roomsWithData;
+
+    if (filters.has_deal === 'true') {
+      filteredRooms = roomsWithData.filter((room) => room.deal !== null);
+    } else if (filters.has_deal === 'false') {
+      filteredRooms = roomsWithData.filter((room) => room.deal === null);
+    }
+
+    return filteredRooms;
   },
+
 
   findRoomById: async (id) => {
     return await Room.findById(id);

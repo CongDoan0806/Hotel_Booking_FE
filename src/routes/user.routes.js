@@ -4,8 +4,8 @@ const authenticate = require('../middlewares/auth');
 
 const router = express.Router();
 
-router.get("/users/:id",authenticate, userController.getUser);
+router.get("/users/:id", userController.getUser);
 
-router.put("/users/:id",authenticate, userController.updateUser);
+router.put("/users/:id", userController.updateUser);
 
 module.exports = router;
