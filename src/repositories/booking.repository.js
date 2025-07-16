@@ -1,5 +1,5 @@
 const pool = require('../config/db')
-const { getBookingByUserId ,updateStatusById} = require('../models/booking.model');
+const { getBookingByUserId ,updateStatusById,getBookingSummaryByDetailId} = require('../models/booking.model');
 
 //  funcs create Booking
 async function findConflictingBooking(roomId, checkIn, checkOut) {
@@ -60,10 +60,13 @@ const updateBookingStatusToConfirmed = async (bookingId) => {
   }
 };
 
+const getBookingSummaryById = async (booking_detail_id) => {
+  return await getBookingSummaryByDetailId(booking_detail_id);
+};
 const updatePaymentStatusById = async (bookingId, paymentStatus = 'paid') => {
   const query = `UPDATE bookings SET payment_status = $1 WHERE booking_id = $2`;
   const result = await pool.query(query, [paymentStatus, bookingId]);
   return result.rowCount > 0;
 };
 
-module.exports = { findConflictingBooking, createBooking, createBookingDetail,getDealDiscount, getBookingInfoById,updateBookingStatusToConfirmed,findById,updatePaymentStatusById};
+module.exports = { findConflictingBooking, createBooking, createBookingDetail,getDealDiscount, getBookingInfoById,updateBookingStatusToConfirmed,findById,getBookingSummaryById,updatePaymentStatusById};

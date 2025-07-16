@@ -103,74 +103,10 @@ const resetPassword = async (email, password) => {
 
   return { message: "Đặt lại mật khẩu thành công", password };
 };
-// functions for change password and email
-
-const generateOTP = () =>
-  Math.floor(100000 + Math.random() * 900000).toString();
-
-const requestCredentialChange = async (
-  userId,
-  currentPassword,
-  newEmail,
-  newPassword
-) => {
-  const user = await UserRepo.getUserById(userId);
-
-  const isMatch = await bcrypt.compare(currentPassword, user.password);
-  if (!isMatch) throw new Error("Incorrect current password");
-
-  if (!newEmail && !newPassword) {
-    throw new Error("Nothing to change");
-  }
-
-  if (!newEmail) {
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await UserRepo.updateEmailAndPassword(userId, null, hashed);
-    return;
-  }
-
-  const otp = generateOTP();
-  const ttl = 10 * 60; // 10 phút
-  const redis = await connectRedis();
-
-  if (!redis) {
-    throw new Error("Redis connection failed");
-  }
-
-  await redis.set(`otp:${userId}`, otp, { EX: ttl });
-  await redis.set(
-    `otp_data:${userId}`,
-    JSON.stringify({
-      newEmail,
-      newPassword: newPassword ? await bcrypt.hash(newPassword, 10) : null,
-    }),
-    { EX: ttl }
-  );
-
-  await sendOTPEmail(newEmail, otp);
-};
-
-
-const confirmCredentialChange = async (userId, otpInput) => {
-  const redis = await connectRedis();
-  const savedOtp = await redis.get(`otp:${userId}`);
-  const rawData = await redis.get(`otp_data:${userId}`);
-
-  if (!savedOtp || savedOtp !== otpInput)
-    throw new Error("Invalid or expired OTP");
-  const { newEmail, newPassword } = JSON.parse(rawData);
-
-  await UserRepo.updateEmailAndPassword(userId, newEmail, newPassword);
-
-  await redis.del(`otp:${userId}`);
-  await redis.del(`otp_data:${userId}`);
-};
 
 module.exports = {
   login,
   refreshAccessToken,
   resetPassword,
   register,
-  requestCredentialChange,
-  confirmCredentialChange,
 };

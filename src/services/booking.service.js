@@ -6,6 +6,7 @@ const {
   getBookingInfoById,
   getDealDiscount,
   updateBookingStatusToConfirmed,
+  getBookingSummaryById
 } = require("../repositories/booking.repository");
 
 const dayjs = require("dayjs");
@@ -116,8 +117,16 @@ const confirmBookingService = async (booking_id) => {
     message: "Booking confirmed successfully",
   };
 };
+
+const getBookingSummaryDetailService = async (booking_detail_id) => {
+  const data = await getBookingSummaryById(booking_detail_id);
+  if (!data) throw new Error('Booking detail not found');
+  return data;
+};
+
 module.exports = {
   createBookingWithDetails,
   getBookingDetailsByUserId,
   confirmBookingService,
+  getBookingSummaryDetailService
 };

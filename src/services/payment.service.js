@@ -4,7 +4,7 @@ const { updateStatusById } = require("../models/booking.model");
 // function to handle successful payment
 
 const handleSuccess = async ({ booking_id, method, amount }) => {
-  const booking = await bookingRepo.findById(booking_id); // ✅ truyền số nguyên
+  const booking = await bookingRepo.findById(booking_id); 
   if (!booking) {
     throw new Error('Booking not found');
   }
