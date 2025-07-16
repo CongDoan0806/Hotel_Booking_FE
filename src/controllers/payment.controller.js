@@ -1,6 +1,6 @@
 const paymentService = require('../services/payment.service');
 const { success, sendError } = require('../utils/response');
-
+// function to handle payment success
 exports.handlePaymentSuccess = async (req, res) => {
   try {
     const { booking_id, method, amount } = req.body;
