@@ -1,4 +1,3 @@
-const pool = require('../config/db');
 const Payment = require('../models/payment.model');
 
 const createPayment = async (paymentData) => {
