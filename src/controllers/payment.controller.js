@@ -1,11 +1,19 @@
 const paymentService = require("../services/payment.service");
 const { success, sendError } = require("../utils/response");
+
 exports.handlePaymentSuccess = async (req, res) => {
   try {
     const { booking_id, method, amount, card_name, card_number, exp_date } = req.body;
 
     if (!booking_id || !amount || !method || !card_name || !card_number || !exp_date) {
       return sendError(res, 400, "Missing required fields");
+    }
+    let formattedExpDate = exp_date;
+    if (/^(0[1-9]|1[0-2])\/\d{2}$/.test(exp_date)) {
+      const [month, year] = exp_date.split('/');
+      formattedExpDate = new Date(`20${year}-${month}-01`);
+    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(exp_date)) {
+      return sendError(res, 400, "Invalid expiration date format");
     }
     const result = await paymentService.handleSuccess({
       booking_id,
