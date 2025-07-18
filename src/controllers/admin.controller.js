@@ -4,7 +4,8 @@ const { getUserlistService,
   getAdminDashboardStatusService, 
   getAdminDashboardDealService, 
   getFeedbackService,
-  getOccupancyStatsService } = require('../services/admin.service');
+  getOccupancyStatsService,
+  getHotelFeedbackService} = require('../services/admin.service');
 const { success, sendError } = require('../utils/response');
 
 const getUserListController = async (req, res) => {
@@ -86,6 +87,15 @@ const getOccupancyStatsController = async (req, res) => {
   }
 }
 
+const getHotelFeedbackController = async (req, res) => {
+  try {
+    const feedbacks = await getHotelFeedbackService();
+    return success(res, feedbacks, "Get hotel feedbacks successfully");
+  } catch (err) {
+    console.error('Error fetching hotel feedbacks:', err);
+    return sendError(res, 500, "Error while getting hotel feedbacks");
+  }
+};
 module.exports = {
   getUserListController,
   getCheckinGuestsController,
@@ -93,5 +103,6 @@ module.exports = {
   getAdminDashboardStatusController,
   getAdminDashboardDealController,
   getFeedbackController,
-  getOccupancyStatsController
+  getOccupancyStatsController,
+  getHotelFeedbackController
 };

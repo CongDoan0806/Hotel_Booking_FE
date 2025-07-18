@@ -121,6 +121,20 @@ const getAdminDashboardStatusModel = async () => {
     return result.rows;
   }
 
+  const getHotelFeedbackModel = async () => {
+    const query = `
+      SELECT 
+          u.name AS customer_name,
+          hf.comment,
+          hf.submitted_at
+      FROM hotel_feedbacks hf
+      JOIN users u ON hf.user_id = u.user_id
+      ORDER BY hf.submitted_at DESC;
+    `
+    const result = await pool.query(query);
+    return result.rows;
+  }
+
   const getMonthlyOccupancyStatsModel = async (year) => {
   const query = `
      SELECT
@@ -145,7 +159,7 @@ const getTotalRoomsModel = async () => {
 };
 
 
-module.exports = {
+    module.exports = {
     getUserListModel,
     getCheckinGuestsModel,
     getCheckoutGuestsModel,
@@ -153,5 +167,6 @@ module.exports = {
     getAdminDashboardDealModel,
     getFeedbackModel,
     getMonthlyOccupancyStatsModel,
-    getTotalRoomsModel
+    getTotalRoomsModel,
+    getHotelFeedbackModel
 };
