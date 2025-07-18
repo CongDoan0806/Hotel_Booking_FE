@@ -1,7 +1,7 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const {findByEmail, findById, updateRefreshToken, updatePassword, createUser} = require('../models/auth.model');
+const {findByEmail, findById, updateRefreshToken, updatePassword, createUser, findUserByRefreshToken} = require('../models/auth.model');
 
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
 const generateAccessToken = (user) => {
@@ -98,9 +98,27 @@ const resetPassword = async (email, password) => {
   return { message: 'Đặt lại mật khẩu thành công' , password};
 };
 
+const logout = async (refreshToken) => {
+  if (!refreshToken) {
+    throw new Error('No refresh token provided');
+  }
+
+  const result = await findUserByRefreshToken(refreshToken);
+  const user = result.rows[0];
+
+  if (!user) {
+    throw new Error('Token không hợp lệ hoặc đã hết hạn');
+  }
+
+  await updateRefreshToken(user.user_id, null);
+
+  return { message: 'Đăng xuất thành công' };
+};
+
 module.exports = {
   login,
   refreshAccessToken,
   resetPassword,
-  register
+  register,
+  logout
 };

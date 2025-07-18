@@ -121,3 +121,37 @@ VALUES
   ('Parking', 'car', 'Free on-site parking'),
   ('Restaurant', 'utensils', 'On-site dining options'),
   ('Tea/Coffee Machine', 'coffee', 'Brew your favorite beverages');
+
+INSERT INTO amenities (amenity_id,name, icon, description)
+VALUES
+  (1,'Free Wi-Fi', '/uploads/amenities/wifi.png', 'Complimentary Wi-Fi access throughout the property.'),
+  (2,'Breakfast Included', '/uploads/amenities/tea.png', 'Complimentary breakfast served daily.'),
+  (3,'Pets are Welcome', '/uploads/amenities/pet.png', 'Complimentary breakfast served daily.'),
+  (4,'Free Parking', '/uploads/amenities/parking.png', 'Free on-site parking available.'),
+  (5,'free laundry service', '/uploads/amenities/clothes-crew-neck.png', 'Relax with our spa services.'),
+  (6,'Free Entrance Exercise Centre', '/uploads/amenities/sport.png', 'Air conditioning in all rooms.');
+
+  INSERT INTO room_amenities (room_id, amenity_id)
+VALUES
+  (1, 1), (1, 2), (1, 3), (1, 4),
+  (2, 1), (2, 2), (2, 3), (2, 5),
+  (3, 1), (3, 4), (3, 5), (3, 6),
+  (4, 2), (4, 3), (4, 5),
+  (5, 1), (5, 2), (5, 3), (5, 6),
+  (6, 1), (6, 2), (6, 4),
+  (7, 2), (7, 3), (7, 5), (7, 6),
+  (8, 1), (8, 3), (8, 4),
+  (9, 1), (9, 2), (9, 5),
+  (10, 3), (10, 4), (10, 6),
+  (11, 1), (11, 2), (11, 3),
+  (12, 1), (12, 4), (12, 5),
+  (13, 2), (13, 3), (13, 6),
+  (14, 1), (14, 5), (14, 6),
+  (15, 2), (15, 4), (15, 5),
+  (16, 1), (16, 3), (16, 6),
+  (17, 2), (17, 4), (17, 5),
+  (18, 1), (18, 3), (18, 6),
+  (19, 1), (19, 2), (19, 4),
+  (20, 3), (20, 4), (20, 5),
+  (21, 1), (21, 2), (21, 6),
+  (22, 2), (22, 3), (22, 5);

@@ -1,7 +1,7 @@
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const {findByEmail,createUser,updateRefreshToken } = require('../models/auth.model')
-const { login, resetPassword, register } = require('../services/auth.service')
+const { login, resetPassword, register, logout } = require('../services/auth.service')
 const {success, sendError} = require('../utils/response')
 
 exports.login = async (req, res) => {
@@ -45,5 +45,17 @@ exports.resetPassword = async (req, res) => {
     return success(res, result, 'Đặt lại mật khẩu thành công');
   } catch (error) {
     return sendError(res, 400, error.message || 'Lỗi đặt lại mật khẩu');
+  }
+};
+
+exports.logout = async (req, res) => {
+  const refreshToken = req.body.refreshToken;
+
+  try {
+    const result = await logout(refreshToken);
+    return success(res, result, 'Đăng xuất thành công');
+  } catch (error) {
+    console.error("Logout error:", error.message);
+    return sendError(res, 400, error.message || 'Logout error');
   }
 };
