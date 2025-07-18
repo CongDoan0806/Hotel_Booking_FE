@@ -6,7 +6,6 @@ const { sendOTPEmail } = require("../utils/emailService");
 const UserRepo = require("../repositories/user.repository");
 const {
   findByEmail,
-  findById,
   updateRefreshToken,
   updatePassword,
   createUser,
@@ -104,9 +103,119 @@ const resetPassword = async (email, password) => {
   return { message: "Đặt lại mật khẩu thành công", password };
 };
 
+const generateOtp = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+const requestEmailChange = async (userId, newEmail) => {
+  try {
+    const redis = connectRedis();
+    const user = await UserRepo.getUserById(userId);
+    console.log(userId);
+    if (!userId) {
+      return { success: false, status: 404, message: "User not found" };
+    }
+
+    const existing = await UserRepo.getUserByEmail(newEmail);
+    if (existing) {
+      return { success: false, status: 409, message: "Email already in use" };
+    }
+    const otp = generateOtp();
+    await redis.set(`otp:${userId}`, otp, { ex: 300 });
+    console.log("Generated OTP:", otp);
+    console.log("Redis key set:", `otp:${userId}`);
+
+    await redis.set(`otp_email:${userId}`, newEmail, { ex: 300 });
+
+    await sendOTPEmail(newEmail, otp);
+
+    return { success: true, message: "OTP sent to new email" };
+  } catch (err) {
+    console.error(err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+const verifyEmailChange = async (userId, otpInput) => {
+  try {
+    const redis = connectRedis(); 
+    const otpStored = await redis.get(`otp:${userId}`);
+    console.log("Stored OTP (raw):", JSON.stringify(otpStored));
+    console.log("Input OTP (raw):", JSON.stringify(otpInput));
+
+    if (!otpStored) {
+      return { success: false, status: 410, message: "OTP expired or invalid" };
+    }
+
+    if (otpStored !== otpInput) {
+      return { success: false, status: 400, message: "OTP does not match" };
+    }
+
+    const newEmail = await redis.get(`otp_email:${userId}`); 
+    if (!newEmail) {
+      return { success: false, status: 400, message: "New email not found" };
+    }
+    console.log("New Email:", newEmail);
+    await UserRepo.updateEmail(userId, newEmail);
+    await redis.del(`otp:${userId}`);
+    await redis.del(`otp_email:${userId}`);
+
+    return { success: true, message: "Email updated successfully" };
+  } catch (err) {
+    console.error(err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
+
+
+const hashPassword = async (password) => {
+  return await bcrypt.hash(password, 10);
+};
+
+const comparePassword = async (currentPassword, hashedPassword) => {
+  return await bcrypt.compare(currentPassword, hashedPassword);
+};
+
+const changePassword = async (
+  userId,
+  currentPassword,
+  newPassword,
+  confirmPassword
+) => {
+  try {
+    const user = await UserRepo.getUserById(userId);
+    console.log("User ID:", userId);
+    if (!userId) {
+      return { success: false, status: 404, message: "User not found" };
+    }
+
+    const isMatch = await comparePassword(currentPassword, user.password);
+    if (!isMatch) {
+      return {
+        success: false,
+        status: 401,
+        message: "Current password is incorrect",
+      };
+    }
+
+    if (newPassword !== confirmPassword) {
+      return { success: false, status: 400, message: "Passwords do not match" };
+    }
+
+    const hashed = await hashPassword(newPassword);
+    await UserRepo.updateUserPassword(userId, hashed);
+
+    return { success: true, message: "Password changed successfully" };
+  } catch (err) {
+    console.error('Error changing password:', err);
+    return { success: false, status: 500, message: "Internal server error" };
+  }
+};
 module.exports = {
   login,
   refreshAccessToken,
   resetPassword,
   register,
+  requestEmailChange,
+  verifyEmailChange,
+  changePassword,
 };
