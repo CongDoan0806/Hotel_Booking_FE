@@ -8,7 +8,15 @@ const {
 const { authenticateToken } = require("../middlewares/auth");
 const { adminOnly } = require("../middlewares/role");
 const upload = require("../utils/upload");
-const { getUserListController } = require("../controllers/admin.controller");
+const { getUserListController,
+  getCheckinGuestsController,
+  getCheckoutGuestsController,
+  getAdminDashboardStatusController,
+  getAdminDashboardDealController,
+  getFeedbackController,
+  getOccupancyStatsController,
+  getHotelFeedbackController
+} = require("../controllers/admin.controller");
 router.use(authenticateToken, adminOnly);
 
 router.get("/admin/rooms/", roomController.getAllRooms);
@@ -30,6 +38,18 @@ router.delete("/admin/rooms/:id", validateRoomId, roomController.deleteRoom);
 
 router.get("/admin/user-list", getUserListController);
 
+router.get("/admin/checkin-guests", getCheckinGuestsController);
 
+router.get("/admin/checkout-guests", getCheckoutGuestsController);
+
+router.get("/admin/dashboard-status", getAdminDashboardStatusController);
+
+router.get("/admin/dashboard-deals", getAdminDashboardDealController);
+
+router.get("/admin/dashboard-feedback", getFeedbackController);
+
+router.get("/admin/dashboard-hotel-feedback", getHotelFeedbackController);
+
+router.get("/admin/dashboard-occupancy/:year", getOccupancyStatsController);
 
 module.exports = router;

@@ -2,6 +2,7 @@ require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const {findByEmail,createUser,updateRefreshToken } = require('../models/auth.model')
 const { login, resetPassword, register, logout } = require('../services/auth.service')
+const authService = require('../services/auth.service');
 const {success, sendError} = require('../utils/response')
 
 exports.login = async (req, res) => {
@@ -57,5 +58,62 @@ exports.logout = async (req, res) => {
   } catch (error) {
     console.error("Logout error:", error.message);
     return sendError(res, 400, error.message || 'Logout error');
+  }
+};
+// function to handle credential change request
+
+exports.requestEmailChange = async (req, res) => {
+  try {
+    const { newEmail, userId } = req.body;
+
+
+    const result = await authService.requestEmailChange(userId, newEmail);
+
+    if (result.success) {
+      return success(res, result.message);
+    } else {
+      return sendError(res, result.status, result.message);
+    }
+  } catch (error) {
+    console.error('[requestEmailChange] Error:', error);
+    return sendError(res, 500, 'Internal server error');
+  }
+};
+
+exports.verifyEmailChange = async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+
+    const result = await authService.verifyEmailChange(userId, otp);
+
+    if (result.success) {
+      return success(res, result.message);
+    } else {
+      return sendError(res, result.status, result.message || 400);
+    }
+  } catch (error) {
+    console.error('[verifyEmailChange] Error:', error);
+    return sendError(res, 500);
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { userId, currentPassword, newPassword, confirmPassword } = req.body;
+
+    const result = await authService.changePassword(
+      userId,
+      currentPassword,
+      newPassword,
+      confirmPassword
+    );
+
+    if (result.success) {
+      return success(res, result.message);
+    } else {
+      return sendError(res, result.status, result.message || 400);
+    }
+  } catch (error) {
+    return sendError(res, 500);
   }
 };

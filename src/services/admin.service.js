@@ -1,7 +1,7 @@
 const { getUserListModel } = require('../models/admin.model');
+const { getCheckinGuestsRepo, getCheckoutGuestsRepo, getAdminDashboardStatusRepo, getAdminDashboardDealRepo , getFeedbackRepo, getMonthlyOccupancyStatsRepo, getTotalRoomsRepo,getHotelFeedbackRepo} = require('../repositories/admin.repository');
 
-const getUserlistService = async (page = 1, perPage = 10) => {
-  const rawData = await getUserListModel();
+const groupGuestsByUser = (rawData) => {
   const groupedData = {};
 
   rawData.forEach((row) => {
@@ -57,13 +57,18 @@ const getUserlistService = async (page = 1, perPage = 10) => {
     }
   });
 
-  const fullResult = Object.values(groupedData).map(user => ({
+  return Object.values(groupedData).map(user => ({
     ...user,
     bookings: Object.values(user.bookings).map(b => ({
       ...b,
       total_price: b.total_price.toFixed(2)
     }))
   }));
+};
+
+const getUserlistService = async (page = 1, perPage = 10) => {
+  const rawData = await getUserListModel();
+  const fullResult = groupGuestsByUser(rawData);
 
   const totalItems = fullResult.length;
   const totalPages = Math.ceil(totalItems / perPage);
@@ -81,7 +86,96 @@ const getUserlistService = async (page = 1, perPage = 10) => {
   };
 };
 
+const getCheckinGuestsService = async (page = 1, perPage = 10) => {
+  const rawData = await getCheckinGuestsRepo();
+  const fullResult = groupGuestsByUser(rawData);
+
+  const totalItems = fullResult.length;
+  const totalPages = Math.ceil(totalItems / perPage);
+  const startIndex = (page - 1) * perPage;
+  const paginatedUsers = fullResult.slice(startIndex, startIndex + perPage);
+
+  return {
+    users: paginatedUsers,
+    pagination: {
+      currentPage: page,
+      perPage,
+      totalPages,
+      totalItems
+    }
+  };
+};
+
+const getCheckoutGuestsService = async (page = 1, perPage = 10) => {
+  const rawData = await getCheckoutGuestsRepo();
+  const fullResult = groupGuestsByUser(rawData);
+
+  const totalItems = fullResult.length;
+  const totalPages = Math.ceil(totalItems / perPage);
+  const startIndex = (page - 1) * perPage;
+  const paginatedUsers = fullResult.slice(startIndex, startIndex + perPage);
+
+  return {
+    users: paginatedUsers,
+    pagination: {
+      currentPage: page,
+      perPage,
+      totalPages,
+      totalItems
+    }
+  };
+};
+
+const getAdminDashboardStatusService = async () => {
+  return await getAdminDashboardStatusRepo();  
+}
+
+const getAdminDashboardDealService = async () => {
+  return await getAdminDashboardDealRepo(); 
+}
+
+const getFeedbackService = async () => {
+  return await getFeedbackRepo();
+};
+
+const getHotelFeedbackService = async () => {
+  return await getHotelFeedbackRepo();
+}
+
+const monthNames = [
+  '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+const getOccupancyStatsService = async (year) => {
+  const usedRoomStats = await getMonthlyOccupancyStatsRepo(year); 
+  const totalRooms = await getTotalRoomsRepo();
+
+  const stats = Array.from({ length: 12 }, (_, i) => {
+    const month = i + 1;
+    const found = usedRoomStats.find(r => Number(r.month) === month);
+    const usedRooms = found ? Number(found.value) : 0;
+
+    const percentage = totalRooms === 0
+      ? 0
+      : Math.round((usedRooms / totalRooms) * 100);
+
+    return {
+      month: monthNames[month],
+      value: percentage,
+    };
+  });
+
+  return stats;
+};
 
 module.exports = {
   getUserlistService,
+  getCheckinGuestsService,
+  getCheckoutGuestsService,
+  getAdminDashboardStatusService,
+  getAdminDashboardDealService,
+  getFeedbackService,
+  getOccupancyStatsService,
+  getHotelFeedbackService
 };

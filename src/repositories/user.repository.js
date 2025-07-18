@@ -1,5 +1,6 @@
 const UserModel = require('../models/auth.model');
 const pool = require("../config/db");
+
 const getUserByEmail = async (email) => {
   const result = await UserModel.findByEmail(email);
   return result.rows[0];
@@ -11,14 +12,16 @@ const insertUser = async (name, email, password, role = "user") => {
 };
 
 const updateUserPassword = (userId, hashedPassword) => {
-  return updatePassword(userId, hashedPassword);
+  return UserModel.updatePassword(userId, hashedPassword);
 };
 
 const getUserById = async (userId) => {
-    const { rows } = await pool.query("SELECT * FROM users WHERE user_id = $1", [userId]);
-    return rows[0]; // Trả về người dùng đầu tiên
+    return UserModel.getUserById(userId);
   };
-  
+const updateEmail = async (userId, email) => {
+  return await UserModel.updateEmail(userId, email);
+};
+
 const updateUser = async (userId, userData) => {
     const { first_name, last_name, email, phone, address, avatar_url, gender, date_of_birth, role, is_active } = userData;
     await pool.query(
@@ -43,6 +46,8 @@ module.exports = {
   insertUser,
   updateUserPassword,
   getUserById,
-  updateUser
+  updateUser,
+  updateEmail,
 
 };
+
