@@ -19,4 +19,4 @@ const createHotelFeedbackController = async (req, res) => {
 
 module.exports = {
     createHotelFeedbackController
-};  
+}; 
