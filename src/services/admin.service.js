@@ -1,5 +1,5 @@
 const { getUserListModel } = require('../models/admin.model');
-const { getCheckinGuestsRepo, getCheckoutGuestsRepo, getAdminDashboardStatusRepo, getAdminDashboardDealRepo , getFeedbackRepo, getMonthlyOccupancyStatsRepo, getTotalRoomsRepo} = require('../repositories/admin.repository');
+const { getCheckinGuestsRepo, getCheckoutGuestsRepo, getAdminDashboardStatusRepo, getAdminDashboardDealRepo , getFeedbackRepo, getMonthlyOccupancyStatsRepo, getTotalRoomsRepo,getHotelFeedbackRepo} = require('../repositories/admin.repository');
 
 const groupGuestsByUser = (rawData) => {
   const groupedData = {};
@@ -138,6 +138,10 @@ const getFeedbackService = async () => {
   return await getFeedbackRepo();
 };
 
+const getHotelFeedbackService = async () => {
+  return await getHotelFeedbackRepo();
+}
+
 const monthNames = [
   '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -172,5 +176,6 @@ module.exports = {
   getAdminDashboardStatusService,
   getAdminDashboardDealService,
   getFeedbackService,
-  getOccupancyStatsService
+  getOccupancyStatsService,
+  getHotelFeedbackService
 };
