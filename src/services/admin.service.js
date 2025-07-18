@@ -1,5 +1,5 @@
 const { getUserListModel } = require('../models/admin.model');
-const { getCheckinGuestsRepo, getCheckoutGuestsRepo, getAdminDashboardStatusRepo, getAdminDashboardDealRepo } = require('../repositories/admin.repository');
+const { getCheckinGuestsRepo, getCheckoutGuestsRepo, getAdminDashboardStatusRepo, getAdminDashboardDealRepo , getFeedbackRepo, getMonthlyOccupancyStatsRepo, getTotalRoomsRepo} = require('../repositories/admin.repository');
 
 const groupGuestsByUser = (rawData) => {
   const groupedData = {};
@@ -133,10 +133,44 @@ const getAdminDashboardStatusService = async () => {
 const getAdminDashboardDealService = async () => {
   return await getAdminDashboardDealRepo(); 
 }
+
+const getFeedbackService = async () => {
+  return await getFeedbackRepo();
+};
+
+const monthNames = [
+  '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+const getOccupancyStatsService = async (year) => {
+  const usedRoomStats = await getMonthlyOccupancyStatsRepo(year); 
+  const totalRooms = await getTotalRoomsRepo();
+
+  const stats = Array.from({ length: 12 }, (_, i) => {
+    const month = i + 1;
+    const found = usedRoomStats.find(r => Number(r.month) === month);
+    const usedRooms = found ? Number(found.value) : 0;
+
+    const percentage = totalRooms === 0
+      ? 0
+      : Math.round((usedRooms / totalRooms) * 100);
+
+    return {
+      month: monthNames[month],
+      value: percentage,
+    };
+  });
+
+  return stats;
+};
+
 module.exports = {
   getUserlistService,
   getCheckinGuestsService,
   getCheckoutGuestsService,
   getAdminDashboardStatusService,
-  getAdminDashboardDealService
+  getAdminDashboardDealService,
+  getFeedbackService,
+  getOccupancyStatsService
 };

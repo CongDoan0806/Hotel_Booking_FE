@@ -8,7 +8,14 @@ const {
 const { authenticateToken } = require("../middlewares/auth");
 const { adminOnly } = require("../middlewares/role");
 const upload = require("../utils/upload");
-const { getUserListController,getCheckinGuestsController,getCheckoutGuestsController,getAdminDashboardStatusController,getAdminDashboardDealController} = require("../controllers/admin.controller");
+const { getUserListController,
+  getCheckinGuestsController,
+  getCheckoutGuestsController,
+  getAdminDashboardStatusController,
+  getAdminDashboardDealController,
+  getFeedbackController,
+  getOccupancyStatsController
+} = require("../controllers/admin.controller");
 router.use(authenticateToken, adminOnly);
 
 router.get("/admin/rooms/", roomController.getAllRooms);
@@ -37,4 +44,9 @@ router.get("/admin/checkout-guests", getCheckoutGuestsController);
 router.get("/admin/dashboard-status", getAdminDashboardStatusController);
 
 router.get("/admin/dashboard-deals", getAdminDashboardDealController);
+
+router.get("/admin/dashboard-feedback", getFeedbackController);
+
+router.get("/admin/dashboard-occupancy/:year", getOccupancyStatsController);
+
 module.exports = router;

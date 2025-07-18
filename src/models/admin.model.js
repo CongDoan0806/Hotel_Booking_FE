@@ -103,10 +103,53 @@ const getAdminDashboardDealModel = async () => {
   return result.rows;
 };
 
+const getFeedbackModel = async () => {
+  const query = `
+      SELECT 
+        u.name AS customer_name,
+        r.name AS room_name,
+        f.comment
+      FROM feedbacks f
+      JOIN booking_details bd ON f.booking_details_id = bd.booking_detail_id
+      JOIN bookings b ON bd.booking_id = b.booking_id
+      JOIN users u ON b.user_id = u.user_id
+      JOIN rooms r ON bd.room_id = r.room_id
+      ORDER BY f.created_at DESC;
+    `;
+  const result = await pool.query(query);
+  return result.rows;
+};
+
+const getMonthlyOccupancyStatsModel = async (year) => {
+  const query = `
+     SELECT
+      EXTRACT(MONTH FROM check_in_date) AS month,
+      COUNT(DISTINCT room_id) AS value
+      FROM booking_details
+      WHERE
+        EXTRACT(YEAR FROM check_in_date) = $1
+        AND room_id IS NOT NULL
+      GROUP BY month
+      ORDER BY month
+  `;
+
+  const { rows } = await pool.query(query, [year]);
+  return rows;
+};
+
+const getTotalRoomsModel = async () => {
+  const query = `SELECT COUNT(*) AS total FROM rooms`;
+  const { rows } = await pool.query(query);
+  return Number(rows[0].total);
+};
+
 module.exports = {
   getUserListModel,
   getCheckinGuestsModel,
   getCheckoutGuestsModel,
   getAdminDashboardStatusModel,
   getAdminDashboardDealModel,
+  getFeedbackModel,
+  getMonthlyOccupancyStatsModel,
+  getTotalRoomsModel,
 };
