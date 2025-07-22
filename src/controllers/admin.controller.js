@@ -4,7 +4,7 @@ const { getUserlistService,
   getAdminDashboardStatusService, 
   getAdminDashboardDealService, 
   getFeedbackService,
-  getOccupancyStatsService,
+  getTop5MostBookedRoomsService,
   getHotelFeedbackService} = require('../services/admin.service');
 const { success, sendError } = require('../utils/response');
 
@@ -73,19 +73,15 @@ const getFeedbackController = async (req, res) => {
   } 
 };
 
-const getOccupancyStatsController = async (req, res) => {
-  const { year } = req.params;
-  if (!year) {
-    return sendError(res, 400, "Year query parameter is required");
-  }
+const getTop5MostBookedRoomsController = async (req, res) => {
   try {
-    const data = await getOccupancyStatsService(Number(year));
-    return success(res, data, "Get monthly occupancy stats successfully");
+    const rooms = await getTop5MostBookedRoomsService();
+    return success(res, rooms, "Get top 5 most booked rooms successfully");
   } catch (err) {
-    console.error('Error fetching monthly occupancy stats:', err);
-    return sendError(res, 500, "Error while getting monthly occupancy stats");
+    console.error('Error fetching top 5 most booked rooms:', err);
+    return sendError(res, 500, "Error while getting top 5 most booked rooms");
   }
-}
+};
 
 const getHotelFeedbackController = async (req, res) => {
   try {
@@ -103,6 +99,6 @@ module.exports = {
   getAdminDashboardStatusController,
   getAdminDashboardDealController,
   getFeedbackController,
-  getOccupancyStatsController,
+  getTop5MostBookedRoomsController,
   getHotelFeedbackController
 };

@@ -3,12 +3,14 @@ const db = require('../config/db');
 const findByEmail = (email) =>
   db.query('SELECT * FROM users WHERE email = $1', [email]);
 
-const createUser = (name, email, hashedPassword, role) => {
-  return db.query(
-    'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)',
-    [name, email, hashedPassword, role]
-  );
+const createUser = async (name, firstname, lastname, email, password, role) => {
+  const query = `
+    INSERT INTO users (name, first_name, last_name, email, password, role)
+    VALUES ($1, $2, $3, $4, $5, $6)
+  `;
+  await db.query(query, [name,firstname, lastname, email, password, role]);
 };
+
 
 const updatePassword = (userId, hashedPassword) => {
   return db.query(
