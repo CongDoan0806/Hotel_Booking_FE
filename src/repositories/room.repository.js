@@ -315,33 +315,37 @@ const roomRepository = {
     return rows.length === 0;
   },
 
-  getRoomDetail: async (roomId) => {
-    const { rows } = await pool.query(
-      `
-      SELECT
-        r.room_id,
-        r.description,
-        r.price,
-        COALESCE(img.images, '[]')     AS images,
-        COALESCE(am.amenities, '[]')   AS amenities
-      FROM rooms r
-      LEFT JOIN LATERAL (
-        SELECT json_agg(image_url) AS images
-        FROM room_images
-        WHERE room_id = r.room_id
-      ) img ON TRUE
-      LEFT JOIN LATERAL (
-        SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
-        FROM room_amenities ra
-        JOIN amenities a ON a.amenity_id = ra.amenity_id
-        WHERE ra.room_id = r.room_id
-      ) am ON TRUE
-      WHERE r.room_id = $1
-      `,
-      [roomId]
-    );
-    return rows[0] || null;
-  },
+getRoomDetail: async (roomId) => {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      r.room_id,
+      r.description,
+      (rl.price + rt.price) AS price, -- Tính giá từ room_level + room_type
+      rl.price AS room_level_price,
+      rt.price AS room_type_price,
+      COALESCE(img.images, '[]')     AS images,
+      COALESCE(am.amenities, '[]')   AS amenities
+    FROM rooms r
+    JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+    JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    LEFT JOIN LATERAL (
+      SELECT json_agg(image_url) AS images
+      FROM room_images
+      WHERE room_id = r.room_id
+    ) img ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
+      FROM room_amenities ra
+      JOIN amenities a ON a.amenity_id = ra.amenity_id
+      WHERE ra.room_id = r.room_id
+    ) am ON TRUE
+    WHERE r.room_id = $1
+    `,
+    [roomId]
+  );
+  return rows[0] || null;
+}
 };
 
 module.exports = roomRepository;

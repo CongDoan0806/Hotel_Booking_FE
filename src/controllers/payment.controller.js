@@ -15,6 +15,7 @@ exports.handlePaymentSuccess = async (req, res) => {
     } else if (!/^\d{4}-\d{2}-\d{2}$/.test(exp_date)) {
       return sendError(res, 400, "Invalid expiration date format");
     }
+
     const result = await paymentService.handleSuccess({
       booking_id,
       method,
@@ -25,7 +26,7 @@ exports.handlePaymentSuccess = async (req, res) => {
     });
 
     if (!result) {
-      return sendError(res, 404, "Booking not found or update failed");
+      return sendError(res,res, result.message, "Booking not found or update failed");
     }
     return success(res, null, "Payment processed successfully");
   } catch (err) {

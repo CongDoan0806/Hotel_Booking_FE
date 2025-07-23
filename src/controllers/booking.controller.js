@@ -34,7 +34,7 @@ const createBooking = async (req, res) => {
   res,
   {
     booking_id: booking.booking_id,
-    user_id: userId // 👈 Thêm dòng này
+    user_id: userId 
   },
   "Booking created successfully",
   201
@@ -49,7 +49,7 @@ const createBooking = async (req, res) => {
 const getBookingDetailsByUserIdController = async (req, res) => {
   try {
     const user_id = parseInt(req.params.user_id, 10);
-
+    console.log ("nef:",user_id); 
     if (isNaN(user_id)) {
       return sendError(res, 400, "Invalid user ID", ["user_id must be a number"]);
     }
