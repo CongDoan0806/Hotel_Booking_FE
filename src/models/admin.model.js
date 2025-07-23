@@ -89,14 +89,14 @@ const getAdminDashboardDealModel = async () => {
   const query = `
     SELECT 
         rt.name AS room_type_name,
-        rt.default_price,
+        rt.price,
         COUNT(DISTINCT d.deal_id) AS total_deals,
         COUNT(DISTINCT r.room_id) AS total_rooms,
         SUM(CASE WHEN r.status IN ('booked', 'occupied') THEN 1 ELSE 0 END) AS used_rooms
       FROM room_types rt
       LEFT JOIN rooms r ON rt.room_type_id = r.room_type_id
       LEFT JOIN deals d ON rt.room_type_id = d.room_type
-      GROUP BY rt.room_type_id, rt.name, rt.default_price
+      GROUP BY rt.room_type_id, rt.name, rt.price
       ORDER BY rt.name;
       `;
   const result = await pool.query(query);
@@ -120,27 +120,39 @@ const getFeedbackModel = async () => {
   return result.rows;
 };
 
-const getMonthlyOccupancyStatsModel = async (year) => {
+const getHotelFeedbackModel = async () => {
   const query = `
-     SELECT
-      EXTRACT(MONTH FROM check_in_date) AS month,
-      COUNT(DISTINCT room_id) AS value
-      FROM booking_details
-      WHERE
-        EXTRACT(YEAR FROM check_in_date) = $1
-        AND room_id IS NOT NULL
-      GROUP BY month
-      ORDER BY month
-  `;
-
-  const { rows } = await pool.query(query, [year]);
-  return rows;
+      SELECT 
+          u.name AS customer_name,
+          hf.comment,
+          hf.rating,
+          hf.submitted_at
+      FROM hotel_feedbacks hf
+      JOIN users u ON hf.user_id = u.user_id
+      ORDER BY hf.submitted_at DESC;
+    `;
+  const result = await pool.query(query);
+  return result.rows;
 };
 
-const getTotalRoomsModel = async () => {
-  const query = `SELECT COUNT(*) AS total FROM rooms`;
+const getTop5MostBookedRoomsModel = async () => {
+  const query = `
+      SELECT 
+      r.room_id,
+      r.name AS room_name,
+      COUNT(bd.booking_detail_id) AS total_bookings
+      FROM 
+          booking_details bd
+      JOIN 
+          rooms r ON bd.room_id = r.room_id
+      GROUP BY 
+          r.room_id, r.name
+      ORDER BY 
+          total_bookings DESC
+      LIMIT 5;
+    `;
   const { rows } = await pool.query(query);
-  return Number(rows[0].total);
+  return rows;
 };
 
 module.exports = {
@@ -150,6 +162,6 @@ module.exports = {
   getAdminDashboardStatusModel,
   getAdminDashboardDealModel,
   getFeedbackModel,
-  getMonthlyOccupancyStatsModel,
-  getTotalRoomsModel,
+  getTop5MostBookedRoomsModel,
+  getHotelFeedbackModel,
 };

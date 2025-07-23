@@ -14,7 +14,8 @@ const { getUserListController,
   getAdminDashboardStatusController,
   getAdminDashboardDealController,
   getFeedbackController,
-  getOccupancyStatsController
+  getTop5MostBookedRoomsController,
+  getHotelFeedbackController
 } = require("../controllers/admin.controller");
 router.use(authenticateToken, adminOnly);
 
@@ -47,6 +48,8 @@ router.get("/admin/dashboard-deals", getAdminDashboardDealController);
 
 router.get("/admin/dashboard-feedback", getFeedbackController);
 
-router.get("/admin/dashboard-occupancy/:year", getOccupancyStatsController);
+router.get("/admin/dashboard-hotel-feedback", getHotelFeedbackController);
+
+router.get("/admin/dashboard-most-booked", getTop5MostBookedRoomsController);
 
 module.exports = router;
