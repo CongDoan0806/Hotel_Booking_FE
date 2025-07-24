@@ -1,4 +1,14 @@
-const {getUserListModel,getCheckinGuestsModel, getCheckoutGuestsModel, getAdminDashboardStatusModel, getAdminDashboardDealModel, getFeedbackModel, getTop5MostBookedRoomsModel, getHotelFeedbackModel} = require('../models/admin.model');
+const {getUserListModel,
+    getCheckinGuestsModel, 
+    getCheckoutGuestsModel, 
+    getAdminDashboardStatusModel, 
+    getAdminDashboardDealModel, 
+    getFeedbackModel, 
+    getTop5MostBookedRoomsModel, 
+    getHotelFeedbackModel, 
+    getGuestListModel,
+    countGuestListModel,
+    updateUserStatusModel} = require('../models/admin.model');
 
 const getUserListRepo = async () => {
     return await getUserListModel();
@@ -32,6 +42,17 @@ const getHotelFeedbackRepo = async () => {
   return await getHotelFeedbackModel();
 }
 
+const getGuestListRepo = async (limit, offset)  => {
+    return await getGuestListModel(limit, offset) ;
+}
+
+const countGuestListRepo = async () => {
+    return await countGuestListModel();
+}
+
+const updateUserStatusRepo = async (user_id, status) => {
+    return await updateUserStatusModel(user_id, status);
+}
 module.exports = {
     getUserListRepo,
     getCheckinGuestsRepo,
@@ -40,5 +61,8 @@ module.exports = {
     getAdminDashboardDealRepo,
     getFeedbackRepo,
     getTop5MostBookedRoomsRepo,
-    getHotelFeedbackRepo
+    getHotelFeedbackRepo,
+    getGuestListRepo,
+    countGuestListRepo,
+    updateUserStatusRepo
 }
