@@ -10,7 +10,6 @@ router.post('/login', login);
 router.post('/refresh-token', refreshTokenController);
 router.post('/logout', logout);
 
-module.exports = router;
 router.post('/reset-password', resetPassword);
 router.post('/request-email-change', authenticateToken, requestEmailChange);
 router.post('/verify-email-change', authenticateToken, verifyEmailChange);

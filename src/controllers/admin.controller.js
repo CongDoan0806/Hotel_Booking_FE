@@ -5,7 +5,9 @@ const { getUserlistService,
   getAdminDashboardDealService, 
   getFeedbackService,
   getTop5MostBookedRoomsService,
-  getHotelFeedbackService} = require('../services/admin.service');
+  getHotelFeedbackService,
+  getGuestListService,
+  updateUserStatusService} = require('../services/admin.service');
 const { success, sendError } = require('../utils/response');
 
 const getUserListController = async (req, res) => {
@@ -92,6 +94,36 @@ const getHotelFeedbackController = async (req, res) => {
     return sendError(res, 500, "Error while getting hotel feedbacks");
   }
 };
+
+const getGuestListController = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 10;
+
+    const result = await getGuestListService(page, perPage);
+    return success(res, result, "Get guest list successfully");
+  } catch (error) {
+    console.error('Error fetching guest list:', error);
+    return sendError(res, 500, "Error while getting guest list" );
+  }
+};
+
+const updateUserStatusController = async (req, res) => {
+  const user_id = parseInt(req.params.user_id);
+  const { status } = req.body;
+
+  if (!user_id || !status) {
+    return sendError(res, 400, "Missing user ID or status");
+  }
+
+  try {
+    const result = await updateUserStatusService(user_id, status);
+    return success(res, result, "User status updated successfully");
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    return sendError(res, 500, "Failed to update user status")
+  }
+}
 module.exports = {
   getUserListController,
   getCheckinGuestsController,
@@ -100,5 +132,7 @@ module.exports = {
   getAdminDashboardDealController,
   getFeedbackController,
   getTop5MostBookedRoomsController,
-  getHotelFeedbackController
+  getHotelFeedbackController,
+  getGuestListController,
+  updateUserStatusController
 };
