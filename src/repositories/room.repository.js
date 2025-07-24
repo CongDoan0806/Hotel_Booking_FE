@@ -321,19 +321,20 @@ isRoomAvailable: async (roomId, checkIn, checkOut) => {
   const { rows } = await pool.query(
     `
     SELECT 1
-    FROM booking_details bd
-    JOIN rooms r ON r.room_id = bd.room_id
-    WHERE bd.room_id = $1
-      AND r.status = 'available'
+    FROM rooms r
+    LEFT JOIN booking_details bd ON r.room_id = bd.room_id
       AND NOT (
-        bd.check_out_date <= $2 OR
-        bd.check_in_date >= $3
+        bd.check_in_date <= $2 OR
+        bd.check_out_date >= $3
       )
+    WHERE r.room_id = $1
+      AND r.status = 'available'
+      AND bd.booking_id IS NULL
     `,
     [roomId, checkIn, checkOut]
   );
-  
-  return rows.length === 0;
+
+  return rows.length > 0;
 },
 
 getRoomDetail: async (roomId) => {

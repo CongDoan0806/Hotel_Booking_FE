@@ -1,16 +1,17 @@
 const pool = require("../config/db");
 const bookingModel = require("../models/booking.model");
 //func check conflict schedule book
-async function findConflictingBooking(roomId, checkIn, checkOut) {
-  const { rows } = await pool.query(
-    `SELECT 1
-     FROM booking_details
-     WHERE room_id = $1
-       AND ($2, $3) OVERLAPS (check_in_date, check_out_date)`,
-    [roomId, checkIn, checkOut]
-  );
-  return rows.length > 0;
-}
+// async function findConflictingBooking(roomId, checkIn, checkOut) {
+//   const { rows } = await pool.query(
+//     `SELECT 1
+//      FROM booking_details
+//      WHERE room_id = $1
+//        AND ($2, $3) OVERLAPS (check_in_date, check_out_date)`,
+//     [roomId, checkIn, checkOut]
+//   );
+//   return rows.length > 0;
+// }
+
 // func create booking
 async function createBooking(userId, totalPrice, client) {
   const { rows } = await client.query(
@@ -90,7 +91,6 @@ const updateStatus = async (bookingId, status) => {
 };
 
 module.exports = {
-  findConflictingBooking,
   createBooking,
   createBookingDetail,
   getDealDiscount,

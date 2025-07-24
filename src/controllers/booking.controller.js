@@ -15,7 +15,7 @@ const createBooking = async (req, res) => {
     const errors = await validateBookingInput({ roomId, checkInDate, checkOutDate });
 
     if (errors.length > 0) {
-      return sendError(res, 400, "Invalid booking input", errors);
+      return sendError(res, 400, "Room not available for booking", errors);
     }
 
     const room = await roomRepository.getRoomDetail(roomId);

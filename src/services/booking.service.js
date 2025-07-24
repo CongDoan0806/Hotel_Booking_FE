@@ -3,12 +3,12 @@ const bookingRepo = require("../repositories/booking.repository");
 const dayjs = require("../utils/dayjs");
 
 const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
-  const isConflict = await bookingRepo.findConflictingBooking(
-    room.room_id,
-    checkIn,
-    checkOut
-  );
-  if (isConflict) throw new Error("Room is unavailable for the selected dates");
+  // const isConflict = await bookingRepo.findConflictingBooking(
+  //   room.room_id,
+  //   checkIn,
+  //   checkOut
+  // );
+  // if (isConflict) throw new Error("Room is unavailable for the selected dates");
 
   const nights = dayjs(checkOut).diff(dayjs(checkIn), "day");
   if (nights <= 0) throw new Error("Invalid date range");
@@ -137,7 +137,7 @@ const getBookingSummaryDetailService = async (booking_detail_id) => {
   if (!data) throw new Error("Booking detail not found");
   return data;
 };
-
+// function auto update room and booking
 const autoUpdateCheckinStatus = async () => {
   const now = dayjs();
   const today = now.format("YYYY-MM-DD");
