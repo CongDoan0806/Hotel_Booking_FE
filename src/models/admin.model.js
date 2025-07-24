@@ -5,7 +5,7 @@ const getUserListModel = async () => {
        SELECT 
             u.*, 
             b.booking_id, b.status AS booking_status, 
-            bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
+            bd.booking_detail_id,  bd.price_per_unit, bd.check_in_date, bd.check_out_date,
             r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
         FROM users u
         LEFT JOIN bookings b ON u.user_id = b.user_id
@@ -43,8 +43,8 @@ const getCheckoutGuestsModel = async () => {
   const query = `
     SELECT 
       u.*, 
-      b.booking_id, b.status AS booking_status, 
-      bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
+      b.booking_id, b.status AS booking_status,  
+      bd.booking_detail_id,  bd.price_per_unit, bd.check_in_date, bd.check_out_date,
       r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
     FROM users u
     JOIN bookings b ON u.user_id = b.user_id
@@ -156,6 +156,36 @@ const getTop5MostBookedRoomsModel = async () => {
   return rows;
 };
 
+const getGuestListModel = async (limit, offset) => {
+  const query = `
+    SELECT 
+      user_id AS guest_number,
+      name,
+      email,
+      phone,
+      address,
+      CASE 
+        WHEN status = 'active' THEN 'Active'
+        ELSE 'Blocked'
+      END AS status
+    FROM users
+    ORDER BY user_id
+    LIMIT $1 OFFSET $2;
+  `;
+  const result = await pool.query(query, [limit, offset]);
+  return result.rows;
+};
+
+const countGuestListModel = async () => {
+  const result = await pool.query(`SELECT COUNT(*) FROM users;`);
+  return parseInt(result.rows[0].count, 10);
+};
+
+const updateUserStatusModel = async (user_id, status) => {
+  const query = `UPDATE users SET status = $1 WHERE user_id = $2`;
+  await pool.query(query, [status.toLowerCase(), user_id]);
+};
+
 module.exports = {
   getUserListModel,
   getCheckinGuestsModel,
@@ -165,4 +195,7 @@ module.exports = {
   getFeedbackModel,
   getTop5MostBookedRoomsModel,
   getHotelFeedbackModel,
+  getGuestListModel,
+  countGuestListModel,
+  updateUserStatusModel,
 };

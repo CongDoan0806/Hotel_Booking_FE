@@ -17,6 +17,8 @@ const {
   getFeedbackController,
   getTop5MostBookedRoomsController,
   getHotelFeedbackController,
+  getGuestListController,
+  updateUserStatusController,
 } = require("../controllers/admin.controller");
 router.use(authenticateToken, adminOnly);
 
@@ -52,5 +54,9 @@ router.get("/admin/dashboard-feedback", getFeedbackController);
 router.get("/admin/dashboard-hotel-feedback", getHotelFeedbackController);
 
 router.get("/admin/dashboard-most-booked", getTop5MostBookedRoomsController);
+
+router.get("/admin/guest-list", getGuestListController);
+
+router.patch("/admin/users/:user_id/status", updateUserStatusController);
 
 module.exports = router;

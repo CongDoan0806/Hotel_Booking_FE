@@ -1,5 +1,16 @@
 const { getUserListModel } = require('../models/admin.model');
-const { getCheckinGuestsRepo, getCheckoutGuestsRepo, getAdminDashboardStatusRepo, getAdminDashboardDealRepo , getFeedbackRepo, getTop5MostBookedRoomsRepo, getHotelFeedbackRepo} = require('../repositories/admin.repository');
+const { getCheckinGuestsRepo, 
+  getCheckoutGuestsRepo, 
+  getAdminDashboardStatusRepo, 
+  getAdminDashboardDealRepo , 
+  getFeedbackRepo, 
+  getTop5MostBookedRoomsRepo, 
+  getHotelFeedbackRepo, 
+  getGuestListRepo, 
+  countGuestListRepo, 
+  getUserListRepo,
+  updateUserStatusRepo} = require('../repositories/admin.repository');
+const { all } = require('../routes/admin.routes');
 
 const groupGuestsByUser = (rawData) => {
   const groupedData = {};
@@ -146,6 +157,34 @@ const getTop5MostBookedRoomsService = async () => {
   return await getTop5MostBookedRoomsRepo();
 };
 
+const getGuestListService = async (page = 1, perPage = 10) => {
+  const offset = (page - 1) * perPage;
+
+  const [guests, totalItems] = await Promise.all([
+    getGuestListRepo(perPage, offset),
+    countGuestListRepo(),
+  ]);
+
+  const totalPages = Math.ceil(totalItems / perPage);
+
+  return {
+    guests,
+    pagination : {
+      currentPage: page,
+      perPage,
+      totalPages,
+      totalItems,
+    },
+  };
+};
+
+const updateUserStatusService = async (user_id, status) => {
+  if (!['active', 'blocked'].includes(status.toLowerCase())) {
+    throw new Error('Invalid status');
+  }
+  return await updateUserStatusRepo(user_id, status);
+}
+
 module.exports = {
   getUserlistService,
   getCheckinGuestsService,
@@ -154,5 +193,7 @@ module.exports = {
   getAdminDashboardDealService,
   getFeedbackService,
   getHotelFeedbackService,
-  getTop5MostBookedRoomsService
+  getTop5MostBookedRoomsService,
+  getGuestListService,
+  updateUserStatusService
 };

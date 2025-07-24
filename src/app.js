@@ -4,6 +4,7 @@ const path = require("path");
 const logger = require("./middlewares/logger");
 const errorHandler = require("./middlewares/errorHandle");
 const app = express();
+require("./jobs/bookingStatusJob");
 
 const adminRoutes = require("./routes/admin.routes"); 
 const authRoutes = require("./routes/auth.routes");
@@ -15,6 +16,8 @@ const userRoutes = require("./routes/user.routes");
 const dealRoutes = require("./routes/deal.routes");
 const paymentRoutes = require("./routes/payment.routes");
 const profileRoutes = require("./routes/profile.routes");
+const { updateAllDealStatuses } = require('./schedulers/scheduler');
+
 // Serve ảnh trong public/uploads qua đường dẫn /uploads
 app.use(
   "/uploads/rooms",
@@ -24,6 +27,10 @@ app.use(
   "/uploads/amenities",
   express.static(path.join(__dirname, "public/uploads/amenities"))
 );
+
+updateAllDealStatuses().catch(error => {
+    console.error('Error updating deal statuses:', error.message);
+});
 
 app.use(cors());
 app.use(express.json());

@@ -160,6 +160,7 @@ const roomRepository = {
   },
 
   getFilteredRooms: async (filters) => {
+<<<<<<< HEAD
     const values = [];
     let query = `
       SELECT 
@@ -194,18 +195,107 @@ const roomRepository = {
       values.push(filters.people);
       query += ` AND rt.max_people >= $${values.length}`;
     }
+=======
+    let query = `
+      SELECT 
+          r.*, 
+          rt.name AS room_type_name,
+          rt.max_people,
+          rt.price AS base_price,
+          rl.name AS room_level_name,
+          rl.price AS level_price,
+          f.name AS floor_name,
+          d.deal_id AS deal_id,
+          d.deal_name AS deal_name,
+          d.discount_rate AS deal_discount_rate
+      FROM rooms r
+      JOIN room_types rt ON r.room_type_id = rt.room_type_id
+      JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+      JOIN floors f ON r.floor_id = f.floor_id
+      LEFT JOIN deals d 
+          ON r.room_type_id = d.room_type 
+          AND d.start_date <= CURRENT_DATE 
+          AND d.end_date >= CURRENT_DATE
+      WHERE 1=1
+    `;
+
+    const values = [];
+    const amenityFilters = filters.amenities ? filters.amenities.split(",").map(Number) : [];
+
+    if (filters.min_price) {
+      values.push(filters.min_price);
+      query += ` AND (rt.price + rl.price) >= $${values.length}`;
+    }
+
+    if (filters.max_price) {
+      values.push(filters.max_price);
+      query += ` AND (rt.price + rl.price) <= $${values.length}`;
+    }
+
+    if (filters.room_type) {
+      values.push(filters.room_type);
+      query += ` AND r.room_type_id = $${values.length}`;
+    }
+
+    if (filters.people) {
+      values.push(filters.people);
+      query += ` AND rt.max_people >= $${values.length}`;
+    }
+
+    if (filters.check_in_date && filters.check_out_date) {
+      const idx1 = values.length + 1;
+      const idx2 = values.length + 2;
+      query += `
+        AND r.room_id NOT IN (
+          SELECT bd.room_id
+          FROM booking_details bd
+          JOIN bookings b ON bd.booking_id = b.booking_id
+          WHERE NOT (
+            bd.check_out_date < $${idx1} OR 
+            bd.check_in_date > $${idx2}
+          )
+        )
+      `;
+      values.push(filters.check_in_date, filters.check_out_date);
+    }
+
+    if (amenityFilters.length > 0) {
+      values.push(amenityFilters, amenityFilters.length);
+      const idxA1 = values.length - 1;
+      const idxA2 = values.length;
+      query += `
+        AND r.room_id IN (
+          SELECT ra.room_id
+          FROM room_amenities ra
+          WHERE ra.amenity_id = ANY($${idxA1}::int[])
+          GROUP BY ra.room_id
+          HAVING COUNT(DISTINCT ra.amenity_id) = $${idxA2}
+        )
+      `;
+    }
+
+>>>>>>> 62fd472cbd170be2a363b66a15111cdebe92b41a
     if (filters.status) {
       values.push(filters.status);
       query += ` AND r.status = $${values.length}`;
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 62fd472cbd170be2a363b66a15111cdebe92b41a
     if (filters.room_level) {
       values.push(filters.room_level);
       query += ` AND r.room_level_id = $${values.length}`;
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 62fd472cbd170be2a363b66a15111cdebe92b41a
     if (filters.floor) {
       values.push(filters.floor);
       query += ` AND r.floor_id = $${values.length}`;
     }
+<<<<<<< HEAD
     if (filters.check_in_date && filters.check_out_date) {
       values.push(filters.check_out_date, filters.check_in_date);
       query += ` AND r.room_id NOT IN (
@@ -231,13 +321,44 @@ const roomRepository = {
       [roomIds]
     );
 
+=======
+
+    const roomResult = await pool.query(query, values);
+    const rooms = roomResult.rows;
+    if (rooms.length === 0) return [];
+
+    const roomIds = rooms.map((r) => r.room_id);
+
+    // Lấy tiện ích
+    const amenityQuery = `
+      SELECT ra.room_id, a.amenity_id, a.name, a.icon
+      FROM room_amenities ra
+      JOIN amenities a ON ra.amenity_id = a.amenity_id
+      WHERE ra.room_id = ANY($1::int[])
+    `;
+    const amenityResult = await pool.query(amenityQuery, [roomIds]);
+
+    // Lấy ảnh
+    const imageQuery = `
+      SELECT room_id, image_url
+      FROM room_images
+      WHERE room_id = ANY($1::int[])
+    `;
+    const imageResult = await pool.query(imageQuery, [roomIds]);
+
+    // Gộp dữ liệu
+>>>>>>> 62fd472cbd170be2a363b66a15111cdebe92b41a
     const amenitiesMap = {};
     for (const row of amenityResult.rows) {
       if (!amenitiesMap[row.room_id]) amenitiesMap[row.room_id] = [];
       amenitiesMap[row.room_id].push({
         amenity_id: row.amenity_id,
         name: row.name,
+<<<<<<< HEAD
         icon: row.icon,
+=======
+        icon: row.icon
+>>>>>>> 62fd472cbd170be2a363b66a15111cdebe92b41a
       });
     }
 
@@ -246,11 +367,27 @@ const roomRepository = {
       if (!imagesMap[row.room_id]) imagesMap[row.room_id] = [];
       imagesMap[row.room_id].push(row.image_url);
     }
+<<<<<<< HEAD
+=======
+
+    let finalRooms = rooms.map((room) => {
+      const basePrice = parseFloat(room.base_price || 0);
+      const levelPrice = parseFloat(room.level_price || 0);
+      const totalPrice = basePrice + levelPrice;
+
+      const deal = room.deal_name ? {
+        deal_id: room.deal_id,
+        deal_name: room.deal_name,
+        discount_rate: room.deal_discount_rate,
+        final_price: totalPrice * (1 - room.deal_discount_rate / 100)
+      } : null;
+>>>>>>> 62fd472cbd170be2a363b66a15111cdebe92b41a
 
     const finalRooms = rooms.map((r) => {
       const basePrice = (r.room_type_price || 0) + (r.room_level_price || 0);
       const discount = r.deal_discount_rate || 0;
       return {
+<<<<<<< HEAD
         ...r,
         price: basePrice,
         final_price: discount ? basePrice * (1 - discount / 100) : basePrice,
@@ -266,6 +403,28 @@ const roomRepository = {
       return finalRooms.filter((r) => r.deal !== null);
     } else if (filters.has_deal === "false") {
       return finalRooms.filter((r) => r.deal === null);
+=======
+        room_id: room.room_id,
+        name: room.name,
+        description: room.description,
+        price: totalPrice,
+        status: room.status,
+        roomType: room.room_type_name,
+        room_type_id: room.room_type_id,
+        roomLevel: room.room_level_name,
+        floor: room.floor_name,
+        max_people: room.max_people,
+        amenities: amenitiesMap[room.room_id] || [],
+        images: imagesMap[room.room_id] || [],
+        deal: deal
+      };
+    });
+
+    if (filters.has_deal === 'true') {
+      finalRooms = finalRooms.filter(room => room.deal !== null);
+    } else if (filters.has_deal === 'false') {
+      finalRooms = finalRooms.filter(room => room.deal === null);
+>>>>>>> 62fd472cbd170be2a363b66a15111cdebe92b41a
     }
 
     return finalRooms;
@@ -305,49 +464,57 @@ const roomRepository = {
     }
   },
 
-  isRoomAvailable: async (roomId, checkIn, checkOut) => {
-    const { rows } = await pool.query(
-      `
-      SELECT 1
-      FROM booking_details
-      WHERE room_id = $1
-        AND NOT (
-          check_out_date <= $2 OR
-          check_in_date >= $3
-        )
-      `,
-      [roomId, checkIn, checkOut]
-    );
-    return rows.length === 0;
-  },
+isRoomAvailable: async (roomId, checkIn, checkOut) => {
+  const { rows } = await pool.query(
+    `
+    SELECT 1
+    FROM rooms r
+    LEFT JOIN booking_details bd ON r.room_id = bd.room_id
+      AND NOT (
+        bd.check_in_date <= $2 OR
+        bd.check_out_date >= $3
+      )
+    WHERE r.room_id = $1
+      AND r.status = 'available'
+      AND bd.booking_id IS NULL
+    `,
+    [roomId, checkIn, checkOut]
+  );
 
-  getRoomDetail: async (roomId) => {
-    const { rows } = await pool.query(
-      `
-      SELECT
-        r.room_id,
-        r.description,
-        r.price,
-        COALESCE(img.images, '[]')     AS images,
-        COALESCE(am.amenities, '[]')   AS amenities
-      FROM rooms r
-      LEFT JOIN LATERAL (
-        SELECT json_agg(image_url) AS images
-        FROM room_images
-        WHERE room_id = r.room_id
-      ) img ON TRUE
-      LEFT JOIN LATERAL (
-        SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
-        FROM room_amenities ra
-        JOIN amenities a ON a.amenity_id = ra.amenity_id
-        WHERE ra.room_id = r.room_id
-      ) am ON TRUE
-      WHERE r.room_id = $1
-      `,
-      [roomId]
-    );
-    return rows[0] || null;
-  },
+  return rows.length > 0;
+},
+
+getRoomDetail: async (roomId) => {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      r.room_id,
+      r.description,
+      (rl.price + rt.price) AS price, -- Tính giá từ room_level + room_type
+      rl.price AS room_level_price,
+      rt.price AS room_type_price,
+      COALESCE(img.images, '[]')     AS images,
+      COALESCE(am.amenities, '[]')   AS amenities
+    FROM rooms r
+    JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+    JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    LEFT JOIN LATERAL (
+      SELECT json_agg(image_url) AS images
+      FROM room_images
+      WHERE room_id = r.room_id
+    ) img ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
+      FROM room_amenities ra
+      JOIN amenities a ON a.amenity_id = ra.amenity_id
+      WHERE ra.room_id = r.room_id
+    ) am ON TRUE
+    WHERE r.room_id = $1
+    `,
+    [roomId]
+  );
+  return rows[0] || null;
+}
 };
 
 module.exports = roomRepository;
