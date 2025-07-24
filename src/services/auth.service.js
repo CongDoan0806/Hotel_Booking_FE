@@ -5,6 +5,7 @@ const {findByEmail, findById, updateRefreshToken, updatePassword, createUser, fi
 const { connectRedis } = require("../utils/redis");
 const { sendOTPEmail } = require("../utils/emailService");
 const UserRepo = require("../repositories/user.repository");
+const { sendError } = require('../utils/response');
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -23,6 +24,11 @@ const generateRefreshToken = (user) => {
 const login = async (email, password) => {
   const result = await findByEmail(email);
   const user = result.rows[0];
+
+  if (user.status === 'blocked') {
+    console.log('Your account has been blocked by admin')
+    return sendError(res, 403, "Your account has been blocked by admin")
+  }
 
   if (!user) throw new Error("Sai email hoặc mật khẩu");
 
