@@ -8,14 +8,15 @@ const {
 const { authenticateToken } = require("../middlewares/auth");
 const { adminOnly } = require("../middlewares/role");
 const upload = require("../utils/upload");
-const { getUserListController,
+const {
+  getUserListController,
   getCheckinGuestsController,
   getCheckoutGuestsController,
   getAdminDashboardStatusController,
   getAdminDashboardDealController,
   getFeedbackController,
   getTop5MostBookedRoomsController,
-  getHotelFeedbackController
+  getHotelFeedbackController,
 } = require("../controllers/admin.controller");
 router.use(authenticateToken, adminOnly);
 
@@ -36,7 +37,7 @@ router.put(
 );
 router.delete("/admin/rooms/:id", validateRoomId, roomController.deleteRoom);
 
-router.get("/admin/user-list", getUserListController);
+router.get("/admin/booking-list", getUserListController);
 
 router.get("/admin/checkin-guests", getCheckinGuestsController);
 
