@@ -12,5 +12,6 @@ router.get('/bookings/user/:user_id', authenticate, bookingController.getBooking
 router.patch('/bookings/:booking_id/confirm', authenticate, validateParams(bookingIdParamSchema),bookingController.confirmBookingController);
 router.get('/booking-details/:booking_detail_id', getBookingSummaryDetailController);
 
+router.post ('/booking/auto-status', bookingController.handleAutoUpdateStatus)
 
 module.exports = router;

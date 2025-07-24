@@ -4,6 +4,7 @@ const path = require("path");
 const logger = require("./middlewares/logger");
 const errorHandler = require("./middlewares/errorHandle");
 const app = express();
+require("./jobs/bookingStatusJob");
 
 const adminRoutes = require("./routes/admin.routes"); 
 const authRoutes = require("./routes/auth.routes");

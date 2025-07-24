@@ -1,6 +1,9 @@
 const bookingRepo = require("../repositories/booking.repository");
 const paymentRepo = require("../repositories/payment.repository");
-const { updateStatusById } = require("../models/booking.model");
+const {
+  updateStatusById,
+  updateRoomStatusByBookingId,
+} = require("../models/booking.model");
 const db = require("../config/db");
 
 const handleSuccess = async ({
@@ -12,9 +15,17 @@ const handleSuccess = async ({
   exp_date,
 }) => {
   const booking = await bookingRepo.findById(booking_id);
-  if (!booking) throw new Error("Booking not found");
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+  
+  const existedPayment = await paymentRepo.checkPaymentExists(booking_id);
+  if (existedPayment) {
+    throw new Error("This booking has already been paid.");
+  }
 
-  await updateStatusById(booking_id, "confirmed");
+  await updateStatusById(booking_id, "booked");
+  await updateRoomStatusByBookingId(booking_id, "booked");
   await bookingRepo.updatePaymentStatusById(booking_id, "paid");
 
   const paymentRecord = await paymentRepo.createPayment({
@@ -24,7 +35,6 @@ const handleSuccess = async ({
     card_number,
     exp_date,
     method,
-    status: "success",
     paid_at: new Date(),
   });
   return paymentRecord;
