@@ -27,16 +27,17 @@ exports.login = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const {name, firstname, lastname, email, password, role } = req.body;
 
   try {
-    const result = await register({ name, email, password, role });
+    const result = await register({name, firstname, lastname, email, password, role });
     return success(res, result, 'Registration successful', 201);
   } catch (error) {
     console.error("Registration error:", error.message);
     return sendError(res, 400, error.message || 'Registration error')
   }
 };
+
 
 exports.resetPassword = async (req, res) => {
   const { email, password } = req.body;

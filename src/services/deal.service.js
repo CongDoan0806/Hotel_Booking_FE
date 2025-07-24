@@ -12,8 +12,8 @@ const dealsService = {
             ...room,
             deal: {
               deal_id: deal.deal_id,
-              title: deal.title,
-              discount_rate: deal.discount_rate * 100, // phần trăm
+              name: deal.deal_name,
+              discount_rate: deal.discount_rate * 100,
               final_price: discountedPrice,
             },
             final_price: discountedPrice,
@@ -27,7 +27,6 @@ const dealsService = {
         };
       })
       .filter(room => {
-        // Nếu có lọc theo deal_id thì chỉ lấy các phòng có deal trùng khớp
         if (filterDealId) {
           return room.deal && room.deal.deal_id === filterDealId;
         }
@@ -38,8 +37,13 @@ const dealsService = {
   getActiveDeals: async () => {
     return await dealsRepository.getActiveDeals();
   },
+
   getAllDeals: async () => {
     return await dealsRepository.getAllDeals();
+  },
+
+  getDealByRoomType: async (room_type) => {
+    return await dealsRepository.getDealByRoomType(room_type);
   },
 
   createDeal: async (dealData) => {
@@ -54,6 +58,21 @@ const dealsService = {
     return await dealsRepository.deleteDeal(id);
   },
 
+  getDealById: async (id) => {
+    return await dealsRepository.getDealById(id);
+  },
+
+  getDealsByStatus: async (status) => {
+    return await dealsRepository.getDealsByStatus(status);
+  },
+
+  updateDealStatus: async (id) => {
+    return await dealsRepository.updateDealStatus(id);
+  },
+
+  getDealSummary: async () => {
+    return await dealsRepository.getDealSummary();
+  },
 };
 
 module.exports = dealsService;

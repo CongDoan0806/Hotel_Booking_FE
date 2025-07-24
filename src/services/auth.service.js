@@ -51,14 +51,14 @@ const login = async (email, password) => {
   };
 };
 
-const register = async ({ name, email, password, role }) => {
+const register = async ({name, firstname, lastname, email, password, role }) => {
   const existing = await findByEmail(email);
   if (existing.rows.length > 0) {
     throw new Error("Email đã tồn tại");
   }
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  await createUser(name, email, hashedPassword, role || "user");
+  await createUser(name, firstname, lastname, email, hashedPassword, role || "user");
 
   return { message: "Đăng ký thành công" };
 };
