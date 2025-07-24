@@ -1,5 +1,5 @@
 const roomRepository = require('../repositories/room.repository');
-const { getBookingDetailsByUserId,confirmBookingService, createBookingWithDetails, getBookingSummaryDetailService  } = require('../services/booking.service');
+const bookingService = require('../services/booking.service');
 const { validateBookingInput } = require('../validations/booking.validate');
 const { success, sendError } = require('../utils/response');
 const validateParams = require('../middlewares/validateParams');
@@ -23,7 +23,7 @@ const createBooking = async (req, res) => {
       return sendError(res, 404, "Room not found");
     }
 
-    const booking = await createBookingWithDetails(
+    const booking = await bookingService.createBookingWithDetails(
       userId,
       room,
       checkInDate,
@@ -54,7 +54,7 @@ const getBookingDetailsByUserIdController = async (req, res) => {
       return sendError(res, 400, "Invalid user ID", ["user_id must be a number"]);
     }
 
-    const data = await getBookingDetailsByUserId(user_id);
+    const data = await bookingService.getBookingDetailsByUserId(user_id);
 
     return success(res, data, "Get bookings for user successfully");
   } catch (err) {
@@ -63,7 +63,7 @@ const getBookingDetailsByUserIdController = async (req, res) => {
 };
 const confirmBookingController = async (req, res) => {
   try {
-    const result = await confirmBookingService(req.params.booking_id);
+    const result = await bookingService.confirmBookingService(req.params.booking_id);
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -73,17 +73,30 @@ const confirmBookingController = async (req, res) => {
 const getBookingSummaryDetailController = async (req, res) => {
   try {
     const booking_detail_id = parseInt(req.params.booking_detail_id);
-    const data = await getBookingSummaryDetailService(booking_detail_id);
+    const data = await bookingService.getBookingSummaryDetailService(booking_detail_id);
     return success(res, data, "Get booking summary by detail_id successfully");
   } catch (err) {
     return sendError(res, 404, "Booking detail not found", [err.message]);
   }
 };
 
+const handleAutoUpdateStatus = async (req, res) => {
+  try {
+    const checkinCount = await bookingService.autoUpdateCheckinStatus();
+    const checkoutCount = await bookingService.autoUpdateCheckoutStatus();
+
+    return success(res, { checkinCount, checkoutCount }, "Booking status updated");
+  } catch (error) {
+    console.error(error);
+    return sendError(res, 500, "Failed to auto-update booking status");
+  }
+};
+
 module.exports = {
-  createBookingWithDetails,
+  createBooking,
   createBooking,
   getBookingDetailsByUserIdController,
   confirmBookingController,
-  getBookingSummaryDetailController
+  getBookingSummaryDetailController,
+  handleAutoUpdateStatus
 };

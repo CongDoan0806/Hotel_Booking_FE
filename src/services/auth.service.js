@@ -228,7 +228,6 @@ const changePassword = async (
     if (newPassword !== confirmPassword) {
       return { success: false, status: 400, message: "Passwords do not match" };
     }
-
     const hashed = await hashPassword(newPassword);
     await UserRepo.updateUserPassword(userId, hashed);
 

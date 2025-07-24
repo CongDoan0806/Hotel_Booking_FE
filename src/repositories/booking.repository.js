@@ -1,10 +1,5 @@
-const pool = require('../config/db');
-const {
-  getBookingByUserId,
-  updateStatusById,
-  getBookingSummaryByDetailId
-} = require('../models/booking.model');
-
+const pool = require("../config/db");
+const bookingModel = require("../models/booking.model");
 //func check conflict schedule book
 async function findConflictingBooking(roomId, checkIn, checkOut) {
   const { rows } = await pool.query(
@@ -51,7 +46,7 @@ const getDealDiscount = async (roomTypeId, inDate, outDate) => {
 };
 
 const getBookingInfoById = async (user_id) => {
-  return await getBookingByUserId(user_id);
+  return await bookingModel.getBookingByUserId(user_id);
 };
 
 const findById = async (bookingId) => {
@@ -64,22 +59,34 @@ const findById = async (bookingId) => {
 
 const updateBookingStatusToConfirmed = async (bookingId) => {
   try {
-    const result = await updateStatusById(bookingId, 'booked');
+    const result = await bookingModel.updateStatusById(bookingId, "booked");
     return result;
   } catch (error) {
-    console.error('❌ Lỗi khi cập nhật trạng thái booking:', error);
+    console.error("❌ Lỗi khi cập nhật trạng thái booking:", error);
     throw error;
   }
 };
 
 const getBookingSummaryById = async (bookingDetailId) => {
-  return await getBookingSummaryByDetailId(bookingDetailId);
+  return await bookingModel.getBookingSummaryByDetailId(bookingDetailId);
 };
 
 const updatePaymentStatusById = async (bookingId) => {
   const query = `UPDATE bookings SET status = 'booked' WHERE booking_id = $1`;
   const result = await pool.query(query, [bookingId]);
   return result.rowCount > 0;
+};
+
+const getBookingsForAutoCheckin = async (currentDate) => {
+  return await bookingModel.findBookingsForAutoCheckin(currentDate);
+};
+
+const getBookingsForAutoCheckout = async (currentDate) => {
+  return await bookingModel.findBookingsForAutoCheckout(currentDate);
+};
+
+const updateStatus = async (bookingId, status) => {
+  return await bookingModel.updateBookingStatus(bookingId, status);
 };
 
 module.exports = {
@@ -91,5 +98,8 @@ module.exports = {
   updateBookingStatusToConfirmed,
   findById,
   getBookingSummaryById,
-  updatePaymentStatusById
+  updatePaymentStatusById,
+  getBookingsForAutoCheckin,
+  getBookingsForAutoCheckout,
+  updateStatus,
 };

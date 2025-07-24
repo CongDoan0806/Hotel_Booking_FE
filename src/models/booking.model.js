@@ -1,6 +1,6 @@
 const pool = require("../config/db");
 
-// func to record info booking to db 
+// func to record info booking to db
 class Booking {
   static async create({ user_id, total_price }) {
     const query = `
@@ -79,14 +79,13 @@ const updateStatusById = async (bookingId, status = "booked") => {
 const updateRoomStatusByBookingId = async (bookingId, status = "booked") => {
   const roomIdsQuery = `SELECT room_id FROM booking_details WHERE booking_id = $1`;
   const roomIdsResult = await pool.query(roomIdsQuery, [bookingId]);
-  const roomIds = roomIdsResult.rows.map(row => row.room_id);
+  const roomIds = roomIdsResult.rows.map((row) => row.room_id);
 
   if (roomIds.length === 0) return;
 
   const updateQuery = `UPDATE rooms SET status = $1 WHERE room_id = ANY($2::int[])`;
   await pool.query(updateQuery, [status, roomIds]);
 };
-
 
 const getBookingSummaryByDetailId = async (booking_detail_id) => {
   const query = `
@@ -95,6 +94,7 @@ const getBookingSummaryByDetailId = async (booking_detail_id) => {
       u.last_name,
       (u.first_name || ' ' || u.last_name) AS user_name,
       u.avatar_url,
+      u.email,
       bd.check_in_date,
       rt.name AS room_type,
       (bd.check_out_date - bd.check_in_date) AS stay_days,
@@ -118,10 +118,92 @@ const getBookingSummaryByDetailId = async (booking_detail_id) => {
   return result.rows[0];
 };
 
+// Function find booking to check status
+const findBookingsForAutoCheckin = async (currentDate) => {
+  const result = await pool.query(
+    `
+    SELECT bd.booking_id
+    FROM booking_details bd
+    JOIN bookings b ON b.booking_id = bd.booking_id
+    WHERE b.status = 'booked'
+      AND bd.check_in_date = $1
+      AND (NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')::time >= '14:00:00'
+  `,
+    [currentDate]
+  );
+
+  return result.rows;
+};
+
+const findBookingsForAutoCheckout = async (currentDate) => {
+  const result = await pool.query(
+    `
+    SELECT bd.booking_id
+    FROM booking_details bd
+    JOIN bookings b ON b.booking_id = bd.booking_id
+    WHERE b.status = 'checked_in'
+      AND bd.check_out_date = $1
+      AND (NOW() AT TIME ZONE 'Asia/Ho_Chi_Minh')::time >= '12:00:00'
+  `,
+    [currentDate]
+  );
+
+  return result.rows;
+};
+
+const updateBookingStatus = async (bookingId, status) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query(
+      `UPDATE bookings SET status = $1 WHERE booking_id = $2`,
+      [status, bookingId]
+    );
+
+    const { rows } = await client.query(
+      `SELECT room_id FROM booking_details WHERE booking_id = $1`,
+      [bookingId]
+    );
+
+    if (rows.length === 0) {
+      throw new Error(`No room found for booking ID ${bookingId}`);
+    }
+
+    const roomId = rows[0].room_id;
+
+    let roomStatus = null;
+    if (status === "checked_in") {
+      roomStatus = "occupied";
+    } else if (status === "checked_out") {
+      roomStatus = "available";
+    }
+
+    if (roomStatus) {
+      await client.query(`UPDATE rooms SET status = $1 WHERE room_id = $2`, [
+        roomStatus,
+        roomId,
+      ]);
+    }
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error updating booking/room status:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   getBookingByUserId,
   updateStatusById,
   getBookingSummaryByDetailId,
   updateRoomStatusByBookingId,
+  findBookingsForAutoCheckin,
+  findBookingsForAutoCheckout,
+  updateBookingStatus,
   Booking,
 };

@@ -1,33 +1,21 @@
 const paymentService = require("../services/payment.service");
 const { success, sendError } = require("../utils/response");
+const { validatePaymentInput } = require("../validations/payment.validate");
 
 exports.handlePaymentSuccess = async (req, res) => {
   try {
-    const { booking_id, method, amount, card_name, card_number, exp_date } = req.body;
+    const { valid, data, message } = validatePaymentInput(req.body);
 
-    if (!booking_id || !amount || !method || !card_name || !card_number || !exp_date) {
-      return sendError(res, 400, "Missing required fields");
-    }
-    let formattedExpDate = exp_date;
-    if (/^(0[1-9]|1[0-2])\/\d{2}$/.test(exp_date)) {
-      const [month, year] = exp_date.split('/');
-      formattedExpDate = new Date(`20${year}-${month}-01`);
-    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(exp_date)) {
-      return sendError(res, 400, "Invalid expiration date format");
+    if (!valid) {
+      return sendError(res, 400, message);
     }
 
-    const result = await paymentService.handleSuccess({
-      booking_id,
-      method,
-      amount,
-      card_name,
-      card_number,
-      exp_date: formattedExpDate,
-    });
+    const result = await paymentService.handleSuccess(data);
 
     if (!result) {
-      return sendError(res,res, result.message, "Booking not found or update failed");
+      return sendError(res, 400, "Booking not found or update failed");
     }
+
     return success(res, null, "Payment processed successfully");
   } catch (err) {
     console.error("[Payment Error]", err);

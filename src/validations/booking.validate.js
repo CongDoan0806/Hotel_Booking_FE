@@ -23,7 +23,7 @@ async function validateBookingInput({ roomId, checkInDate, checkOutDate, totalGu
   if (!isFree) errors.push('Room is unavailable for the selected dates');
 
   return errors;
-}
+}   
 
 const bookingIdParamSchema = Joi.object({
   booking_id: Joi.number().integer().positive().required()
