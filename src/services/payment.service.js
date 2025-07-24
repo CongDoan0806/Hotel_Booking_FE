@@ -12,9 +12,7 @@ const handleSuccess = async ({
   exp_date,
 }) => {
   const booking = await bookingRepo.findById(booking_id);
-  if (!booking) {
-    throw new Error("Booking not found");
-  }
+  if (!booking) throw new Error("Booking not found");
 
   await updateStatusById(booking_id, "confirmed");
   await bookingRepo.updatePaymentStatusById(booking_id, "paid");
