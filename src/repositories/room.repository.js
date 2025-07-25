@@ -27,7 +27,7 @@ const roomRepository = {
     );
 
     const rooms = result.rows;
-    const roomIds = rooms.map((r) => r.id);
+    const roomIds = rooms.map((r) => r.room_id);
 
     const amenities = await pool.query(
       `
@@ -59,8 +59,8 @@ const roomRepository = {
     const fullRooms = rooms.map((room) => ({
       ...room,
       price: (room.room_type_price || 0) + (room.room_level_price || 0),
-      amenities: amenitiesMap[room.id] || [],
-      images: imagesMap[room.id] || [],
+      amenities: amenitiesMap[room.room_id] || [],
+      images: imagesMap[room.room_id] || [],
     }));
 
     return {
