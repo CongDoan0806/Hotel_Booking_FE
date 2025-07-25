@@ -89,7 +89,9 @@ const getBookingsForAutoCheckout = async (currentDate) => {
 const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
-
+const autoDeleteExpiredBookingsService = async () => {
+  return await bookingModel.deleteExpiredPendingBookings();
+};
 module.exports = {
   createBooking,
   createBookingDetail,
@@ -102,4 +104,5 @@ module.exports = {
   getBookingsForAutoCheckin,
   getBookingsForAutoCheckout,
   updateStatus,
+  autoDeleteExpiredBookingsService
 };

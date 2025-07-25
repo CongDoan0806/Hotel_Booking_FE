@@ -168,6 +168,10 @@ const autoUpdateCheckoutStatus = async () => {
   return bookings.length;
 };
 
+const autoDeleteExpiredBookingsService = async () => {
+  return await bookingRepo.autoDeleteExpiredBookingsService();
+};
+
 module.exports = {
   createBookingWithDetails,
   getBookingDetailsByUserId,
@@ -175,4 +179,5 @@ module.exports = {
   getBookingSummaryDetailService,
   autoUpdateCheckinStatus,
   autoUpdateCheckoutStatus,
+  autoDeleteExpiredBookingsService,
 };

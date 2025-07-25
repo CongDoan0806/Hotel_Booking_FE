@@ -92,11 +92,22 @@ const handleAutoUpdateStatus = async (req, res) => {
   }
 };
 
+const handleAutoDeleteExpiredBookings = async (req, res) => {
+  try {
+    const deleted = await bookingService.autoDeleteExpiredBookingsService();
+    return success(res, { deleted }, `Đã xoá ${deleted} booking quá hạn.`);
+  } catch (err) {
+    console.error(err);
+    return sendError(res, 500, 'Lỗi khi xoá booking quá hạn');
+  }
+};
+
 module.exports = {
   createBooking,
   createBooking,
   getBookingDetailsByUserIdController,
   confirmBookingController,
   getBookingSummaryDetailController,
-  handleAutoUpdateStatus
+  handleAutoUpdateStatus,
+  handleAutoDeleteExpiredBookings
 };
