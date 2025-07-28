@@ -9,7 +9,9 @@ const { getCheckinGuestsRepo,
   getGuestListRepo, 
   countGuestListRepo, 
   getUserListRepo,
-  updateUserStatusRepo} = require('../repositories/admin.repository');
+  updateUserStatusRepo,
+getRateRepo,
+countRateRepo} = require('../repositories/admin.repository');
 const { all } = require('../routes/admin.routes');
 
 const groupGuestsByUser = (rawData) => {
@@ -185,6 +187,30 @@ const updateUserStatusService = async (user_id, status) => {
   return await updateUserStatusRepo(user_id, status);
 }
 
+
+const getRateService = async (page = 1, perPage = 10) => {
+  const offset = (page - 1) * perPage;
+
+  const [rate, totalItems] = await Promise.all([
+    getRateRepo(perPage, offset),
+    countRateRepo(),
+  ]);
+
+  const totalPages = Math.ceil(totalItems / perPage);
+
+  return {
+    rate,
+    pagination: {
+      currentPage: page,
+      perPage,
+      totalPages,
+      totalItems,
+    },
+  };
+};
+
+
+
 module.exports = {
   getUserlistService,
   getCheckinGuestsService,
@@ -195,5 +221,6 @@ module.exports = {
   getHotelFeedbackService,
   getTop5MostBookedRoomsService,
   getGuestListService,
-  updateUserStatusService
+  updateUserStatusService,
+  getRateService
 };
