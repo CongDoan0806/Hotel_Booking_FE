@@ -159,18 +159,22 @@ const getAdminDashboardStatusModel = async () => {
 const getGuestListModel = async (limit, offset) => {
   const query = `
     SELECT 
-      user_id AS guest_number,
-      name,
-      email,
-      phone,
-      address,
-      CASE 
-        WHEN status = 'active' THEN 'Active'
-        ELSE 'Blocked'
-      END AS status
-    FROM users
-    ORDER BY user_id
-    LIMIT $1 OFFSET $2;
+    u.user_id AS guest_number,
+    u.name,
+    u.email,
+    u.phone,
+    CASE 
+      WHEN u.status = 'active' THEN 'Active'
+      ELSE 'Blocked'
+    END AS status,
+    COUNT(bd.booking_detail_id) AS booking_count
+  FROM users u
+  LEFT JOIN bookings b ON u.user_id = b.user_id
+  LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
+  GROUP BY u.user_id, u.name, u.email, u.phone, u.status
+  ORDER BY u.user_id
+  LIMIT $1 OFFSET $2;
+
   `;
   const result = await pool.query(query, [limit, offset]);
   return result.rows;
@@ -186,6 +190,29 @@ const updateUserStatusModel = async (user_id, status) => {
   await pool.query(query, [status.toLowerCase(), user_id]);
 };
 
+const getRateModel = async () => {
+  const query = `
+    SELECT 
+      rt.name AS room_type_name,
+      rt.price AS original_price,
+      COUNT(DISTINCT r.room_id) AS total_rooms,
+      COUNT(DISTINCT bd.booking_detail_id) AS occupied_rooms,
+      COALESCE(SUM(bd.price_per_unit), 0) AS total_revenue
+    FROM room_types rt
+    LEFT JOIN rooms r ON r.room_type_id = rt.room_type_id
+    LEFT JOIN booking_details bd ON bd.room_id = r.room_id
+    GROUP BY rt.room_type_id, rt.name, rt.price
+    ORDER BY rt.name
+  `;
+  const result = await pool.query(query);
+  return result.rows;
+};
+
+const countRateModel = async () => {
+  const query = `SELECT COUNT(*) FROM room_types;`;
+  const result = await pool.query(query);
+  return parseInt(result.rows[0].count, 10);
+};
   module.exports = {
   getUserListModel,
   getCheckinGuestsModel,
@@ -197,5 +224,7 @@ const updateUserStatusModel = async (user_id, status) => {
   getHotelFeedbackModel,
   getGuestListModel,
   countGuestListModel,
-  updateUserStatusModel
+  updateUserStatusModel,
+  getRateModel,
+  countRateModel
 };
