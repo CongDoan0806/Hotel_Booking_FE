@@ -10,16 +10,16 @@ const Room = {
 
   create: async (roomData, client) => {
     const query = `
-      INSERT INTO rooms (name, status, price, description, room_type_id, floor_id)
+      INSERT INTO rooms (name, status, description, room_type_id, room_level_id, floor_id)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING room_id
     `;
     const values = [
       roomData.name,
       roomData.status || "available",
-      roomData.price,
       roomData.description,
       roomData.room_type_id,
+      roomData.room_level_id,
       roomData.floor_id,
     ];
     const result = await client.query(query, values);
@@ -27,7 +27,10 @@ const Room = {
   },
 
   insertRoomImage: async (roomId, imageUrl, client) => {
-    const query = `INSERT INTO room_images (room_id, image_url) VALUES ($1, $2)`;
+    const query = `
+      INSERT INTO room_images (room_id, image_url, uploaded_at)
+      VALUES ($1, $2, NOW())
+    `;
     await client.query(query, [roomId, imageUrl]);
   },
 
@@ -36,16 +39,26 @@ const Room = {
       typeof amenityNameOrObj === "string"
         ? amenityNameOrObj
         : amenityNameOrObj.name;
+
+    // Kiểm tra tiện ích đã tồn tại chưa
     let query = `SELECT amenity_id FROM amenities WHERE name = $1`;
     let result = await client.query(query, [name]);
     let amenityId;
+
     if (result.rows.length > 0) {
       amenityId = result.rows[0].amenity_id;
     } else {
-      query = `INSERT INTO amenities (name) VALUES ($1) RETURNING amenity_id`;
+      // Nếu chưa có, thêm mới (giả sử không có icon => để null)
+      query = `
+        INSERT INTO amenities (name, icon, created_at)
+        VALUES ($1, NULL, NOW())
+        RETURNING amenity_id
+      `;
       result = await client.query(query, [name]);
       amenityId = result.rows[0].amenity_id;
     }
+
+    // Thêm vào bảng liên kết
     await client.query(
       `INSERT INTO room_amenities (room_id, amenity_id) VALUES ($1, $2)`,
       [roomId, amenityId]
@@ -59,24 +72,23 @@ const Room = {
     `;
     await client.query(query, [roomId, amenityId]);
   },
+
   update: async (roomId, roomData, client) => {
     const query = `
       UPDATE rooms SET 
         name = $1, 
         description = $2, 
-        price = $3, 
-        status = $4, 
-        room_type_id = $5,
-        room_level_id = $6,
-        floor_id = $7
-      WHERE room_id = $8
+        status = $3, 
+        room_type_id = $4,
+        room_level_id = $5,
+        floor_id = $6
+      WHERE room_id = $7
       RETURNING *
     `;
 
     const values = [
       roomData.name,
       roomData.description,
-      roomData.price,
       roomData.status,
       roomData.room_type_id,
       roomData.room_level_id,
