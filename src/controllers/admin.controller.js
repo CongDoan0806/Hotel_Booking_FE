@@ -7,7 +7,8 @@ const { getUserlistService,
   getTop5MostBookedRoomsService,
   getHotelFeedbackService,
   getGuestListService,
-  updateUserStatusService} = require('../services/admin.service');
+  updateUserStatusService,
+getRateService} = require('../services/admin.service');
 const { success, sendError } = require('../utils/response');
 
 const getUserListController = async (req, res) => {
@@ -124,6 +125,19 @@ const updateUserStatusController = async (req, res) => {
     return sendError(res, 500, "Failed to update user status")
   }
 }
+
+const getRateController = async (req, res) => {
+  try {
+    const { page = 1, perPage = 10 } = req.query;
+
+    const data = await getRateService(Number(page), Number(perPage));
+
+    return success(res, data, "Get rate successfully")
+  } catch (error) {
+    console.error("Error fetching rate:", error);
+    return sendError(res, 500, "Failed to fetch rate data")
+  }
+};
 module.exports = {
   getUserListController,
   getCheckinGuestsController,
@@ -134,5 +148,6 @@ module.exports = {
   getTop5MostBookedRoomsController,
   getHotelFeedbackController,
   getGuestListController,
-  updateUserStatusController
+  updateUserStatusController,
+  getRateController
 };
