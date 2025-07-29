@@ -37,7 +37,7 @@ const getDealDiscount = async (roomTypeId, inDate, outDate) => {
   const { rows } = await pool.query(
     `SELECT discount_rate
      FROM deals
-     WHERE room_type = $1
+     WHERE deal_id = $1
        AND ($2, $3) OVERLAPS (start_date, end_date)
        AND status = 'Ongoing'
      LIMIT 1`,

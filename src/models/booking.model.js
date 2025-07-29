@@ -52,14 +52,14 @@ const getBookingByUserId = async (user_id) => {
   (rt.price + rl.price) AS total_price,
 
   -- Giá đã áp dụng deal từ room_type
-ROUND(((rt.price + rl.price) * (1 - COALESCE(d.discount_rate, 0) / 100))::numeric, 2) AS discounted_unit_price
+ROUND(((rt.price + rl.price) * (1 - COALESCE(d.discount_rate, 0)))::numeric, 2) AS discounted_unit_price
 
 FROM bookings b
 JOIN booking_details bd ON b.booking_id = bd.booking_id
 LEFT JOIN rooms r ON bd.room_id = r.room_id
 LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
 LEFT JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-LEFT JOIN deals d ON d.room_type = rt.room_type_id
+LEFT JOIN deals d ON d.deal_id = r.deal_id
 
 WHERE b.user_id = $1
 ORDER BY b.booking_id DESC;

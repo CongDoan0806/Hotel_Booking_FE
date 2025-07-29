@@ -14,7 +14,7 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
   if (nights <= 0) throw new Error("Invalid date range");
 
   const discount = await bookingRepo.getDealDiscount(
-    room.room_type_id,
+    room.deal_id,
     checkIn,
     checkOut
   );

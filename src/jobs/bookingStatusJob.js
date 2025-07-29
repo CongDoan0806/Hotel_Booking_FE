@@ -2,7 +2,7 @@ const cron = require("node-cron");
 const bookingService = require("../services/booking.service");
 const dayjs = require("../utils/dayjs");
 
-cron.schedule("*/10 * * * * *", async () => {
+cron.schedule("*/10 * * * *", async () => {
   const now = dayjs();
   const today = now.format("YYYY-MM-DD");
   const time = now.format("HH:mm:ss");
