@@ -43,9 +43,17 @@ const updateUser = async (req, res) => {
       is_active,
     } = req.body;
 
-    let avatar_url = null;
+    const currentUser = await userService.getUserById(userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    let avatar_url = currentUser.avatar_url;
+
     if (req.file) {
       avatar_url = `/uploads/avatars/${req.file.filename}`;
+    } else if (req.body.avatar_url) {
+      avatar_url = req.body.avatar_url;
     }
 
     const userData = {
@@ -58,17 +66,10 @@ const updateUser = async (req, res) => {
       address,
       role,
       is_active,
+      avatar_url,
     };
 
-    if (avatar_url) {
-      userData.avatar_url = avatar_url;
-    }
-
-    const updated = await userService.updateUser(userId, userData);
-
-    if (!updated) {
-      return res.status(404).json({ message: "User not found or not updated" });
-    }
+    await userService.updateUser(userId, userData);
 
     const updatedUser = await userService.getUserById(userId);
 
@@ -81,6 +82,7 @@ const updateUser = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 module.exports = {
   getUser,
