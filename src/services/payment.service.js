@@ -5,6 +5,8 @@ const {
   updateRoomStatusByBookingId,
 } = require("../models/booking.model");
 const db = require("../config/db");
+const { sendBookingEmail } = require("../utils/emailService");
+
 
 const handleSuccess = async ({
   booking_id,
@@ -37,8 +39,39 @@ const handleSuccess = async ({
     method,
     paid_at: new Date(),
   });
+
+  const userBookings = await bookingRepo.getBookingInfoById(booking.user_id);
+  if (userBookings && userBookings.length > 0) {
+    const oldestBooking = userBookings[0]; 
+    console.log(oldestBooking)
+    const bookingDetails = oldestBooking.booking_details[oldestBooking.booking_details.length-1];
+    const user = {
+      email: booking.user_email, 
+      name: booking.user_name || 'Guest',
+    };
+    const room = {
+      room_type_name: bookingDetails.room_type,
+      room_level_name: bookingDetails.room_level,
+    };
+    const nights = oldestBooking.nights;
+    const total_price = oldestBooking.total_discounted_price || oldestBooking.total_price;
+
+    await sendBookingEmail({
+      user,
+      booking: {
+        booking_id: oldestBooking.booking_id.toString(),
+        check_in_date: oldestBooking.check_in_date,
+        check_out_date: oldestBooking.check_out_date,
+      },
+      room,
+      total_price,
+      nights,
+    });
+  }
+
   return paymentRecord;
 };
+
 
 const getPaymentByBookingId = async (booking_id) => {
   const { rows } = await db.query(

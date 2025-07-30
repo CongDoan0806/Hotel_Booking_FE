@@ -25,6 +25,7 @@ const getBookingByUserId = async (user_id) => {
     SELECT
   b.booking_id,
   b.user_id,
+
   b.total_price AS total_price,
   b.status AS booking_status,
 

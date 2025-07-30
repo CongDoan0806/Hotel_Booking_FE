@@ -395,6 +395,7 @@ const roomRepository = {
    SELECT
   r.room_id,
   r.description,
+  r.name,
   (rl.price + rt.price) AS price,
   rl.price AS room_level_price,
   rl.name AS room_level, -- Lấy tên cấp độ phòng (room_level)
