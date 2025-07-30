@@ -247,3 +247,164 @@ INSERT INTO feedbacks (booking_details_id, rating, comment, created_at) VALUES
 (10, 3, 'Ổn áp, nhưng thiếu khăn tắm.', '2025-07-20');
 
 
+--update rooms_description
+
+UPDATE rooms
+SET description = 'Room 1011 is a spacious double room featuring large windows that provide ample natural light and a stunning view of the city skyline. Designed with comfort in mind, it includes two cozy beds, a writing desk, and a comfortable seating area. Guests can enjoy modern amenities such as a flat-screen TV, free Wi-Fi, and a mini-bar. The room is perfect for couples or friends traveling together, offering a relaxing retreat after a day of exploring the local attractions. With a stylish decor and warm colors, Room 1011 ensures a pleasant stay for all guests.'
+WHERE room_id = 11;
+
+UPDATE rooms
+SET description = 'Room 1012 offers a delightful experience with its elegant decor and inviting atmosphere. This double room is equipped with two plush beds, ensuring a restful night’s sleep. It features a spacious layout with a desk for work or study, and a seating area for relaxation. Guests can enjoy a variety of amenities, including a mini-fridge, coffee maker, and complimentary high-speed internet. The large windows overlook the garden, providing a serene view that enhances the overall ambiance of the room.'
+WHERE room_id = 12;
+
+UPDATE rooms
+SET description = 'Room 1013 is designed for comfort and relaxation, featuring two comfortable beds and a stylish interior. This double room includes all the essential amenities, such as a large flat-screen TV, a writing desk, and a cozy armchair. Guests can enjoy the convenience of a mini-bar stocked with refreshments and complimentary Wi-Fi access. The room’s decor combines modern elements with a touch of warmth, creating a welcoming environment for both leisure and business travelers.'
+WHERE room_id = 13;
+
+UPDATE rooms
+SET description = 'Room 1014 is a beautifully appointed double room that offers a mix of style and comfort. With two spacious beds, it is perfect for friends or family traveling together. The room includes a work desk, a seating area, and a variety of modern amenities to enhance your stay. Enjoy the stunning views from the large windows, and take advantage of the complimentary Wi-Fi and in-room dining services. This room provides a perfect retreat after a busy day in the city.'
+WHERE room_id = 14;
+
+UPDATE rooms
+SET description = 'Room 1015 features a contemporary design with two comfortable beds, ideal for travelers seeking relaxation. The room is equipped with a desk, a flat-screen TV, and a mini-fridge for convenience. Natural light floods the space through large windows that offer a picturesque view of the surroundings. Guests will appreciate the thoughtful touches, including complimentary toiletries and high-speed internet, ensuring a pleasant and enjoyable stay.'
+WHERE room_id = 15;
+
+UPDATE rooms
+SET description = 'Room 1016 is an inviting double room that combines comfort and functionality. Furnished with two cozy beds, it is well-suited for both leisure and business travelers. The room features a writing desk, a comfortable seating area, and a range of amenities including a mini-bar and free Wi-Fi. Guests can unwind and enjoy the view from the large windows, making this room a perfect choice for a relaxing getaway.'
+WHERE room_id = 16;
+
+UPDATE rooms
+SET description = 'Room 1017 is a charming double room that offers a tranquil ambiance for guests. With two well-appointed beds, it provides a restful escape after a long day. The room is equipped with a desk, a flat-screen TV, and a mini-fridge for added convenience. Large windows allow plenty of natural light to fill the space, creating a warm and inviting atmosphere. Enjoy complimentary Wi-Fi access and a variety of in-room amenities to enhance your stay.'
+WHERE room_id = 17;
+
+UPDATE rooms
+SET description = 'Room 1018 is a lovely double room that emphasizes comfort and relaxation. Featuring two spacious beds, it is perfect for friends or couples traveling together. The room includes a desk for work, a cozy seating area, and modern amenities such as a flat-screen TV and complimentary Wi-Fi. Guests can enjoy the beautiful view from the windows, making this room an ideal choice for a peaceful retreat in the heart of the city.'
+WHERE room_id = 18;
+
+UPDATE rooms
+SET description = 'Room 1019 is a luxurious suite designed for guests seeking an elevated experience. Featuring high-end furnishings and a spacious layout, this suite includes a comfortable king-size bed, a sitting area, and a large desk for work. Modern amenities such as a mini-bar, coffee maker, and high-speed internet ensure a convenient stay. Guests can take in stunning views from the large windows, creating a perfect backdrop for relaxation and enjoyment.'
+WHERE room_id = 19;
+
+UPDATE rooms
+SET description = 'Room 1020 is an exquisite suite that offers a blend of luxury and comfort. With elegant decor and a spacious floor plan, this room includes a king-size bed, a cozy seating area, and a work desk. Guests can enjoy a range of amenities, including a flat-screen TV, mini-bar, and complimentary Wi-Fi. The large windows provide breathtaking views of the city, enhancing the overall experience for those looking to indulge in a lavish stay.'
+WHERE room_id = 20;
+
+UPDATE rooms
+SET description = 'Room 2001 is a luxurious suite that promises a remarkable experience for guests. Designed with elegance and comfort in mind, it features a king-size bed, a separate living area, and a work desk. Guests can enjoy modern amenities such as a flat-screen TV, mini-bar, and high-speed internet. The room’s large windows offer stunning views of the city skyline, providing a serene atmosphere for relaxation and enjoyment.'
+WHERE room_id = 21;
+
+UPDATE rooms
+SET description = 'Room 2002 is a stylish and spacious suite that caters to guests looking for luxury and comfort. With a comfortable king-size bed and a cozy sitting area, this room is perfect for unwinding after a busy day. It features a desk for work, a flat-screen TV, and a mini-bar stocked with refreshments. The large windows provide a beautiful view, making this suite an ideal choice for a memorable stay.'
+WHERE room_id = 22;
+
+UPDATE rooms
+SET description = 'Room 1001 is a charming single room that offers a cozy atmosphere for travelers. Featuring a comfortable bed and a desk, this room is perfect for those on the go. Guests can enjoy modern amenities such as free Wi-Fi, a flat-screen TV, and a mini-fridge. Natural light fills the room from the window, creating a warm and welcoming environment for a pleasant stay.'
+WHERE room_id = 1;
+
+UPDATE rooms
+SET description = 'Room 1002 is a delightful double room that combines comfort with style. With two spacious beds, it is ideal for friends or family traveling together. The room includes a desk for work or study, a flat-screen TV, and a mini-fridge for added convenience. Guests can enjoy the lovely view from the windows, creating a relaxing atmosphere that enhances their overall experience.'
+WHERE room_id = 2;
+
+UPDATE rooms
+SET description = 'Room 1004 is a beautiful double room that emphasizes comfort and relaxation. Featuring two cozy beds, it is perfect for guests seeking a restful retreat. The room is equipped with a writing desk, a flat-screen TV, and complimentary Wi-Fi. Guests can unwind and enjoy the view from the large windows, making this room an ideal choice for a pleasant stay.'
+WHERE room_id = 4;
+
+UPDATE rooms
+SET description = 'Room 1005 is a stylish double room that offers a tranquil ambiance for guests. With two comfortable beds, it is well-suited for both leisure and business travelers. The room features a desk, a cozy seating area, and a range of amenities including a mini-bar and free Wi-Fi. Guests can enjoy the beautiful view from the windows, creating a perfect setting for relaxation.'
+WHERE room_id = 5;
+
+UPDATE rooms
+SET description = 'Room 1007 is a charming double room that combines comfort and functionality. Furnished with two cozy beds, it is ideal for travelers seeking relaxation. The room is equipped with a desk, a flat-screen TV, and a mini-fridge for convenience. Large windows allow plenty of natural light to fill the space, making this room a welcoming retreat.'
+WHERE room_id = 7;
+
+UPDATE rooms
+SET description = 'Room 1008 is a delightful double room that emphasizes comfort and style. Featuring two spacious beds, it is perfect for friends or family traveling together. The room includes a desk for work or study, a flat-screen TV, and a mini-fridge for added convenience. Guests can enjoy the lovely view from the windows, creating a relaxing atmosphere that enhances their overall experience.'
+WHERE room_id = 8;
+
+UPDATE rooms
+SET description = 'Room 1010 is a beautifully appointed double room that offers a mix of style and comfort. With two comfortable beds, it is perfect for guests seeking relaxation. The room includes a work desk, a flat-screen TV, and a variety of modern amenities to enhance your stay. Enjoy the stunning views from the large windows, making this room a perfect choice for a relaxing getaway.'
+WHERE room_id = 10;
+
+UPDATE rooms
+SET description = 'Room 1003 is a cozy double room that emphasizes comfort and relaxation. Furnished with two spacious beds, it is ideal for travelers seeking a restful retreat. The room includes a desk, a flat-screen TV, and complimentary Wi-Fi. Guests can unwind and enjoy the view from the large windows, making this room an ideal choice for a pleasant stay.'
+WHERE room_id = 3;
+
+UPDATE rooms
+SET description = 'Room 1006 is a lovely double room that combines comfort with functionality. Featuring two cozy beds, it is well-suited for both leisure and business travelers. The room is equipped with a writing desk, a flat-screen TV, and a mini-fridge for convenience. Large windows allow plenty of natural light to fill the space, creating a warm and inviting atmosphere for a pleasant stay.'
+WHERE room_id = 6;
+
+UPDATE rooms
+SET description = 'Room 1009 is a charming double room that offers a tranquil ambiance for guests. With two comfortable beds, it is perfect for friends or couples traveling together. The room includes a desk for work, a flat-screen TV, and a mini-fridge for added convenience. Guests can enjoy the beautiful view from the windows, making this room an ideal choice for a relaxing getaway.'
+WHERE room_id = 9;
+
+INSERT INTO amenities(amenity_id, name, icon)
+VALUES 
+(7,'Fitness', '/uploads/amenities/dumbbell.png'),
+(8,'Air Conditioning', '/uploads/amenities/heavy-wind.png'),
+(9,'Room Services', '/uploads/amenities/single-bed.png');
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(1, 6), (1, 7), (1, 8);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(2, 6), (2, 7), (2, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(3, 2), (3, 7), (3, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(4, 1), (4, 6), (4, 7);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(5, 4), (5, 7), (5, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(6, 3), (6, 5), (6, 6), (6, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(7, 1), (7, 4), (7, 8);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(8, 2), (8, 5), (8, 7);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(9, 3), (9, 4), (9, 6), (9, 8);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(10, 1), (10, 2), (10, 7), (10, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(11, 4), (11, 5), (11, 6), (11, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(12, 2), (12, 3), (12, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(13, 1), (13, 4), (13, 5), (13, 7);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(14, 2), (14, 3), (14, 4), (14, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(15, 1), (15, 3), (15, 6), (15, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(16, 2), (16, 4), (16, 5), (16, 7);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(17, 1), (17, 6), (17, 7), (17, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(18, 2), (18, 4), (18, 5);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(19, 3), (19, 5), (19, 6), (19, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(20, 1), (20, 2), (20, 6), (20, 7);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(21, 3), (21, 4), (21, 5), (21, 9);
+
+INSERT INTO room_amenities (room_id, amenity_id) VALUES
+(22, 1), (22, 4), (22, 6), (22, 7);
