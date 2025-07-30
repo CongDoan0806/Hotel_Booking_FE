@@ -73,7 +73,6 @@ const roomRepository = {
       },
     };
   },
-
   getById: async (id) => {
     const result = await pool.query(
       `
@@ -423,6 +422,72 @@ WHERE r.room_id = $1;
       [roomId]
     );
     return rows[0] || null;
+  },
+  getFilterOptions: async () => {
+    try {
+      const maxPeopleQuery = `
+        SELECT DISTINCT rt.max_people
+        FROM room_types rt
+        JOIN rooms r ON r.room_type_id = rt.room_type_id
+        WHERE rt.max_people IS NOT NULL
+        ORDER BY rt.max_people ASC
+      `;
+      const maxPeopleResult = await pool.query(maxPeopleQuery);
+
+      const roomLevelsQuery = `
+        SELECT DISTINCT rl.room_level_id, rl.name, rl.price
+        FROM room_levels rl
+        JOIN rooms r ON r.room_level_id = rl.room_level_id
+        ORDER BY rl.room_level_id ASC
+      `;
+      const roomLevelsResult = await pool.query(roomLevelsQuery);
+
+      const amenitiesQuery = `
+        SELECT DISTINCT a.amenity_id, a.name, a.icon
+        FROM amenities a
+        JOIN room_amenities ra ON ra.amenity_id = a.amenity_id
+        JOIN rooms r ON r.room_id = ra.room_id
+        ORDER BY a.name ASC
+      `;
+      const amenitiesResult = await pool.query(amenitiesQuery);
+
+      const floorsQuery = `
+        SELECT DISTINCT f.floor_id, f.name
+        FROM floors f
+        JOIN rooms r ON r.floor_id = f.floor_id
+        ORDER BY f.floor_id ASC
+      `;
+      const floorsResult = await pool.query(floorsQuery);
+
+      const roomTypesQuery = `
+        SELECT DISTINCT rt.room_type_id, rt.name, rt.price, rt.max_people
+        FROM room_types rt
+        JOIN rooms r ON r.room_type_id = rt.room_type_id
+        ORDER BY rt.name ASC
+      `;
+      const roomTypesResult = await pool.query(roomTypesQuery);
+
+      const priceRangeQuery = `
+        SELECT 
+          MIN(rt.price + rl.price) as min_price,
+          MAX(rt.price + rl.price) as max_price
+        FROM rooms r
+        JOIN room_types rt ON r.room_type_id = rt.room_type_id
+        JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+      `;
+      const priceRangeResult = await pool.query(priceRangeQuery);
+
+      return {
+        maxPeople: maxPeopleResult.rows.map((row) => row.max_people),
+        roomLevels: roomLevelsResult.rows,
+        amenities: amenitiesResult.rows,
+        floors: floorsResult.rows,
+        roomTypes: roomTypesResult.rows,
+        priceRange: priceRangeResult.rows[0],
+      };
+    } catch (error) {
+      throw error;
+    }
   },
 };
 
