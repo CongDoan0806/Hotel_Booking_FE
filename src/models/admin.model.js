@@ -94,7 +94,7 @@ const getAdminDashboardDealModel = async () => {
         SUM(CASE WHEN r.status IN ('booked', 'occupied') THEN 1 ELSE 0 END) AS used_rooms
       FROM room_types rt
       LEFT JOIN rooms r ON rt.room_type_id = r.room_type_id
-      LEFT JOIN deals d ON rt.room_type_id = d.room_type
+      LEFT JOIN deals d ON rt.room_type_id = d.deal_id
       GROUP BY rt.room_type_id, rt.name, rt.price
       ORDER BY rt.name;
       `;
@@ -134,23 +134,22 @@ const getHotelFeedbackModel = async () => {
   return result.rows;
 };
 
-const getTop5MostBookedRoomsModel = async () => {
+const getTop5MostBookedRoomsModel = async (month, year) => {
   const query = `
-      SELECT 
+    SELECT 
       r.room_id,
       r.name AS room_name,
       COUNT(bd.booking_detail_id) AS total_bookings
-      FROM 
-          booking_details bd
-      JOIN 
-          rooms r ON bd.room_id = r.room_id
-      GROUP BY 
-          r.room_id, r.name
-      ORDER BY 
-          total_bookings DESC
-      LIMIT 5;
-    `;
-  const { rows } = await pool.query(query);
+    FROM booking_details bd
+    JOIN rooms r ON bd.room_id = r.room_id
+    JOIN bookings b ON bd.booking_id = b.booking_id
+    WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
+      AND EXTRACT(YEAR FROM bd.check_in_date) = $2
+    GROUP BY r.room_id, r.name
+    ORDER BY total_bookings DESC
+    LIMIT 5;
+  `;
+  const { rows } = await pool.query(query, [month, year]);
   return rows;
 };
 
@@ -188,30 +187,85 @@ const updateUserStatusModel = async (user_id, status) => {
   await pool.query(query, [status.toLowerCase(), user_id]);
 };
 
-const getRateModel = async () => {
+const getRateModel = async (month, year,limit, offset) => {
   const query = `
-    SELECT 
-      rt.name AS room_type_name,
-      rt.price AS original_price,
-      COUNT(DISTINCT r.room_id) AS total_rooms,
-      COUNT(DISTINCT bd.booking_detail_id) AS occupied_rooms,
-      COALESCE(SUM(bd.price_per_unit), 0) AS total_revenue
-    FROM room_types rt
-    LEFT JOIN rooms r ON r.room_type_id = rt.room_type_id
-    LEFT JOIN booking_details bd ON bd.room_id = r.room_id
-    GROUP BY rt.room_type_id, rt.name, rt.price
-    ORDER BY rt.name
+    SELECT
+      r.room_id,
+      r.name AS room_number,
+      rt.name AS room_type,
+      rl.name AS room_level,
+      (rt.price + rl.price) AS original_price,
+      COUNT(bd.booking_detail_id) FILTER (
+        WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
+          AND EXTRACT(YEAR FROM bd.check_in_date) = $2
+      ) AS number_of_booking,
+      SUM(b.total_price) FILTER (
+        WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
+          AND EXTRACT(YEAR FROM bd.check_in_date) = $2
+      ) AS total_revenue
+  FROM rooms r
+  JOIN room_types rt ON r.room_type_id = rt.room_type_id
+  JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+  LEFT JOIN booking_details bd ON bd.room_id = r.room_id
+  LEFT JOIN bookings b ON b.booking_id = bd.booking_id
+  GROUP BY r.room_id, r.name, rt.name, rl.name, rt.price, rl.price
+  ORDER BY number_of_booking DESC
+  LIMIT $3 OFFSET $4;
+
   `;
-  const result = await pool.query(query);
+  const result = await pool.query(query, [limit, offset, month, year]);
   return result.rows;
 };
 
-const countRateModel = async () => {
-  const query = `SELECT COUNT(*) FROM room_types;`;
-  const result = await pool.query(query);
-  return parseInt(result.rows[0].count, 10);
+const getBestSellerRoomModel = async (month, year) => {
+  const query = `
+    SELECT
+      r.name AS room_number,
+      rt.name AS room_type,
+      rl.name AS room_level,
+      (rt.price + rl.price) AS original_price,
+      COUNT(bd.booking_detail_id) AS number_of_booking,
+      SUM(b.total_price) AS total_revenue
+    FROM rooms r
+    JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+    LEFT JOIN booking_details bd ON bd.room_id = r.room_id
+    LEFT JOIN bookings b ON b.booking_id = bd.booking_id
+    WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
+      AND EXTRACT(YEAR FROM bd.check_in_date) = $2
+    GROUP BY r.room_id, r.name, rt.name, rl.name, rt.price, rl.price
+    ORDER BY COUNT(bd.booking_detail_id) DESC
+    LIMIT 1;
+  `;
+  const result = await pool.query(query, [month, year]);
+  return result.rows[0] || null;
 };
-  module.exports = {
+
+const getTotalRevenueModel = async (month, year) => {
+  const query = `
+    SELECT
+      COALESCE(SUM(b.total_price), 0) AS total_revenue
+    FROM booking_details bd
+    JOIN bookings b ON b.booking_id = bd.booking_id
+    WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
+      AND EXTRACT(YEAR FROM bd.check_in_date) = $2
+  `;
+
+  const result = await pool.query(query, [month, year]);
+  return result.rows[0].total_revenue;
+};
+
+
+const totalRoomModel = async () => {
+  const query = `
+    SELECT COUNT(DISTINCT r.room_id) AS total
+    FROM rooms r
+    LEFT JOIN booking_details bd ON bd.room_id = r.room_id
+  `;
+  const result = await pool.query(query);
+  return parseInt(result.rows[0].total);
+};
+module.exports = {
   getUserListModel,
   getCheckinGuestsModel,
   getCheckoutGuestsModel,
@@ -224,5 +278,7 @@ const countRateModel = async () => {
   countGuestListModel,
   updateUserStatusModel,
   getRateModel,
-  countRateModel
+  getTotalRevenueModel,
+  getBestSellerRoomModel,
+  totalRoomModel
 };
