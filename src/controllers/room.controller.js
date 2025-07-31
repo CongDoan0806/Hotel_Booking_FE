@@ -2,7 +2,7 @@ const roomService = require("../services/room.service");
 const response = require("../utils/response");
 
 const roomController = {
-  getAllRooms: async (req, res, next) => {
+  getAllRooms: async (req, res) => {
     try {
       const page = parseInt(req.query.page, 10) || 1;
       const perPage = parseInt(req.query.perPage, 10) || 10;
@@ -16,7 +16,11 @@ const roomController = {
         pagination: result.pagination,
       });
     } catch (err) {
-      return response.sendError(res, 500, err.message);
+      console.error("[getAllRooms] Error:", err.message);
+      return res.status(500).json({
+        status: "error",
+        message: err.message,
+      });
     }
   },
   getRoomById: async (req, res, next) => {
@@ -87,35 +91,47 @@ const roomController = {
   },
 
   filterRooms: async (req, res, next) => {
-      try {
-          const filters = {
-              min_price: req.query.min_price ? parseFloat(req.query.min_price) : undefined,
-              max_price: req.query.max_price ? parseFloat(req.query.max_price) : undefined,
-              room_type: req.query.room_type ? parseInt(req.query.room_type) : undefined,
-              people: req.query.people ? parseInt(req.query.people) : undefined,
-              check_in_date: req.query.check_in_date || undefined,
-              check_out_date: req.query.check_out_date || undefined,
-              amenities: req.query.amenities || undefined,
-              has_deal: req.query.has_deal || undefined,
-              status: req.query.status || undefined,
-              room_level: req.query.room_level ? parseInt(req.query.room_level) : undefined,
-              floor: req.query.floor ? parseInt(req.query.floor) : undefined,
-          };
+    try {
+      const filters = {
+        min_price: req.query.min_price
+          ? parseFloat(req.query.min_price)
+          : undefined,
+        max_price: req.query.max_price
+          ? parseFloat(req.query.max_price)
+          : undefined,
+        room_type: req.query.room_type
+          ? parseInt(req.query.room_type)
+          : undefined,
+        people: req.query.people ? parseInt(req.query.people) : undefined,
+        check_in_date: req.query.check_in_date || undefined,
+        check_out_date: req.query.check_out_date || undefined,
+        amenities: req.query.amenities || undefined,
+        has_deal: req.query.has_deal || undefined,
+        status: req.query.status || undefined,
+        room_level: req.query.room_level
+          ? parseInt(req.query.room_level)
+          : undefined,
+        floor: req.query.floor ? parseInt(req.query.floor) : undefined,
+      };
 
-          const rooms = await roomService.getFilteredRooms(filters);
+      const rooms = await roomService.getFilteredRooms(filters);
 
-          const roomsWithDeals = rooms.map(room => ({
-              ...room,
-              deal_title: room.deal ? room.deal.title : null, // Thêm tên deal
-              deal_discount_rate: room.deal ? room.deal.discount_rate : null // Thêm tỷ lệ giảm giá
-          }));
+      const roomsWithDeals = rooms.map((room) => ({
+        ...room,
+        deal_title: room.deal ? room.deal.title : null, // Thêm tên deal
+        deal_discount_rate: room.deal ? room.deal.discount_rate : null, // Thêm tỷ lệ giảm giá
+      }));
 
-          const hasDeals = roomsWithDeals.some(room => room.deal_title !== null);
+      const hasDeals = roomsWithDeals.some((room) => room.deal_title !== null);
 
-          return response.success(res, { rooms: roomsWithDeals, hasDeals }, "Filtered rooms");
-      } catch (error) {
-          return response.sendError(res, 500, error.message);
-      }
+      return response.success(
+        res,
+        { rooms: roomsWithDeals, hasDeals },
+        "Filtered rooms"
+      );
+    } catch (error) {
+      return response.sendError(res, 500, error.message);
+    }
   },
   getRoomDetail: async (req, res, next) => {
     try {
@@ -128,6 +144,19 @@ const roomController = {
 
       return response.success(res, room, "Room details fetched successfully");
     } catch (err) {
+      return response.sendError(res, 500, err.message);
+    }
+  },
+  getFilterOptions: async (req, res, next) => {
+    try {
+      const filterOptions = await roomService.getFilterOptions();
+      return response.success(
+        res,
+        filterOptions,
+        "Filter options fetched successfully"
+      );
+    } catch (err) {
+      console.error("[getFilterOptions] Error:", err.message);
       return response.sendError(res, 500, err.message);
     }
   },

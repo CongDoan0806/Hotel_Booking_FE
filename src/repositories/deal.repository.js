@@ -4,14 +4,8 @@ const dealsRepository = {
   getActiveDeals: async function() {
     const { rows } = await pool.query(`
       SELECT * FROM deals
-      WHERE start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE
+      WHERE status = 'Ongoing';
     `);
-    return rows;
-  },
-
-  getDealByRoomType: async function(room_type) {
-    const { rows } = await pool.query(`
-      SELECT * FROM deals WHERE room_type = $1`, [room_type]);
     return rows;
   },
 
@@ -21,52 +15,62 @@ const dealsRepository = {
     return rows;
   },
 
-  createDeal: async function({ deal_name, room_type, discount_rate, start_date, end_date }) {
-      const overlappingDeals = await pool.query(`
-        SELECT * FROM deals
-        WHERE room_type = $1 AND (
-          (start_date <= $2 AND end_date >= $2) OR
-          (start_date <= $3 AND end_date >= $3) OR
-          (start_date >= $2 AND end_date <= $3)
-        )`, [room_type, start_date, end_date]);
+  createDeal: async function({ deal_name, discount_rate, start_date, end_date }) {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+    end.setHours(23, 59, 59, 999);
 
-      if (overlappingDeals.rows.length > 0) {
-          throw new Error("There is already a deal for this room type that overlaps with the provided dates.");
-      }
+    this.validateDeal({ start_date: start, end_date: end });
 
-      this.validateDeal({ start_date, end_date });
+    const currentDate = new Date();
+    let status;
 
-      let status;
-      const currentDate = new Date();
+    if (currentDate < start) {
+      status = 'New';
+    } else if (currentDate >= start && currentDate <= end) {
+      status = 'Ongoing';
+    } else {
+      status = 'Finished';
+    }
 
-      if (currentDate < new Date(start_date)) {
-        status = 'New';
-      } else if (currentDate >= new Date(start_date) && currentDate <= new Date(end_date)) {
-        status = 'Ongoing';
-      } else {
-        status = 'Finished';
-      }
+    const { rows } = await pool.query(`
+      INSERT INTO deals (deal_name, discount_rate, start_date, end_date, status)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *`,
+      [deal_name, discount_rate, start, end, status]
+    );
 
-      const { rows } = await pool.query(`
-        INSERT INTO deals (deal_name, room_type, discount_rate, start_date, end_date, status)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *`,
-        [deal_name, room_type, discount_rate, start_date, end_date, status]
-      );
-
-      return rows[0];
+    return rows[0];
   },
 
-  updateDeal: async function(id, { deal_name, room_type, discount_rate, start_date, end_date }) {
+  updateDeal: async function(id, { deal_name, discount_rate, start_date, end_date }) {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+    end.setHours(23, 59, 59, 999);
     this.validateDeal({ start_date, end_date });
+    const currentDate = new Date();
+    let status;
+
+    if (currentDate < start) {
+      status = 'New';
+    } else if (currentDate >= start && currentDate <= end) {
+      status = 'Ongoing';
+    } else {
+      status = 'Finished';
+    }
 
     const { rows } = await pool.query(`
       UPDATE deals
-      SET deal_name = $1, room_type = $2, discount_rate = $3, start_date = $4, end_date = $5
+      SET deal_name = $1,
+          discount_rate = $2,
+          start_date = $3,
+          end_date = $4,
+          status = $5
       WHERE deal_id = $6
       RETURNING *`,
-      [deal_name, room_type, discount_rate, start_date, end_date, id]
+      [deal_name, discount_rate, start, end, status, id]
     );
+
     return rows[0];
   },
 
@@ -78,10 +82,14 @@ const dealsRepository = {
   validateDeal: function({ start_date, end_date }) {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
-    if (new Date(start_date) < currentDate) {
+
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+
+    if (start < currentDate) {
       throw new Error("Start date must not be in the past.");
     }
-    if (new Date(end_date) < new Date(start_date)) {
+    if (end < start) {
       throw new Error("End date must be after start date.");
     }
   },

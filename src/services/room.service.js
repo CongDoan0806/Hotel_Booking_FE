@@ -46,6 +46,14 @@ const roomService = {
     }
     return deletedRoom;
   },
+  getFilterOptions: async () => {
+    try {
+      const filterOptions = await roomRepository.getFilterOptions();
+      return filterOptions;
+    } catch (error) {
+      throw new Error(`Failed to get filter options: ${error.message}`);
+    }
+  },
 };
 
 module.exports = roomService;
