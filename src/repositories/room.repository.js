@@ -27,7 +27,7 @@ const roomRepository = {
     );
 
     const rooms = result.rows;
-    const roomIds = rooms.map((r) => r.room_id);
+    const roomIds = rooms.map((r) => r.id);
 
     const amenities = await pool.query(
       `
@@ -59,8 +59,8 @@ const roomRepository = {
     const fullRooms = rooms.map((room) => ({
       ...room,
       price: (room.room_type_price || 0) + (room.room_level_price || 0),
-      amenities: amenitiesMap[room.room_id] || [],
-      images: imagesMap[room.room_id] || [],
+      amenities: amenitiesMap[room.id] || [],
+      images: imagesMap[room.id] || [],
     }));
 
     return {
@@ -73,6 +73,7 @@ const roomRepository = {
       },
     };
   },
+
   getById: async (id) => {
     const result = await pool.query(
       `
@@ -298,13 +299,15 @@ const roomRepository = {
       const basePrice = parseFloat(room.base_price || 0);
       const levelPrice = parseFloat(room.level_price || 0);
       const totalPrice = basePrice + levelPrice;
+      const finalPrice = room.deal_discount_rate
+        ? totalPrice * (1 - room.deal_discount_rate)
+        : totalPrice;
 
       const deal = room.deal_name
         ? {
             deal_id: room.deal_id,
             deal_name: room.deal_name,
             discount_rate: room.deal_discount_rate,
-            final_price: totalPrice * (1 - room.deal_discount_rate / 100),
           }
         : null;
 
@@ -313,6 +316,7 @@ const roomRepository = {
         name: room.name,
         description: room.description,
         price: totalPrice,
+        final_price: finalPrice,
         status: room.status,
         roomType: room.room_type_name,
         room_type_id: room.room_type_id,
