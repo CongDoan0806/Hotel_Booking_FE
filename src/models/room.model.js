@@ -40,25 +40,12 @@ const Room = {
         ? amenityNameOrObj
         : amenityNameOrObj.name;
 
-    // Kiểm tra tiện ích đã tồn tại chưa
-    let query = `SELECT amenity_id FROM amenities WHERE name = $1`;
-    let result = await client.query(query, [name]);
-    let amenityId;
-
-    if (result.rows.length > 0) {
-      amenityId = result.rows[0].amenity_id;
-    } else {
-      // Nếu chưa có, thêm mới (giả sử không có icon => để null)
-      query = `
-        INSERT INTO amenities (name, icon, created_at)
-        VALUES ($1, NULL, NOW())
-        RETURNING amenity_id
-      `;
-      result = await client.query(query, [name]);
-      amenityId = result.rows[0].amenity_id;
+    const query = `SELECT amenity_id FROM amenities WHERE name = $1`;
+    const result = await client.query(query, [name]);
+    if (result.rows.length === 0) {
+      return;
     }
-
-    // Thêm vào bảng liên kết
+    const amenityId = result.rows[0].amenity_id;
     await client.query(
       `INSERT INTO room_amenities (room_id, amenity_id) VALUES ($1, $2)`,
       [roomId, amenityId]

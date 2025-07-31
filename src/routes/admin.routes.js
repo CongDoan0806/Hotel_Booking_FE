@@ -26,14 +26,14 @@ router.get("/admin/rooms/", roomController.getAllRooms);
 router.get("/admin/rooms/:id", validateRoomId, roomController.getRoomById);
 router.post(
   "/admin/rooms/",
-  validateRoom,
+  // validateRoom,
   upload.multiImages,
   roomController.createRoom
 );
 router.put(
   "/admin/rooms/:id",
-  validateRoomId,
-  validateRoom,
+  // validateRoomId,
+  // validateRoom,
   upload.multiImages,
   roomController.updateRoom
 );
