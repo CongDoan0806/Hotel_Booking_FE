@@ -9,7 +9,12 @@ const { getCheckinGuestsRepo,
   getGuestListRepo, 
   countGuestListRepo, 
   getUserListRepo,
-  updateUserStatusRepo} = require('../repositories/admin.repository');
+  updateUserStatusRepo,
+getRateRepo,
+getTotalRevenueRepo,
+getBestSellerRoomRepo,
+totalRoomRepo
+} = require('../repositories/admin.repository');
 const { all } = require('../routes/admin.routes');
 
 const groupGuestsByUser = (rawData) => {
@@ -153,8 +158,11 @@ const getHotelFeedbackService = async () => {
   return await getHotelFeedbackRepo();
 }
 
-const getTop5MostBookedRoomsService = async () => {
-  return await getTop5MostBookedRoomsRepo();
+const getTop5MostBookedRoomsService = async (month, year) => {
+  if (!month || !year) {
+    throw new Error('Month and year are required');
+  }
+  return await getTop5MostBookedRoomsRepo(month, year);
 };
 
 const getGuestListService = async (page = 1, perPage = 10) => {
@@ -185,6 +193,37 @@ const updateUserStatusService = async (user_id, status) => {
   return await updateUserStatusRepo(user_id, status);
 }
 
+
+const getRateService = async (page = 1, perPage = 10, month, year) => {
+  const offset = (page - 1) * perPage;
+  if (!month || !year) {
+      throw new Error('Month and year are required');
+    }
+  const [rate, totalItems, best_seller_room, total_nenevue] = await Promise.all([
+    getRateRepo(perPage, offset, month, year),
+    totalRoomRepo(),
+    getBestSellerRoomRepo(month, year),
+    getTotalRevenueRepo(month, year)
+  ]);
+
+  const totalPages = Math.ceil(totalItems / perPage);
+
+  return {
+    total_room: totalItems,
+    best_seller_room,
+    total_nenevue,
+    rate,
+    pagination: {
+      currentPage: page,
+      perPage,
+      totalPages,
+      totalItems,
+    },
+  };
+};
+
+
+
 module.exports = {
   getUserlistService,
   getCheckinGuestsService,
@@ -195,5 +234,6 @@ module.exports = {
   getHotelFeedbackService,
   getTop5MostBookedRoomsService,
   getGuestListService,
-  updateUserStatusService
+  updateUserStatusService,
+  getRateService
 };

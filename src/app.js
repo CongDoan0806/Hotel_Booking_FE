@@ -17,7 +17,7 @@ const dealRoutes = require("./routes/deal.routes");
 const paymentRoutes = require("./routes/payment.routes");
 const profileRoutes = require("./routes/profile.routes");
 const { updateAllDealStatuses } = require('./schedulers/scheduler');
-
+const cron = require('node-cron');
 // Serve ảnh trong public/uploads qua đường dẫn /uploads
 app.use(
   "/uploads/rooms",
@@ -27,13 +27,22 @@ app.use(
   "/uploads/amenities",
   express.static(path.join(__dirname, "public/uploads/amenities"))
 );
+app.use(
+  "/uploads/avatars",
+  express.static(path.join(__dirname, "public/uploads/avatars"))
+);
 
-updateAllDealStatuses().catch(error => {
-    console.error('Error updating deal statuses:', error.message);
+// Thiết lập Cron job để chạy mỗi ngày vào lúc 00:00
+cron.schedule('0 0 * * *', () => {
+    console.log('Cập nhật trạng thái deal...');
+    updateAllDealStatuses().catch(error => {
+        console.error('Error updating deal statuses:', error.message);
+    });
 });
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(logger);
 app.use(errorHandler);
 

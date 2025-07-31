@@ -7,6 +7,8 @@ const userService = {
 
   updateUser: async (userId, userData) => {
     await userRepository.updateUser(userId, userData);
+    const updatedUser = await userRepository.getUserById(userId); // thêm dòng này
+    return updatedUser;
   }
 };
 
