@@ -176,7 +176,7 @@ const roomRepository = {
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       JOIN floors f ON r.floor_id = f.floor_id
       LEFT JOIN deals d 
-          ON r.room_type_id = d.room_type 
+          ON r.deal_id = d.deal_id 
           AND d.start_date <= CURRENT_DATE 
           AND d.end_date >= CURRENT_DATE
       WHERE 1=1
