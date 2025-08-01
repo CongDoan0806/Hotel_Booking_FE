@@ -25,10 +25,17 @@ const updateRefreshToken = (userId, refreshToken) =>
 const findUserByRefreshToken = (refreshToken) =>
   db.query(`SELECT * FROM users WHERE refresh_token = $1`, [refreshToken]);
 
-const getUserById = async (id) => {
-  const result = await db.query('SELECT * FROM users WHERE user_id = $1', [id]);
-  return result.rows[0]; 
+const getUserById = async (userId) => {
+  const result = await db.query(
+    `SELECT user_id, first_name, last_name, email, phone, gender,
+            to_char(date_of_birth, 'YYYY-MM-DD') AS date_of_birth,
+            avatar_url, address, role, is_active
+     FROM users WHERE user_id = $1`,
+    [userId]
+  );
+  return result.rows[0];
 };
+
 const updateEmail = async (userId, email) => {
   const result = await db.query(
     'UPDATE users SET email = $1 WHERE user_id = $2 RETURNING *',
