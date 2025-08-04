@@ -27,7 +27,7 @@ const roomRepository = {
     );
 
     const rooms = result.rows;
-    const roomIds = rooms.map((r) => r.id);
+    const roomIds = rooms.map((r) => r.room_id);
 
     const amenities = await pool.query(
       `
@@ -59,8 +59,8 @@ const roomRepository = {
     const fullRooms = rooms.map((room) => ({
       ...room,
       price: (room.room_type_price || 0) + (room.room_level_price || 0),
-      amenities: amenitiesMap[room.id] || [],
-      images: imagesMap[room.id] || [],
+      amenities: amenitiesMap[room.room_id] || [],
+      images: imagesMap[room.room_id] || [],
     }));
 
     return {
@@ -171,7 +171,9 @@ const roomRepository = {
           f.name AS floor_name,
           d.deal_id AS deal_id,
           d.deal_name AS deal_name,
-          d.discount_rate AS deal_discount_rate
+          d.discount_rate AS deal_discount_rate,
+          d.start_date AS deal_start_date,
+          d.end_date AS deal_end_date
       FROM rooms r
       JOIN room_types rt ON r.room_type_id = rt.room_type_id
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
@@ -258,7 +260,6 @@ const roomRepository = {
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
     if (rooms.length === 0) return [];
-
     const roomIds = rooms.map((r) => r.room_id);
 
     // Lấy tiện ích
@@ -308,6 +309,8 @@ const roomRepository = {
             deal_id: room.deal_id,
             deal_name: room.deal_name,
             discount_rate: room.deal_discount_rate,
+            start_date: room.deal_start_date,
+            end_date: room.deal_end_date,
           }
         : null;
 
