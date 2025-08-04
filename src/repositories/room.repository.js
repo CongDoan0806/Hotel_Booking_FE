@@ -27,7 +27,7 @@ const roomRepository = {
     );
 
     const rooms = result.rows;
-    const roomIds = rooms.map((r) => r.room_id);
+    const roomIds = rooms.map((r) => r.id);
 
     const amenities = await pool.query(
       `
@@ -59,8 +59,8 @@ const roomRepository = {
     const fullRooms = rooms.map((room) => ({
       ...room,
       price: (room.room_type_price || 0) + (room.room_level_price || 0),
-      amenities: amenitiesMap[room.room_id] || [],
-      images: imagesMap[room.room_id] || [],
+      amenities: amenitiesMap[room.id] || [],
+      images: imagesMap[room.id] || [],
     }));
 
     return {
@@ -73,6 +73,7 @@ const roomRepository = {
       },
     };
   },
+
   getById: async (id) => {
     const result = await pool.query(
       `
@@ -176,7 +177,7 @@ const roomRepository = {
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       JOIN floors f ON r.floor_id = f.floor_id
       LEFT JOIN deals d 
-          ON r.deal_id = d.deal_id 
+          ON r.deal_id = d.deal_id
           AND d.start_date <= CURRENT_DATE 
           AND d.end_date >= CURRENT_DATE
       WHERE 1=1
@@ -298,13 +299,15 @@ const roomRepository = {
       const basePrice = parseFloat(room.base_price || 0);
       const levelPrice = parseFloat(room.level_price || 0);
       const totalPrice = basePrice + levelPrice;
+      const finalPrice = room.deal_discount_rate
+        ? totalPrice * (1 - room.deal_discount_rate)
+        : totalPrice;
 
       const deal = room.deal_name
         ? {
             deal_id: room.deal_id,
             deal_name: room.deal_name,
             discount_rate: room.deal_discount_rate,
-            final_price: totalPrice * (1 - room.deal_discount_rate / 100),
           }
         : null;
 
@@ -313,6 +316,7 @@ const roomRepository = {
         name: room.name,
         description: room.description,
         price: totalPrice,
+        final_price: finalPrice,
         status: room.status,
         roomType: room.room_type_name,
         room_type_id: room.room_type_id,
@@ -418,72 +422,6 @@ const roomRepository = {
       [roomId]
     );
     return rows[0] || null;
-  },
-  getFilterOptions: async () => {
-    try {
-      const maxPeopleQuery = `
-        SELECT DISTINCT rt.max_people
-        FROM room_types rt
-        JOIN rooms r ON r.room_type_id = rt.room_type_id
-        WHERE rt.max_people IS NOT NULL
-        ORDER BY rt.max_people ASC
-      `;
-      const maxPeopleResult = await pool.query(maxPeopleQuery);
-
-      const roomLevelsQuery = `
-        SELECT DISTINCT rl.room_level_id, rl.name, rl.price
-        FROM room_levels rl
-        JOIN rooms r ON r.room_level_id = rl.room_level_id
-        ORDER BY rl.room_level_id ASC
-      `;
-      const roomLevelsResult = await pool.query(roomLevelsQuery);
-
-      const amenitiesQuery = `
-        SELECT DISTINCT a.amenity_id, a.name, a.icon
-        FROM amenities a
-        JOIN room_amenities ra ON ra.amenity_id = a.amenity_id
-        JOIN rooms r ON r.room_id = ra.room_id
-        ORDER BY a.name ASC
-      `;
-      const amenitiesResult = await pool.query(amenitiesQuery);
-
-      const floorsQuery = `
-        SELECT DISTINCT f.floor_id, f.name
-        FROM floors f
-        JOIN rooms r ON r.floor_id = f.floor_id
-        ORDER BY f.floor_id ASC
-      `;
-      const floorsResult = await pool.query(floorsQuery);
-
-      const roomTypesQuery = `
-        SELECT DISTINCT rt.room_type_id, rt.name, rt.price, rt.max_people
-        FROM room_types rt
-        JOIN rooms r ON r.room_type_id = rt.room_type_id
-        ORDER BY rt.name ASC
-      `;
-      const roomTypesResult = await pool.query(roomTypesQuery);
-
-      const priceRangeQuery = `
-        SELECT 
-          MIN(rt.price + rl.price) as min_price,
-          MAX(rt.price + rl.price) as max_price
-        FROM rooms r
-        JOIN room_types rt ON r.room_type_id = rt.room_type_id
-        JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-      `;
-      const priceRangeResult = await pool.query(priceRangeQuery);
-
-      return {
-        maxPeople: maxPeopleResult.rows.map((row) => row.max_people),
-        roomLevels: roomLevelsResult.rows,
-        amenities: amenitiesResult.rows,
-        floors: floorsResult.rows,
-        roomTypes: roomTypesResult.rows,
-        priceRange: priceRangeResult.rows[0],
-      };
-    } catch (error) {
-      throw error;
-    }
   },
 };
 
