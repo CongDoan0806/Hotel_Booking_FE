@@ -77,16 +77,16 @@ const updateStatusById = async (bookingId, status = "booked") => {
   const result = await pool.query(query, [status, bookingId]);
   return result;
 };
-const updateRoomStatusByBookingId = async (bookingId, status = "booked") => {
-  const roomIdsQuery = `SELECT room_id FROM booking_details WHERE booking_id = $1`;
-  const roomIdsResult = await pool.query(roomIdsQuery, [bookingId]);
-  const roomIds = roomIdsResult.rows.map((row) => row.room_id);
+// const updateRoomStatusByBookingId = async (bookingId, status = "booked") => {
+//   const roomIdsQuery = `SELECT room_id FROM booking_details WHERE booking_id = $1`;
+//   const roomIdsResult = await pool.query(roomIdsQuery, [bookingId]);
+//   const roomIds = roomIdsResult.rows.map((row) => row.room_id);
 
-  if (roomIds.length === 0) return;
+//   if (roomIds.length === 0) return;
 
-  const updateQuery = `UPDATE rooms SET status = $1 WHERE room_id = ANY($2::int[])`;
-  await pool.query(updateQuery, [status, roomIds]);
-};
+//   const updateQuery = `UPDATE rooms SET status = $1 WHERE room_id = ANY($2::int[])`;
+//   await pool.query(updateQuery, [status, roomIds]);
+// };
 
 
 const getBookingSummaryByDetailId = async (booking_detail_id) => {
@@ -199,53 +199,53 @@ const updateBookingStatus = async (bookingId, status) => {
   }
 };
 
-const deleteExpiredPendingBookings = async () => {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
+// const deleteExpiredPendingBookings = async () => {
+//   const client = await pool.connect();
+//   try {
+//     await client.query('BEGIN');
 
-    const { rows } = await client.query(`
-      SELECT booking_id FROM bookings
-      WHERE status IS NULL
-      AND created_at < NOW() - INTERVAL '30 minutes'
-    `);
+//     const { rows } = await client.query(`
+//       SELECT booking_id FROM bookings
+//       WHERE status IS NULL
+//       AND created_at < NOW() - INTERVAL '30 minutes'
+//     `);
 
-    const bookingIds = rows.map(row => row.booking_id);
+//     const bookingIds = rows.map(row => row.booking_id);
 
-    if (bookingIds.length === 0) {
-      await client.query('COMMIT');
-      return 0;
-    }
+//     if (bookingIds.length === 0) {
+//       await client.query('COMMIT');
+//       return 0;
+//     }
 
-    await client.query(
-      `DELETE FROM booking_details WHERE booking_id = ANY($1::int[])`,
-      [bookingIds]
-    );
+//     await client.query(
+//       `DELETE FROM booking_details WHERE booking_id = ANY($1::int[])`,
+//       [bookingIds]
+//     );
 
-    const deleteResult = await client.query(
-      `DELETE FROM bookings WHERE booking_id = ANY($1::int[])`,
-      [bookingIds]
-    );
+//     const deleteResult = await client.query(
+//       `DELETE FROM bookings WHERE booking_id = ANY($1::int[])`,
+//       [bookingIds]
+//     );
 
-    await client.query('COMMIT');
-    return deleteResult.rowCount;
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('❌fail:', err);
-    throw err;
-  } finally {
-    client.release();
-  }
-};
+//     await client.query('COMMIT');
+//     return deleteResult.rowCount;
+//   } catch (err) {
+//     await client.query('ROLLBACK');
+//     console.error('❌fail:', err);
+//     throw err;
+//   } finally {
+//     client.release();
+//   }
+// };
 
 module.exports = {
   getBookingByUserId,
   updateStatusById,
   getBookingSummaryByDetailId,
-  updateRoomStatusByBookingId,
+  // updateRoomStatusByBookingId,
   findBookingsForAutoCheckin,
   findBookingsForAutoCheckout,
   updateBookingStatus,
-  deleteExpiredPendingBookings,
+  // deleteExpiredPendingBookings,
   Booking,
 };

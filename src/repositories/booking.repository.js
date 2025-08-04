@@ -24,14 +24,29 @@ async function createBooking(userId, totalPrice, client) {
 }
 
 async function createBookingDetail(bookingId, detail, client) {
-  const { roomId, pricePerUnit, checkIn, checkOut } = detail;
-  await client.query(
-    `INSERT INTO booking_details
-     (booking_id, room_id, price_per_unit, check_in_date, check_out_date)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [bookingId, roomId, pricePerUnit, checkIn, checkOut]
-  );
+  try {
+    const { roomId, pricePerUnit, checkIn, checkOut, checkInTimestamp, checkOutTimestamp } = detail;
+
+    await client.query(
+      `INSERT INTO booking_details
+       (booking_id, room_id, price_per_unit, check_in_date, check_out_date, check_in_timestamp, check_out_timestamp)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        bookingId,
+        roomId,
+        pricePerUnit,
+        checkIn || null,
+        checkOut || null,
+        checkInTimestamp || null,
+        checkOutTimestamp || null
+      ]
+    );
+  } catch (err) {
+    console.error('Failed to insert booking detail:', err.message);
+    throw err;
+  }
 }
+
 
 const getDealDiscount = async (roomTypeId, inDate, outDate) => {
   const { rows } = await pool.query(
@@ -89,8 +104,28 @@ const getBookingsForAutoCheckout = async (currentDate) => {
 const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
-const autoDeleteExpiredBookingsService = async () => {
-  return await bookingModel.deleteExpiredPendingBookings();
+// const autoDeleteExpiredBookingsService = async () => {
+//   return await bookingModel.deleteExpiredPendingBookings();
+// };
+
+// select date to disable
+const getDisabledDatesByRoomId = async (roomId) => {
+  const { rows } = await pool.query(
+    `
+SELECT 
+  bd.check_in_timestamp AS check_in,
+  bd.check_out_timestamp AS check_out
+FROM booking_details bd
+JOIN bookings b ON bd.booking_id = b.booking_id
+WHERE bd.room_id = $1
+  AND b.status IN ('booked', 'checked_in')
+ORDER BY bd.check_in_timestamp
+
+    `,
+    [roomId]
+  );
+
+  return rows;
 };
 module.exports = {
   createBooking,
@@ -104,5 +139,6 @@ module.exports = {
   getBookingsForAutoCheckin,
   getBookingsForAutoCheckout,
   updateStatus,
-  autoDeleteExpiredBookingsService
+  // autoDeleteExpiredBookingsService,
+  getDisabledDatesByRoomId,
 };

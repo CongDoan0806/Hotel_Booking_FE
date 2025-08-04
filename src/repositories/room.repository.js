@@ -1,5 +1,6 @@
 const Room = require("../models/room.model");
 const pool = require("../config/db");
+const dayjs = require("../utils/dayjs");
 
 const roomRepository = {
   getAll: async (page = 1, perPage = 10) => {
@@ -176,7 +177,7 @@ const roomRepository = {
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       JOIN floors f ON r.floor_id = f.floor_id
       LEFT JOIN deals d 
-          ON r.room_type_id = d.room_type 
+          ON r.deal_id = d.deal_id
           AND d.start_date <= CURRENT_DATE 
           AND d.end_date >= CURRENT_DATE
       WHERE 1=1
@@ -368,25 +369,41 @@ const roomRepository = {
     }
   },
 
-  isRoomAvailable: async (roomId, checkIn, checkOut) => {
-    const { rows } = await pool.query(
-      `
-    SELECT 1
-    FROM rooms r
-    LEFT JOIN booking_details bd ON r.room_id = bd.room_id
-      AND NOT (
-        bd.check_in_date <= $2 OR
-        bd.check_out_date >= $3
-      )
-    WHERE r.room_id = $1
-      AND r.status = 'available'
-      AND bd.booking_id IS NULL
-    `,
-      [roomId, checkIn, checkOut]
-    );
+isRoomAvailable: async (roomId, checkIn, checkOut) => {
+  const checkInDateTime = dayjs(checkIn)
+    .tz("Asia/Ho_Chi_Minh")
+    .hour(14)
+    .minute(0)
+    .second(0)
+    .toDate(); 
 
-    return rows.length > 0;
-  },
+  const checkOutDateTime = dayjs(checkOut)
+    .tz("Asia/Ho_Chi_Minh")
+    .hour(12)
+    .minute(0)
+    .second(0)
+    .toDate();
+
+  console.log("Check-in at:", checkInDateTime);
+  console.log("Check-out at:", checkOutDateTime);
+
+  const { rows } = await pool.query(
+    `
+    SELECT 1
+    FROM booking_details bd
+    JOIN bookings b ON b.booking_id = bd.booking_id
+    WHERE bd.room_id = $1
+      AND b.status IN ('booked', 'checked_in')
+      AND NOT (
+        bd.check_out_timestamp <= $2::timestamptz
+        OR bd.check_in_timestamp >= $3::timestamptz
+      )
+    `,
+    [roomId, checkInDateTime, checkOutDateTime]
+  );
+
+  return rows.length === 0;
+},
 
   getRoomDetail: async (roomId) => {
     const { rows } = await pool.query(

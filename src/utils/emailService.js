@@ -40,7 +40,7 @@ const sendBookingEmail = async ({
         <li><strong>Check-Out:</strong> ${booking.check_out_date}</li>
         <li><strong>Room Type:</strong> ${room.room_type_name}</li>
         <li><strong>Room Level:</strong> ${room.room_level_name}</li>
-        <li><strong>Total Price:</strong> $${total_price}</li>
+        <li><strong>Total Price:</strong> $${total_price * nights}</li>
       </ul>
       <p><strong>Note:</strong></p>
       <p>Check-in time: <strong>at 14:00</strong> on the day of arrival</p>

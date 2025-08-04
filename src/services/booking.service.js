@@ -10,15 +10,15 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
   // );
   // if (isConflict) throw new Error("Room is unavailable for the selected dates");
 
-  const nights = dayjs(checkOut).diff(dayjs(checkIn), "day");
-  if (nights <= 0) throw new Error("Invalid date range");
+const nights = dayjs(checkOut, "YYYY-MM-DD").diff(dayjs(checkIn, "YYYY-MM-DD"), "day");
+  // if (nights <= 0) throw new Error("Invalid date range");
 
   const discount = await bookingRepo.getDealDiscount(
     room.deal_id,
     checkIn,
     checkOut
   );
-  const totalPrice = nights * room.price * (1 - discount);
+  const totalPrice = nights * room.price * (1 - discount);  
 
   const client = await pool.connect();
   try {
@@ -29,7 +29,13 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
       totalPrice,
       client
     );
+    const checkInTimestamp = checkIn
+      ? dayjs(checkIn).hour(14).minute(0).second(0).millisecond(0).toDate()
+      : null;
 
+    const checkOutTimestamp = checkOut
+      ? dayjs(checkOut).hour(12).minute(0).second(0).millisecond(0).toDate()
+      : null;
     await bookingRepo.createBookingDetail(
       bookingId,
       {
@@ -37,6 +43,8 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
         pricePerUnit: room.price,
         checkIn,
         checkOut,
+        checkInTimestamp,
+        checkOutTimestamp,
       },
       client
     );
@@ -168,8 +176,17 @@ const autoUpdateCheckoutStatus = async () => {
   return bookings.length;
 };
 
-const autoDeleteExpiredBookingsService = async () => {
-  return await bookingRepo.autoDeleteExpiredBookingsService();
+// const autoDeleteExpiredBookingsService = async () => {
+//   return await bookingRepo.autoDeleteExpiredBookingsService();
+// };
+
+const getDisabledDates = async (roomId) => {
+  const rawDates = await bookingRepo.getDisabledDatesByRoomId(roomId);
+
+  return rawDates.map((row) => ({
+    from: row.check_in,
+    to: row.check_out,
+  }));
 };
 
 module.exports = {
@@ -179,5 +196,6 @@ module.exports = {
   getBookingSummaryDetailService,
   autoUpdateCheckinStatus,
   autoUpdateCheckoutStatus,
-  autoDeleteExpiredBookingsService,
+  // autoDeleteExpiredBookingsService,
+  getDisabledDates,
 };

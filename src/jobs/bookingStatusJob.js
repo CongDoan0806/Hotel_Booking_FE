@@ -12,10 +12,10 @@ cron.schedule("*/10 * * * *", async () => {
   try {
     const checkinCount = await bookingService.autoUpdateCheckinStatus();
     const checkoutCount = await bookingService.autoUpdateCheckoutStatus();
-    const deletedCount = await bookingService.autoDeleteExpiredBookingsService();
+    // const deletedCount = await bookingService.autoDeleteExpiredBookingsService();
 
     console.log(
-      `[${today} ${time}] ✅ Updated check-in: ${checkinCount}, check-out: ${checkoutCount}, deleted pending: ${deletedCount}`
+      `[${today} ${time}] ✅ Updated check-in: ${checkinCount}, check-out: ${checkoutCount}`
     );
   } catch (err) {
     console.error(`[${today} ${time}] ❌ Cron job error:`, err);

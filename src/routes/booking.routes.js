@@ -13,5 +13,6 @@ router.patch('/bookings/:booking_id/confirm', authenticate, validateParams(booki
 router.get('/booking-details/:booking_detail_id', getBookingSummaryDetailController);
 
 router.post ('/booking/auto-status', bookingController.handleAutoUpdateStatus)
+router.get('/rooms/:roomId/disabled-dates', bookingController.getDisabledDatesController);
 
 module.exports = router;

@@ -28,7 +28,7 @@ const handleSuccess = async ({
   }
 
   await updateStatusById(booking_id, "booked");
-  await updateRoomStatusByBookingId(booking_id, "booked");
+  // await updateRoomStatusByBookingId(booking_id, "booked");
   await bookingRepo.updatePaymentStatusById(booking_id, "paid");
 
   const paymentRecord = await paymentRepo.createPayment({
@@ -76,7 +76,7 @@ const newestBooking = [...userBookings].sort((a, b) => b.booking_id - a.booking_
     },
     room,
     total_price: Number(
-      newestBooking.total_discounted_price
+      newestBooking.discounted_unit_price
     ),
     nights,
   };
