@@ -2,8 +2,12 @@ const { body, param, validationResult } = require("express-validator");
 
 const validateRoom = [
   body("name").notEmpty().withMessage("Room name is required"),
-  body("room_type_id").isInt().withMessage("room_type_id must be an integer"),
-  body("room_level_id").isInt().withMessage("room_level_id must be an integer"),
+  body("room_type_id")
+    .isString()
+    .withMessage("room_type_id must be an integer"),
+  body("room_level_id")
+    .isString()
+    .withMessage("room_level_id must be an integer"),
   body("floor_id").isInt().withMessage("floor_id must be an integer"),
   body("status")
     .isIn(["available", "booked", "maintenance"])
