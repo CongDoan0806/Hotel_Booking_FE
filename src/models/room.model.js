@@ -40,25 +40,12 @@ const Room = {
         ? amenityNameOrObj
         : amenityNameOrObj.name;
 
-    // Kiểm tra tiện ích đã tồn tại chưa
-    let query = `SELECT amenity_id FROM amenities WHERE name = $1`;
-    let result = await client.query(query, [name]);
-    let amenityId;
-
-    if (result.rows.length > 0) {
-      amenityId = result.rows[0].amenity_id;
-    } else {
-      // Nếu chưa có, thêm mới (giả sử không có icon => để null)
-      query = `
-        INSERT INTO amenities (name, icon, created_at)
-        VALUES ($1, NULL, NOW())
-        RETURNING amenity_id
-      `;
-      result = await client.query(query, [name]);
-      amenityId = result.rows[0].amenity_id;
+    const query = `SELECT amenity_id FROM amenities WHERE name = $1`;
+    const result = await client.query(query, [name]);
+    if (result.rows.length === 0) {
+      return;
     }
-
-    // Thêm vào bảng liên kết
+    const amenityId = result.rows[0].amenity_id;
     await client.query(
       `INSERT INTO room_amenities (room_id, amenity_id) VALUES ($1, $2)`,
       [roomId, amenityId]
@@ -85,7 +72,6 @@ const Room = {
       WHERE room_id = $7
       RETURNING *
     `;
-
     const values = [
       roomData.name,
       roomData.description,
@@ -95,8 +81,20 @@ const Room = {
       roomData.floor_id,
       roomId,
     ];
-
     const result = await client.query(query, values);
+
+    if (roomData.image_urls && Array.isArray(roomData.image_urls)) {
+      await client.query("DELETE FROM room_images WHERE room_id = $1", [
+        roomId,
+      ]);
+      for (const imageUrl of roomData.image_urls) {
+        await client.query(
+          "INSERT INTO room_images (room_id, image_url, uploaded_at) VALUES ($1, $2, NOW())",
+          [roomId, imageUrl]
+        );
+      }
+    }
+
     return result.rows[0];
   },
 
