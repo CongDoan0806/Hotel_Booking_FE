@@ -492,6 +492,14 @@ const roomRepository = {
       throw error;
     }
   },
+
+  updateDeal: async (room_id, deal_id) => {
+    const result = await pool.query(
+      `UPDATE rooms SET deal_id = $1 WHERE room_id = $2 RETURNING *`,
+      [deal_id, room_id]
+    );
+    return result.rows[0];
+  },
 };
 
 module.exports = roomRepository;
