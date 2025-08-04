@@ -388,9 +388,6 @@ isRoomAvailable: async (roomId, checkIn, checkOut) => {
     .second(0)
     .toDate();
 
-  console.log("Check-in at:", checkInDateTime);
-  console.log("Check-out at:", checkOutDateTime);
-
   const { rows } = await pool.query(
     `
     SELECT 1
