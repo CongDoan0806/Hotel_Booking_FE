@@ -1,15 +1,17 @@
-const { getUserlistService, 
-  getCheckinGuestsService, 
+const {
+  getUserlistService,
+  getCheckinGuestsService,
   getCheckoutGuestsService,
-  getAdminDashboardStatusService, 
-  getAdminDashboardDealService, 
+  getAdminDashboardStatusService,
+  getAdminDashboardDealService,
   getFeedbackService,
   getTop5MostBookedRoomsService,
   getHotelFeedbackService,
   getGuestListService,
   updateUserStatusService,
-getRateService} = require('../services/admin.service');
-const { success, sendError } = require('../utils/response');
+  getRateService,
+} = require("../services/admin.service");
+const { success, sendError } = require("../utils/response");
 
 const getUserListController = async (req, res) => {
   try {
@@ -20,7 +22,7 @@ const getUserListController = async (req, res) => {
 
     return success(res, { users, pagination }, "Get user list successfully");
   } catch (err) {
-    console.error('Error fetching customer bookings:', err);
+    console.error("Error fetching customer bookings:", err);
     return sendError(res, 500, "Error while getting user list");
   }
 };
@@ -29,9 +31,8 @@ const getCheckinGuestsController = async (req, res) => {
   try {
     const guests = await getCheckinGuestsService();
     return success(res, guests, "Get check-in guests successfully");
-
   } catch (error) {
-    console.error('Error fetching check-in guests:', error);
+    console.error("Error fetching check-in guests:", error);
     return sendError(res, 500, "Error while getting check-in guests");
   }
 };
@@ -41,7 +42,7 @@ const getCheckoutGuestsController = async (req, res) => {
     const guests = await getCheckoutGuestsService();
     return success(res, guests, "Get checkout guests successfully");
   } catch (error) {
-    console.error('Error fetching checkout guests:', error);
+    console.error("Error fetching checkout guests:", error);
     return sendError(res, 500, "Error while getting checkout guests");
   }
 };
@@ -51,19 +52,19 @@ const getAdminDashboardStatusController = async (req, res) => {
     const status = await getAdminDashboardStatusService();
     return success(res, status, "Get admin dashboard status successfully");
   } catch (err) {
-    console.error('Error fetching admin dashboard status:', err);
+    console.error("Error fetching admin dashboard status:", err);
     return sendError(res, 500, "Error while getting admin dashboard status");
   }
 };
 
 const getAdminDashboardDealController = async (req, res) => {
-  try { 
+  try {
     const deals = await getAdminDashboardDealService();
     return success(res, deals, "Get admin dashboard deals successfully");
   } catch (err) {
-    console.error('Error fetching admin dashboard deals:', err);
+    console.error("Error fetching admin dashboard deals:", err);
     return sendError(res, 500, "Error while getting admin dashboard deals");
-  } 
+  }
 };
 
 const getFeedbackController = async (req, res) => {
@@ -71,17 +72,41 @@ const getFeedbackController = async (req, res) => {
     const feedbacks = await getFeedbackService();
     return success(res, feedbacks, "Get feedbacks successfully");
   } catch (err) {
-    console.error('Error fetching feedbacks:', err);
+    console.error("Error fetching feedbacks:", err);
     return sendError(res, 500, "Error while getting feedbacks");
-  } 
+  }
 };
 
 const getTop5MostBookedRoomsController = async (req, res) => {
   try {
-    const rooms = await getTop5MostBookedRoomsService();
+    const { month, year } = req.query;
+
+    const currentYear = new Date().getFullYear();
+
+    if (!month || !year) {
+      return sendError(res, 400, "Month and year are required");
+    }
+
+    if (Number(year) > currentYear) {
+      return sendError(
+        res,
+        400,
+        `Cannot select future year beyond ${currentYear}`
+      );
+    }
+
+    const rooms = await getTop5MostBookedRoomsService(
+      Number(month),
+      Number(year)
+    );
+
+    if (!rooms || rooms.length === 0) {
+      return success(res, [], "No data found for the selected month and year");
+    }
+
     return success(res, rooms, "Get top 5 most booked rooms successfully");
   } catch (err) {
-    console.error('Error fetching top 5 most booked rooms:', err);
+    console.error("Error fetching top 5 most booked rooms:", err);
     return sendError(res, 500, "Error while getting top 5 most booked rooms");
   }
 };
@@ -91,7 +116,7 @@ const getHotelFeedbackController = async (req, res) => {
     const feedbacks = await getHotelFeedbackService();
     return success(res, feedbacks, "Get hotel feedbacks successfully");
   } catch (err) {
-    console.error('Error fetching hotel feedbacks:', err);
+    console.error("Error fetching hotel feedbacks:", err);
     return sendError(res, 500, "Error while getting hotel feedbacks");
   }
 };
@@ -104,8 +129,8 @@ const getGuestListController = async (req, res) => {
     const result = await getGuestListService(page, perPage);
     return success(res, result, "Get guest list successfully");
   } catch (error) {
-    console.error('Error fetching guest list:', error);
-    return sendError(res, 500, "Error while getting guest list" );
+    console.error("Error fetching guest list:", error);
+    return sendError(res, 500, "Error while getting guest list");
   }
 };
 
@@ -121,21 +146,43 @@ const updateUserStatusController = async (req, res) => {
     const result = await updateUserStatusService(user_id, status);
     return success(res, result, "User status updated successfully");
   } catch (error) {
-    console.error('Error updating user status:', error);
-    return sendError(res, 500, "Failed to update user status")
+    console.error("Error updating user status:", error);
+    return sendError(res, 500, "Failed to update user status");
   }
-}
+};
 
 const getRateController = async (req, res) => {
   try {
-    const { page = 1, perPage = 10 } = req.query;
+    const { month, year } = req.query;
+    const currentYear = new Date().getFullYear();
 
-    const data = await getRateService(Number(page), Number(perPage));
+    if (!month || !year) {
+      return sendError(res, 400, "Month and year are required");
+    }
 
-    return success(res, data, "Get rate successfully")
+    if (Number(year) > currentYear) {
+      return sendError(
+        res,
+        400,
+        `Cannot select future year beyond ${currentYear}`
+      );
+    }
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 10;
+    const data = await getRateService(
+      page,
+      perPage,
+      Number(month),
+      Number(year)
+    );
+    if (!data || data.length === 0) {
+      return success(res, [], "No data found for the selected month and year");
+    }
+
+    return success(res, data, "Get rate successfully");
   } catch (error) {
     console.error("Error fetching rate:", error);
-    return sendError(res, 500, "Failed to fetch rate data")
+    return sendError(res, 500, "Failed to fetch rate data");
   }
 };
 module.exports = {
@@ -149,5 +196,5 @@ module.exports = {
   getHotelFeedbackController,
   getGuestListController,
   updateUserStatusController,
-  getRateController
+  getRateController,
 };
