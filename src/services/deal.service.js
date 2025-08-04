@@ -38,8 +38,8 @@ const dealsService = {
     return await dealsRepository.getActiveDeals();
   },
 
-  getAllDeals: async () => {
-    return await dealsRepository.getAllDeals();
+  getAllDeals: async ({ page, limit }) => {
+    return await dealsRepository.getAllDeals({ page, limit });
   },
 
   getDealByRoomType: async (room_type) => {

@@ -12,7 +12,9 @@ const dealController = {
 
   getAllDeals: async (req, res) => {
     try {
-      const deals = await dealService.getAllDeals();
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const deals = await dealService.getAllDeals({ page, limit });
       res.json({ status: "success", data: deals });
     } catch (err) {
       res.status(500).json({ status: "error", message: err.message });
