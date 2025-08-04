@@ -492,6 +492,15 @@ const roomRepository = {
       throw error;
     }
   },
+  getTopLuxuryRooms: async (limit = 3) => {
+    const query = `
+      SELECT * FROM rooms 
+      WHERE room_level_id = 2
+      LIMIT $1
+    `;
+    const { rows } = await pool.query(query, [limit]);
+    return rows;
+  },
 };
 
 module.exports = roomRepository;
