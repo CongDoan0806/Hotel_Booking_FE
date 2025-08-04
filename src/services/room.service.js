@@ -9,8 +9,7 @@ const roomService = {
   },
   getFilteredRooms: async (filters) => {
     const rooms = await roomRepository.getFilteredRooms(filters);
-    const activeDeals = await dealService.getActiveDeals();
-    return dealService.applyDealsToRooms(rooms, activeDeals);
+    return rooms;
   },
 
   findRoomById: async (id) => {
@@ -45,6 +44,14 @@ const roomService = {
       throw new Error("Failed to delete. Room not found.");
     }
     return deletedRoom;
+  },
+  getFilterOptions: async () => {
+    try {
+      const filterOptions = await roomRepository.getFilterOptions();
+      return filterOptions;
+    } catch (error) {
+      throw new Error(`Failed to get filter options: ${error.message}`);
+    }
   },
 };
 

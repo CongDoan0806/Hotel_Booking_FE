@@ -10,7 +10,10 @@ const {getUserListModel,
     countGuestListModel,
     updateUserStatusModel,
     getRateModel,
-    countRateModel} = require('../models/admin.model');
+    getTotalRevenueModel,
+getBestSellerRoomModel,
+totalRoomModel
+} = require('../models/admin.model');
 
 const getUserListRepo = async () => {
     return await getUserListModel();
@@ -36,8 +39,8 @@ const getFeedbackRepo = async () => {
     return await getFeedbackModel();
 }
 
-const getTop5MostBookedRoomsRepo = async () => {
-    return await getTop5MostBookedRoomsModel();
+const getTop5MostBookedRoomsRepo = async (month, year) => {
+    return await getTop5MostBookedRoomsModel(month, year);
 }
 
 const getHotelFeedbackRepo = async () => {
@@ -56,12 +59,19 @@ const updateUserStatusRepo = async (user_id, status) => {
     return await updateUserStatusModel(user_id, status);
 }
 
-const getRateRepo = async (limit, offset) => {
-    return await getRateModel(limit, offset);
+const getRateRepo = async (limit, offset, month, year) => {
+    return await getRateModel(limit, offset, month, year);
 }
 
-const countRateRepo = async () => {
-    return await countRateModel();
+const getTotalRevenueRepo = async (month, year) => {
+  return await getTotalRevenueModel(month, year);
+};
+
+const getBestSellerRoomRepo = async (month, year) => {
+    return await getBestSellerRoomModel(month, year)
+}
+const totalRoomRepo = async () => {
+    return await totalRoomModel();
 }
 module.exports = {
     getUserListRepo,
@@ -76,5 +86,7 @@ module.exports = {
     countGuestListRepo,
     updateUserStatusRepo,
     getRateRepo,
-    countRateRepo
+    getTotalRevenueRepo,
+    getBestSellerRoomRepo,
+    totalRoomRepo
 }

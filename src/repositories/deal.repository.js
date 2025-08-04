@@ -14,7 +14,7 @@ const dealsRepository = {
 
     const deals = await pool.query(`
       SELECT * FROM deals
-      ORDER BY start_date DESC
+      ORDER BY deal_id DESC
       LIMIT $1 OFFSET $2
     `, [limit, offset]);
 

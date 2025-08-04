@@ -177,7 +177,7 @@ const roomRepository = {
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       JOIN floors f ON r.floor_id = f.floor_id
       LEFT JOIN deals d 
-          ON r.room_type_id = d.room_type 
+          ON r.deal_id = d.deal_id
           AND d.start_date <= CURRENT_DATE 
           AND d.end_date >= CURRENT_DATE
       WHERE 1=1
@@ -299,13 +299,15 @@ const roomRepository = {
       const basePrice = parseFloat(room.base_price || 0);
       const levelPrice = parseFloat(room.level_price || 0);
       const totalPrice = basePrice + levelPrice;
+      const finalPrice = room.deal_discount_rate
+        ? totalPrice * (1 - room.deal_discount_rate)
+        : totalPrice;
 
       const deal = room.deal_name
         ? {
             deal_id: room.deal_id,
             deal_name: room.deal_name,
             discount_rate: room.deal_discount_rate,
-            final_price: totalPrice * (1 - room.deal_discount_rate / 100),
           }
         : null;
 
@@ -314,6 +316,7 @@ const roomRepository = {
         name: room.name,
         description: room.description,
         price: totalPrice,
+        final_price: finalPrice,
         status: room.status,
         roomType: room.room_type_name,
         room_type_id: room.room_type_id,
