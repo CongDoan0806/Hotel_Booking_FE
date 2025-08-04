@@ -64,6 +64,9 @@ const getDealDiscount = async (roomTypeId, inDate, outDate) => {
 const getBookingInfoById = async (user_id) => {
   return await bookingModel.getBookingByUserId(user_id);
 };
+const getBookingById = async (booking_id) => {
+  return await bookingModel.getBookingById(booking_id);
+};
 
 const findById = async (bookingId) => {
   const result = await pool.query(
@@ -134,6 +137,7 @@ module.exports = {
   getBookingInfoById,
   updateBookingStatusToConfirmed,
   findById,
+  getBookingById,
   getBookingSummaryById,
   updatePaymentStatusById,
   getBookingsForAutoCheckin,

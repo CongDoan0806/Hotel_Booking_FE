@@ -8,6 +8,7 @@ const { getBookingSummaryDetailController } = require('../controllers/booking.co
 
 
 router.post('/bookings', authenticate, bookingController.createBooking);
+router.get('/bookings/:booking_id', authenticate, bookingController.getBookingDetailbyId);
 router.get('/bookings/user/:user_id', authenticate, bookingController.getBookingDetailsByUserIdController);
 router.patch('/bookings/:booking_id/confirm', authenticate, validateParams(bookingIdParamSchema),bookingController.confirmBookingController);
 router.get('/booking-details/:booking_detail_id', getBookingSummaryDetailController);

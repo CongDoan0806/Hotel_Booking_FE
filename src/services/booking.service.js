@@ -64,13 +64,13 @@ const nights = dayjs(checkOut, "YYYY-MM-DD").diff(dayjs(checkIn, "YYYY-MM-DD"), 
   }
 };
 
-const getBookingDetailsByUserId = async (user_id) => {
+const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5) => {
   const rows = await bookingRepo.getBookingInfoById(user_id);
 
   if (rows.length === 0) throw new Error("No bookings found for this user");
 
+  // Gộp bookings
   const groupedBookings = {};
-
   rows.forEach((r) => {
     const bookingId = r.booking_id;
     const checkInDate = new Date(r.check_in_date);
@@ -94,6 +94,80 @@ const getBookingDetailsByUserId = async (user_id) => {
 
     const unit_price =
       Number(r.room_type_price || 0) + Number(r.room_level_price || 0);
+    const discounted_unit_price = Number(r.discounted_unit_price || unit_price);
+
+    const detailPrice = unit_price * quantity * nights;
+    const discountedPrice = discounted_unit_price * quantity * nights;
+
+    groupedBookings[bookingId].total_price += detailPrice;
+    groupedBookings[bookingId].total_discounted_price += discountedPrice;
+
+    groupedBookings[bookingId].booking_details.push({
+      room_id: r.room_id,
+      room_name: r.room_name,
+      room_type: r.room_type,
+      room_type_price: r.room_type_price,
+      room_level: r.room_level,
+      room_level_price: r.room_level_price,
+      quantity,
+      unit_price,
+      discounted_unit_price,
+      deal_discount_rate: r.discount_rate,
+      price_per_unit: r.price_per_unit,
+    });
+  });
+
+  const bookingsArray = Object.values(groupedBookings).map((b) => ({
+    ...b,
+    total_price: Number(b.total_price.toFixed(2)),
+    total_discounted_price: Number(b.total_discounted_price.toFixed(2)),
+    room_quantity: b.booking_details.length,
+  }));
+
+  // Phân trang dữ liệu sau khi xử lý
+  const total = bookingsArray.length;
+  const totalPages = Math.ceil(total / limit);
+  const start = (page - 1) * limit;
+  const paginatedData = bookingsArray.slice(start, start + limit);
+
+  return {
+    total,
+    totalPages,
+    page,
+    limit,
+    data: paginatedData,
+  };
+};
+
+const getBookingDetailsById = async (booking_id) => {
+  const rows = await bookingRepo.getBookingById(booking_id);
+
+  if (rows.length === 0) throw new Error("No bookings found for this booking_id");
+
+  const groupedBookings = {};
+
+  rows.forEach((r) => {
+    const bookingId = r.booking_id;
+    const checkInDate = new Date(r.check_in_date);
+    const checkOutDate = new Date(r.check_out_date);
+    const nights = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
+    const quantity = Number(r.quantity || 1);
+
+    if (!groupedBookings[bookingId]) {
+      groupedBookings[bookingId] = {
+        booking_id: r.booking_id,
+        user_id: r.user_id,
+        status: r.booking_status,
+        check_in_date: r.check_in_date,
+        check_out_date: r.check_out_date,
+        nights,
+        total_price: 0,
+        total_discounted_price: 0,
+        booking_details: [],
+      };
+    }
+
+    const unit_price = Number(r.room_type_price || 0) + Number(r.room_level_price || 0);
     const discounted_unit_price = Number(r.discounted_unit_price || unit_price); // fallback nếu không có deal
 
     const detailPrice = unit_price * quantity * nights;
@@ -113,18 +187,18 @@ const getBookingDetailsByUserId = async (user_id) => {
       unit_price,
       discounted_unit_price,
       deal_discount_rate: r.discount_rate,
-      price_per_unit: r.price_per_unit, // bạn có thể bỏ nếu không cần
+      price_per_unit: r.price_per_unit, // có thể bỏ nếu không cần
     });
   });
 
-  const result = Object.values(groupedBookings).map((b) => ({
-    ...b,
-    total_price: Number(b.total_price.toFixed(2)),
-    total_discounted_price: Number(b.total_discounted_price.toFixed(2)),
-    room_quantity: b.booking_details.length,
-  }));
+  const booking = Object.values(groupedBookings)[0];
 
-  return result;
+  return {
+    ...booking,
+    total_price: Number(booking.total_price.toFixed(2)),
+    total_discounted_price: Number(booking.total_discounted_price.toFixed(2)),
+    room_quantity: booking.booking_details.length,
+  };
 };
 
 const confirmBookingService = async (booking_id) => {
@@ -192,6 +266,7 @@ const getDisabledDates = async (roomId) => {
 module.exports = {
   createBookingWithDetails,
   getBookingDetailsByUserId,
+  getBookingDetailsById,
   confirmBookingService,
   getBookingSummaryDetailService,
   autoUpdateCheckinStatus,

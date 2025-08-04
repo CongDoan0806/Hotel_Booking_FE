@@ -376,23 +376,23 @@ const roomRepository = {
     }
   },
 
-isRoomAvailable: async (roomId, checkIn, checkOut) => {
-  const checkInDateTime = dayjs(checkIn)
-    .tz("Asia/Ho_Chi_Minh")
-    .hour(14)
-    .minute(0)
-    .second(0)
-    .toDate(); 
+  isRoomAvailable: async (roomId, checkIn, checkOut) => {
+    const checkInDateTime = dayjs(checkIn)
+      .tz("Asia/Ho_Chi_Minh")
+      .hour(14)
+      .minute(0)
+      .second(0)
+      .toDate();
 
-  const checkOutDateTime = dayjs(checkOut)
-    .tz("Asia/Ho_Chi_Minh")
-    .hour(12)
-    .minute(0)
-    .second(0)
-    .toDate();
+    const checkOutDateTime = dayjs(checkOut)
+      .tz("Asia/Ho_Chi_Minh")
+      .hour(12)
+      .minute(0)
+      .second(0)
+      .toDate();
 
-  const { rows } = await pool.query(
-    `
+    const { rows } = await pool.query(
+      `
     SELECT 1
     FROM booking_details bd
     JOIN bookings b ON b.booking_id = bd.booking_id
@@ -403,11 +403,11 @@ isRoomAvailable: async (roomId, checkIn, checkOut) => {
         OR bd.check_in_timestamp >= $3::timestamptz
       )
     `,
-    [roomId, checkInDateTime, checkOutDateTime]
-  );
+      [roomId, checkInDateTime, checkOutDateTime]
+    );
 
-  return rows.length === 0;
-},
+    return rows.length === 0;
+  },
 
   getRoomDetail: async (roomId) => {
     const { rows } = await pool.query(

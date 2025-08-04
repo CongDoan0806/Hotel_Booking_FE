@@ -24,7 +24,7 @@ const createBooking = async (req, res) => {
     const room = await roomRepository.getRoomDetail(roomId);
     if (!room) {
       return sendError(res, 404, "Room not found");
-    } 
+    }
 
     const booking = await bookingService.createBookingWithDetails(
       userId,
@@ -51,14 +51,20 @@ const createBooking = async (req, res) => {
 const getBookingDetailsByUserIdController = async (req, res) => {
   try {
     const user_id = parseInt(req.params.user_id, 10);
-    console.log("nef:", user_id);
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 5;
+
     if (isNaN(user_id)) {
       return sendError(res, 400, "Invalid user ID", [
         "user_id must be a number",
       ]);
     }
 
-    const data = await bookingService.getBookingDetailsByUserId(user_id);
+    const data = await bookingService.getBookingDetailsByUserId(
+      user_id,
+      page,
+      limit
+    );
 
     return success(res, data, "Get bookings for user successfully");
   } catch (err) {
@@ -67,6 +73,29 @@ const getBookingDetailsByUserIdController = async (req, res) => {
     ]);
   }
 };
+const getBookingDetailbyId = async (req, res) => {
+  const booking_id = Number(req.params.booking_id);
+  console.log("Booking ID from params:", booking_id);
+
+  if (isNaN(booking_id)) {
+    return sendError(res, 400, "Invalid booking ID");
+  }
+
+  try {
+    const bookingList = await bookingService.getBookingDetailsById(booking_id);
+
+    if (!bookingList || bookingList.length === 0) {
+      return sendError(res, 404, "Booking not found");
+    }
+
+    const booking = bookingList;
+    return success(res, booking, "Booking fetched successfully");
+  } catch (error) {
+    console.error(error);
+    return sendError(res, 500, "Internal Server Error");
+  }
+};
+
 const confirmBookingController = async (req, res) => {
   try {
     const result = await bookingService.confirmBookingService(
@@ -117,13 +146,11 @@ const handleAutoUpdateStatus = async (req, res) => {
 // };
 
 const getDisabledDatesController = async (req, res) => {
-  console.log("req.params:", req.params); 
+  console.log("req.params:", req.params);
 
-  const roomId = Number(req.params.roomId); 
+  const roomId = Number(req.params.roomId);
   if (isNaN(roomId)) {
-    return res
-      .status(400)
-      .json({ status: "error", message: "Invalid roomId" });
+    return res.status(400).json({ status: "error", message: "Invalid roomId" });
   }
 
   console.log("roomId:", roomId);
@@ -140,6 +167,7 @@ module.exports = {
   createBooking,
   createBooking,
   getBookingDetailsByUserIdController,
+  getBookingDetailbyId,
   confirmBookingController,
   getBookingSummaryDetailController,
   handleAutoUpdateStatus,
