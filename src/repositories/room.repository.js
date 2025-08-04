@@ -28,7 +28,7 @@ const roomRepository = {
     );
 
     const rooms = result.rows;
-    const roomIds = rooms.map((r) => r.id);
+    const roomIds = rooms.map((r) => r.room_id);
 
     const amenities = await pool.query(
       `
@@ -60,8 +60,8 @@ const roomRepository = {
     const fullRooms = rooms.map((room) => ({
       ...room,
       price: (room.room_type_price || 0) + (room.room_level_price || 0),
-      amenities: amenitiesMap[room.id] || [],
-      images: imagesMap[room.id] || [],
+      amenities: amenitiesMap[room.room_id] || [],
+      images: imagesMap[room.room_id] || [],
     }));
 
     return {
@@ -172,7 +172,9 @@ const roomRepository = {
           f.name AS floor_name,
           d.deal_id AS deal_id,
           d.deal_name AS deal_name,
-          d.discount_rate AS deal_discount_rate
+          d.discount_rate AS deal_discount_rate,
+          d.start_date AS deal_start_date,
+          d.end_date AS deal_end_date
       FROM rooms r
       JOIN room_types rt ON r.room_type_id = rt.room_type_id
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
@@ -259,7 +261,6 @@ const roomRepository = {
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
     if (rooms.length === 0) return [];
-
     const roomIds = rooms.map((r) => r.room_id);
 
     // Lấy tiện ích
@@ -309,6 +310,8 @@ const roomRepository = {
             deal_id: room.deal_id,
             deal_name: room.deal_name,
             discount_rate: room.deal_discount_rate,
+            start_date: room.deal_start_date,
+            end_date: room.deal_end_date,
           }
         : null;
 
@@ -440,6 +443,72 @@ WHERE r.room_id = $1;
       [roomId]
     );
     return rows[0] || null;
+  },
+  getFilterOptions: async () => {
+    try {
+      const maxPeopleQuery = `
+        SELECT DISTINCT rt.max_people
+        FROM room_types rt
+        JOIN rooms r ON r.room_type_id = rt.room_type_id
+        WHERE rt.max_people IS NOT NULL
+        ORDER BY rt.max_people ASC
+      `;
+      const maxPeopleResult = await pool.query(maxPeopleQuery);
+
+      const roomLevelsQuery = `
+        SELECT DISTINCT rl.room_level_id, rl.name, rl.price
+        FROM room_levels rl
+        JOIN rooms r ON r.room_level_id = rl.room_level_id
+        ORDER BY rl.room_level_id ASC
+      `;
+      const roomLevelsResult = await pool.query(roomLevelsQuery);
+
+      const amenitiesQuery = `
+        SELECT DISTINCT a.amenity_id, a.name, a.icon
+        FROM amenities a
+        JOIN room_amenities ra ON ra.amenity_id = a.amenity_id
+        JOIN rooms r ON r.room_id = ra.room_id
+        ORDER BY a.name ASC
+      `;
+      const amenitiesResult = await pool.query(amenitiesQuery);
+
+      const floorsQuery = `
+        SELECT DISTINCT f.floor_id, f.name
+        FROM floors f
+        JOIN rooms r ON r.floor_id = f.floor_id
+        ORDER BY f.floor_id ASC
+      `;
+      const floorsResult = await pool.query(floorsQuery);
+
+      const roomTypesQuery = `
+        SELECT DISTINCT rt.room_type_id, rt.name, rt.price, rt.max_people
+        FROM room_types rt
+        JOIN rooms r ON r.room_type_id = rt.room_type_id
+        ORDER BY rt.name ASC
+      `;
+      const roomTypesResult = await pool.query(roomTypesQuery);
+
+      const priceRangeQuery = `
+        SELECT 
+          MIN(rt.price + rl.price) as min_price,
+          MAX(rt.price + rl.price) as max_price
+        FROM rooms r
+        JOIN room_types rt ON r.room_type_id = rt.room_type_id
+        JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+      `;
+      const priceRangeResult = await pool.query(priceRangeQuery);
+
+      return {
+        maxPeople: maxPeopleResult.rows.map((row) => row.max_people),
+        roomLevels: roomLevelsResult.rows,
+        amenities: amenitiesResult.rows,
+        floors: floorsResult.rows,
+        roomTypes: roomTypesResult.rows,
+        priceRange: priceRangeResult.rows[0],
+      };
+    } catch (error) {
+      throw error;
+    }
   },
 };
 
