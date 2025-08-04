@@ -9,8 +9,7 @@ const roomService = {
   },
   getFilteredRooms: async (filters) => {
     const rooms = await roomRepository.getFilteredRooms(filters);
-    const activeDeals = await dealService.getActiveDeals();
-    return dealService.applyDealsToRooms(rooms, activeDeals);
+    return rooms;
   },
 
   findRoomById: async (id) => {

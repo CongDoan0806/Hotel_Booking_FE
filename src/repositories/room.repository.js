@@ -73,6 +73,7 @@ const roomRepository = {
       },
     };
   },
+
   getById: async (id) => {
     const result = await pool.query(
       `
@@ -170,13 +171,15 @@ const roomRepository = {
           f.name AS floor_name,
           d.deal_id AS deal_id,
           d.deal_name AS deal_name,
-          d.discount_rate AS deal_discount_rate
+          d.discount_rate AS deal_discount_rate,
+          d.start_date AS deal_start_date,
+          d.end_date AS deal_end_date
       FROM rooms r
       JOIN room_types rt ON r.room_type_id = rt.room_type_id
       JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       JOIN floors f ON r.floor_id = f.floor_id
       LEFT JOIN deals d 
-          ON r.room_type_id = d.room_type 
+          ON r.deal_id = d.deal_id
           AND d.start_date <= CURRENT_DATE 
           AND d.end_date >= CURRENT_DATE
       WHERE 1=1
@@ -257,7 +260,6 @@ const roomRepository = {
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
     if (rooms.length === 0) return [];
-
     const roomIds = rooms.map((r) => r.room_id);
 
     // Lấy tiện ích
@@ -298,13 +300,17 @@ const roomRepository = {
       const basePrice = parseFloat(room.base_price || 0);
       const levelPrice = parseFloat(room.level_price || 0);
       const totalPrice = basePrice + levelPrice;
+      const finalPrice = room.deal_discount_rate
+        ? totalPrice * (1 - room.deal_discount_rate)
+        : totalPrice;
 
       const deal = room.deal_name
         ? {
             deal_id: room.deal_id,
             deal_name: room.deal_name,
             discount_rate: room.deal_discount_rate,
-            final_price: totalPrice * (1 - room.deal_discount_rate / 100),
+            start_date: room.deal_start_date,
+            end_date: room.deal_end_date,
           }
         : null;
 
@@ -313,6 +319,7 @@ const roomRepository = {
         name: room.name,
         description: room.description,
         price: totalPrice,
+        final_price: finalPrice,
         status: room.status,
         roomType: room.room_type_name,
         room_type_id: room.room_type_id,
