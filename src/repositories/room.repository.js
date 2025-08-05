@@ -493,22 +493,67 @@ const roomRepository = {
     }
   },
   getTopLuxuryRooms: async (limit = 3) => {
-    const query = `
+    const result = await pool.query(
+      `
     SELECT 
-      r.*,
-      COALESCE(img.images, '[]') AS images
+      r.room_id, r.name, r.description, r.status,
+      r.room_type_id, r.room_level_id, r.floor_id,
+      rt.name AS room_type_name, rt.max_people, rt.price AS room_type_price,
+      rl.name AS room_level_name, rl.price AS room_level_price,
+      f.name AS floor_name
     FROM rooms r
-    LEFT JOIN LATERAL (
-      SELECT json_agg(image_url) AS images
-      FROM room_images
-      WHERE room_id = r.room_id
-    ) img ON TRUE
+    LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    LEFT JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+    LEFT JOIN floors f ON r.floor_id = f.floor_id
     WHERE r.room_level_id = 2
+    ORDER BY r.room_id DESC
     LIMIT $1
-  `;
+    `,
+      [limit]
+    );
 
-    const { rows } = await pool.query(query, [limit]);
-    return rows;
+    const rooms = result.rows;
+    const roomIds = rooms.map((r) => r.room_id);
+
+    const amenities = await pool.query(
+      `
+    SELECT ra.room_id, a.amenity_id, a.name, a.icon
+    FROM room_amenities ra
+    JOIN amenities a ON a.amenity_id = ra.amenity_id
+    WHERE ra.room_id = ANY($1::int[])
+    `,
+      [roomIds]
+    );
+
+    const images = await pool.query(
+      `
+    SELECT room_id, image_url
+    FROM room_images
+    WHERE room_id = ANY($1::int[])
+    `,
+      [roomIds]
+    );
+
+    const amenitiesMap = {};
+    for (const row of amenities.rows) {
+      if (!amenitiesMap[row.room_id]) amenitiesMap[row.room_id] = [];
+      amenitiesMap[row.room_id].push(row);
+    }
+
+    const imagesMap = {};
+    for (const row of images.rows) {
+      if (!imagesMap[row.room_id]) imagesMap[row.room_id] = [];
+      imagesMap[row.room_id].push(row.image_url);
+    }
+
+    const fullRooms = rooms.map((room) => ({
+      ...room,
+      price: (room.room_type_price || 0) + (room.room_level_price || 0),
+      amenities: amenitiesMap[room.room_id] || [],
+      images: imagesMap[room.room_id] || [],
+    }));
+
+    return fullRooms;
   },
 };
 
