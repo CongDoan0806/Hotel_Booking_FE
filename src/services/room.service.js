@@ -7,9 +7,14 @@ const roomService = {
     if (!room) throw new Error("ROOM_NOT_FOUND");
     return room;
   },
-  getFilteredRooms: async (filters) => {
-    const rooms = await roomRepository.getFilteredRooms(filters);
-    return rooms;
+
+  getFilteredRooms: async (filters, page = 1, perPage = 5) => {
+    const result = await roomRepository.getFilteredRooms(
+      filters,
+      page,
+      perPage
+    );
+    return result;
   },
 
   findRoomById: async (id) => {
@@ -19,9 +24,11 @@ const roomService = {
   createRoom: async (roomData) => {
     return await roomRepository.createRoom(roomData);
   },
+
   getAllRooms: async (page, perPage) => {
     return await roomRepository.getAll(page, perPage);
   },
+
   getRoomById: async (id) => {
     const room = await roomRepository.getById(id);
     if (!room) {
@@ -45,6 +52,7 @@ const roomService = {
     }
     return deletedRoom;
   },
+
   getFilterOptions: async () => {
     try {
       const filterOptions = await roomRepository.getFilterOptions();
