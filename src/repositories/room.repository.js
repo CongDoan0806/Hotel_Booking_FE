@@ -494,10 +494,19 @@ const roomRepository = {
   },
   getTopLuxuryRooms: async (limit = 3) => {
     const query = `
-      SELECT * FROM rooms 
-      WHERE room_level_id = 2
-      LIMIT $1
-    `;
+    SELECT 
+      r.*,
+      COALESCE(img.images, '[]') AS images
+    FROM rooms r
+    LEFT JOIN LATERAL (
+      SELECT json_agg(image_url) AS images
+      FROM room_images
+      WHERE room_id = r.room_id
+    ) img ON TRUE
+    WHERE r.room_level_id = 2
+    LIMIT $1
+  `;
+
     const { rows } = await pool.query(query, [limit]);
     return rows;
   },
