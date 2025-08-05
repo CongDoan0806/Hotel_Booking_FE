@@ -1,16 +1,5 @@
 const pool = require("../config/db");
 const bookingModel = require("../models/booking.model");
-//func check conflict schedule book
-// async function findConflictingBooking(roomId, checkIn, checkOut) {
-//   const { rows } = await pool.query(
-//     `SELECT 1
-//      FROM booking_details
-//      WHERE room_id = $1
-//        AND ($2, $3) OVERLAPS (check_in_date, check_out_date)`,
-//     [roomId, checkIn, checkOut]
-//   );
-//   return rows.length > 0;
-// }
 
 // func create booking
 async function createBooking(userId, totalPrice, client) {
@@ -107,9 +96,6 @@ const getBookingsForAutoCheckout = async (currentDate) => {
 const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
-// const autoDeleteExpiredBookingsService = async () => {
-//   return await bookingModel.deleteExpiredPendingBookings();
-// };
 
 // select date to disable
 const getDisabledDatesByRoomId = async (roomId) => {

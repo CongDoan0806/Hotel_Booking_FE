@@ -3,22 +3,17 @@ const bookingRepo = require("../repositories/booking.repository");
 const dayjs = require("../utils/dayjs");
 
 const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
-  // const isConflict = await bookingRepo.findConflictingBooking(
-  //   room.room_id,
-  //   checkIn,
-  //   checkOut
-  // );
-  // if (isConflict) throw new Error("Room is unavailable for the selected dates");
-
-const nights = dayjs(checkOut, "YYYY-MM-DD").diff(dayjs(checkIn, "YYYY-MM-DD"), "day");
-  // if (nights <= 0) throw new Error("Invalid date range");
+  const nights = dayjs(checkOut, "YYYY-MM-DD").diff(
+    dayjs(checkIn, "YYYY-MM-DD"),
+    "day"
+  );
 
   const discount = await bookingRepo.getDealDiscount(
     room.deal_id,
     checkIn,
     checkOut
   );
-  const totalPrice = nights * room.price * (1 - discount);  
+  const totalPrice = nights * room.price * (1 - discount);
 
   const client = await pool.connect();
   try {
@@ -64,12 +59,11 @@ const nights = dayjs(checkOut, "YYYY-MM-DD").diff(dayjs(checkIn, "YYYY-MM-DD"), 
   }
 };
 
-const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5) => {
+const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5, status) => {
   const rows = await bookingRepo.getBookingInfoById(user_id);
 
   if (rows.length === 0) throw new Error("No bookings found for this user");
 
-  // Gộp bookings
   const groupedBookings = {};
   rows.forEach((r) => {
     const bookingId = r.booking_id;
@@ -108,6 +102,7 @@ const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5) => {
       room_type: r.room_type,
       room_type_price: r.room_type_price,
       room_level: r.room_level,
+      room_image: Array.isArray(r.room_images) ? r.room_images[0] : null,
       room_level_price: r.room_level_price,
       quantity,
       unit_price,
@@ -124,11 +119,12 @@ const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5) => {
     room_quantity: b.booking_details.length,
   }));
 
-  // Phân trang dữ liệu sau khi xử lý
-  const total = bookingsArray.length;
+  const filtered = status ? bookingsArray.filter(b => b.status === status) : bookingsArray;
+
+  const total = filtered.length;
   const totalPages = Math.ceil(total / limit);
   const start = (page - 1) * limit;
-  const paginatedData = bookingsArray.slice(start, start + limit);
+  const paginatedData = filtered.slice(start, start + limit);
 
   return {
     total,
@@ -142,7 +138,8 @@ const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5) => {
 const getBookingDetailsById = async (booking_id) => {
   const rows = await bookingRepo.getBookingById(booking_id);
 
-  if (rows.length === 0) throw new Error("No bookings found for this booking_id");
+  if (rows.length === 0)
+    throw new Error("No bookings found for this booking_id");
 
   const groupedBookings = {};
 
@@ -150,7 +147,8 @@ const getBookingDetailsById = async (booking_id) => {
     const bookingId = r.booking_id;
     const checkInDate = new Date(r.check_in_date);
     const checkOutDate = new Date(r.check_out_date);
-    const nights = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
+    const nights =
+      (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24);
     const quantity = Number(r.quantity || 1);
 
     if (!groupedBookings[bookingId]) {
@@ -167,7 +165,8 @@ const getBookingDetailsById = async (booking_id) => {
       };
     }
 
-    const unit_price = Number(r.room_type_price || 0) + Number(r.room_level_price || 0);
+    const unit_price =
+      Number(r.room_type_price || 0) + Number(r.room_level_price || 0);
     const discounted_unit_price = Number(r.discounted_unit_price || unit_price); // fallback nếu không có deal
 
     const detailPrice = unit_price * quantity * nights;
@@ -250,10 +249,6 @@ const autoUpdateCheckoutStatus = async () => {
   return bookings.length;
 };
 
-// const autoDeleteExpiredBookingsService = async () => {
-//   return await bookingRepo.autoDeleteExpiredBookingsService();
-// };
-
 const getDisabledDates = async (roomId) => {
   const rawDates = await bookingRepo.getDisabledDatesByRoomId(roomId);
 
@@ -271,6 +266,5 @@ module.exports = {
   getBookingSummaryDetailService,
   autoUpdateCheckinStatus,
   autoUpdateCheckoutStatus,
-  // autoDeleteExpiredBookingsService,
   getDisabledDates,
 };

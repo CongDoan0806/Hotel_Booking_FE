@@ -23,53 +23,64 @@ class Booking {
 const getBookingByUserId = async (user_id) => {
   const query = `
     SELECT
-  b.booking_id,
-  b.user_id,
+      b.booking_id,
+      b.user_id,
+      b.total_price AS total_price,
+      b.status AS booking_status,
 
-  b.total_price AS total_price,
-  b.status AS booking_status,
+      bd.booking_detail_id,
+      bd.price_per_unit,
+      bd.check_in_date,
+      bd.check_out_date,
 
-  bd.booking_detail_id,
-  bd.price_per_unit,
-  bd.check_in_date,
-  bd.check_out_date,
+      r.room_id,
+      r.name AS room_name,
+      r.description AS room_description,
 
-  r.room_id,
-  r.name AS room_name,
-  r.description AS room_description,
+      -- Lấy danh sách ảnh dưới dạng JSON array
+      COALESCE(img.images, '[]') AS room_images,
 
-  rt.room_type_id,
-  rt.name AS room_type,
-  rt.price AS room_type_price,
+      rt.room_type_id,
+      rt.name AS room_type,
+      rt.price AS room_type_price,
 
-  rl.room_level_id,
-  rl.name AS room_level,
-  rl.price AS room_level_price,
+      rl.room_level_id,
+      rl.name AS room_level,
+      rl.price AS room_level_price,
 
-  d.deal_id,
-  d.discount_rate,
+      d.deal_id,
+      d.discount_rate,
 
-  -- Giá gốc 1 phòng
-  (rt.price + rl.price) AS total_price,
+      -- Giá gốc 1 phòng
+      (rt.price + rl.price) AS total_price,
 
-  -- Giá đã áp dụng deal từ room_type
-ROUND(((rt.price + rl.price) * (1 - COALESCE(d.discount_rate, 0)))::numeric, 2) AS discounted_unit_price
+      -- Giá sau khi giảm giá nếu có deal
+      ROUND(((rt.price + rl.price) * (1 - COALESCE(d.discount_rate, 0)))::numeric, 2) AS discounted_unit_price
 
-FROM bookings b
-JOIN booking_details bd ON b.booking_id = bd.booking_id
-LEFT JOIN rooms r ON bd.room_id = r.room_id
-LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
-LEFT JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-LEFT JOIN deals d ON d.deal_id = r.deal_id
+    FROM bookings b
+    JOIN booking_details bd ON b.booking_id = bd.booking_id
+    LEFT JOIN rooms r ON bd.room_id = r.room_id
 
-WHERE b.user_id = $1
-ORDER BY b.booking_id DESC;
+    -- LATERAL JOIN để lấy danh sách ảnh theo room_id
+    LEFT JOIN LATERAL (
+      SELECT json_agg(ri.image_url) AS images
+      FROM room_images ri
+      WHERE ri.room_id = r.room_id
+    ) img ON TRUE
+
+    LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    LEFT JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+    LEFT JOIN deals d ON d.deal_id = r.deal_id
+
+    WHERE b.user_id = $1
+    ORDER BY b.booking_id DESC;
   `;
 
   const values = [user_id];
   const result = await pool.query(query, values);
   return result.rows;
 };
+  
 const getBookingById = async (booking_id) => {
   const query = `
     SELECT
@@ -86,7 +97,6 @@ const getBookingById = async (booking_id) => {
       r.room_id,
       r.name AS room_name,
       r.description AS room_description,
-
       rt.room_type_id,
       rt.name AS room_type,
       rt.price AS room_type_price,
@@ -123,17 +133,6 @@ const updateStatusById = async (bookingId, status = "booked") => {
   const result = await pool.query(query, [status, bookingId]);
   return result;
 };
-// const updateRoomStatusByBookingId = async (bookingId, status = "booked") => {
-//   const roomIdsQuery = `SELECT room_id FROM booking_details WHERE booking_id = $1`;
-//   const roomIdsResult = await pool.query(roomIdsQuery, [bookingId]);
-//   const roomIds = roomIdsResult.rows.map((row) => row.room_id);
-
-//   if (roomIds.length === 0) return;
-
-//   const updateQuery = `UPDATE rooms SET status = $1 WHERE room_id = ANY($2::int[])`;
-//   await pool.query(updateQuery, [status, roomIds]);
-// };
-
 
 const getBookingSummaryByDetailId = async (booking_detail_id) => {
   const query = `
@@ -244,45 +243,6 @@ const updateBookingStatus = async (bookingId, status) => {
     client.release();
   }
 };
-
-// const deleteExpiredPendingBookings = async () => {
-//   const client = await pool.connect();
-//   try {
-//     await client.query('BEGIN');
-
-//     const { rows } = await client.query(`
-//       SELECT booking_id FROM bookings
-//       WHERE status IS NULL
-//       AND created_at < NOW() - INTERVAL '30 minutes'
-//     `);
-
-//     const bookingIds = rows.map(row => row.booking_id);
-
-//     if (bookingIds.length === 0) {
-//       await client.query('COMMIT');
-//       return 0;
-//     }
-
-//     await client.query(
-//       `DELETE FROM booking_details WHERE booking_id = ANY($1::int[])`,
-//       [bookingIds]
-//     );
-
-//     const deleteResult = await client.query(
-//       `DELETE FROM bookings WHERE booking_id = ANY($1::int[])`,
-//       [bookingIds]
-//     );
-
-//     await client.query('COMMIT');
-//     return deleteResult.rowCount;
-//   } catch (err) {
-//     await client.query('ROLLBACK');
-//     console.error('❌fail:', err);
-//     throw err;
-//   } finally {
-//     client.release();
-//   }
-// };
 
 module.exports = {
   getBookingByUserId,

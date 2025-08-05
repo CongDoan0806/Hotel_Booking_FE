@@ -3,7 +3,6 @@ const bookingService = require("../services/booking.service");
 const { validateBookingInput } = require("../validations/booking.validate");
 const { success, sendError } = require("../utils/response");
 const validateParams = require("../middlewares/validateParams");
-
 // Create booking
 const createBooking = async (req, res) => {
   try {
@@ -53,6 +52,7 @@ const getBookingDetailsByUserIdController = async (req, res) => {
     const user_id = parseInt(req.params.user_id, 10);
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 5;
+    const status = req.query.status || undefined;
 
     if (isNaN(user_id)) {
       return sendError(res, 400, "Invalid user ID", [
@@ -63,7 +63,8 @@ const getBookingDetailsByUserIdController = async (req, res) => {
     const data = await bookingService.getBookingDetailsByUserId(
       user_id,
       page,
-      limit
+      limit,
+      status
     );
 
     return success(res, data, "Get bookings for user successfully");
@@ -73,6 +74,7 @@ const getBookingDetailsByUserIdController = async (req, res) => {
     ]);
   }
 };
+
 const getBookingDetailbyId = async (req, res) => {
   const booking_id = Number(req.params.booking_id);
   console.log("Booking ID from params:", booking_id);
@@ -135,16 +137,6 @@ const handleAutoUpdateStatus = async (req, res) => {
   }
 };
 
-// const handleAutoDeleteExpiredBookings = async (req, res) => {
-//   try {
-//     const deleted = await bookingService.autoDeleteExpiredBookingsService();
-//     return success(res, { deleted }, `Đã xoá ${deleted} booking quá hạn.`);
-//   } catch (err) {
-//     console.error(err);
-//     return sendError(res, 500, "Lỗi khi xoá booking quá hạn");
-//   }
-// };
-
 const getDisabledDatesController = async (req, res) => {
   console.log("req.params:", req.params);
 
@@ -171,6 +163,5 @@ module.exports = {
   confirmBookingController,
   getBookingSummaryDetailController,
   handleAutoUpdateStatus,
-  // handleAutoDeleteExpiredBookings,
   getDisabledDatesController,
 };
