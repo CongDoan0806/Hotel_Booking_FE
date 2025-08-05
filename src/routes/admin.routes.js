@@ -66,4 +66,5 @@ router.get("/admin/rate", getRateController);
 
 router.post("/admin/rooms/:room_id/deal", roomDealController.assignDealToRoom);
 
+router.get("/admin/rooms/status/:status", roomController.getRoomsByStatus);
 module.exports = router;

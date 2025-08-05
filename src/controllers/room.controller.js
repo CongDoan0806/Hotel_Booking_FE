@@ -160,6 +160,25 @@ const roomController = {
       return response.sendError(res, 500, err.message);
     }
   },
+  getRoomsByStatus: async (req, res) => {
+    try {
+      const status = req.params.status;
+      const page = parseInt(req.query.page, 10) || 1;
+      const perPage = parseInt(req.query.perPage, 10) || 10;
+      const result = await roomService.getRoomsByStatus(status, page, perPage);
+      return res.status(200).json({
+        status: "success",
+        message: `Fetched rooms with status: ${status}`,
+        data: result.data,
+        pagination: result.pagination,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        status: "error",
+        message: err.message,
+      });
+    }
+  },
 };
 
 module.exports = roomController;

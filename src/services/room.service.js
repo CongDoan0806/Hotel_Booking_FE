@@ -1,5 +1,4 @@
 const roomRepository = require("../repositories/room.repository");
-const dealService = require("./deal.service");
 
 const roomService = {
   async getRoomDetail(id) {
@@ -21,6 +20,9 @@ const roomService = {
   },
   getAllRooms: async (page, perPage) => {
     return await roomRepository.getAll(page, perPage);
+  },
+  getRoomsByStatus: async (status, page = 1, perPage = 10) => {
+    return await roomRepository.getRoomsByStatus(status, page, perPage);
   },
   getRoomById: async (id) => {
     const room = await roomRepository.getById(id);
