@@ -1,18 +1,6 @@
 const pool = require("../config/db");
 const bookingModel = require("../models/booking.model");
-//func check conflict schedule book
-// async function findConflictingBooking(roomId, checkIn, checkOut) {
-//   const { rows } = await pool.query(
-//     `SELECT 1
-//      FROM booking_details
-//      WHERE room_id = $1
-//        AND ($2, $3) OVERLAPS (check_in_date, check_out_date)`,
-//     [roomId, checkIn, checkOut]
-//   );
-//   return rows.length > 0;
-// }
 
-// func create booking
 async function createBooking(userId, totalPrice, client) {
   const { rows } = await client.query(
     `INSERT INTO bookings (user_id, total_price)
@@ -24,20 +12,41 @@ async function createBooking(userId, totalPrice, client) {
 }
 
 async function createBookingDetail(bookingId, detail, client) {
-  const { roomId, pricePerUnit, checkIn, checkOut } = detail;
-  await client.query(
-    `INSERT INTO booking_details
-     (booking_id, room_id, price_per_unit, check_in_date, check_out_date)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [bookingId, roomId, pricePerUnit, checkIn, checkOut]
-  );
+  try {
+    const {
+      roomId,
+      pricePerUnit,
+      checkIn,
+      checkOut,
+      checkInTimestamp,
+      checkOutTimestamp,
+    } = detail;
+
+    await client.query(
+      `INSERT INTO booking_details
+       (booking_id, room_id, price_per_unit, check_in_date, check_out_date, check_in_timestamp, check_out_timestamp)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        bookingId,
+        roomId,
+        pricePerUnit,
+        checkIn || null,
+        checkOut || null,
+        checkInTimestamp || null,
+        checkOutTimestamp || null,
+      ]
+    );
+  } catch (err) {
+    console.error("Failed to insert booking detail:", err.message);
+    throw err;
+  }
 }
 
 const getDealDiscount = async (roomTypeId, inDate, outDate) => {
   const { rows } = await pool.query(
     `SELECT discount_rate
      FROM deals
-     WHERE room_type = $1
+     WHERE deal_id = $1
        AND ($2, $3) OVERLAPS (start_date, end_date)
        AND status = 'Ongoing'
      LIMIT 1`,
@@ -48,6 +57,9 @@ const getDealDiscount = async (roomTypeId, inDate, outDate) => {
 
 const getBookingInfoById = async (user_id) => {
   return await bookingModel.getBookingByUserId(user_id);
+};
+const getBookingById = async (booking_id) => {
+  return await bookingModel.getBookingById(booking_id);
 };
 
 const findById = async (bookingId) => {
@@ -90,6 +102,48 @@ const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
 
+const getAllBookingsWithDetails = async () => {
+  const query = `
+    SELECT
+      b.booking_id,
+      u.name AS user_name,
+      r.name AS room_name,
+      bd.check_in_date,
+      bd.check_out_date,
+      b.status
+    FROM bookings b
+    JOIN booking_details bd ON b.booking_id = bd.booking_id
+    JOIN "users" u ON b.user_id = u.user_id
+    JOIN rooms r ON bd.room_id = r.room_id
+    ORDER BY bd.check_in_date;
+  `;
+  try {
+    const { rows } = await pool.query(query);
+    return rows;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy danh sách booking chi tiết:", error);
+    throw error;
+  }
+};
+
+const getDisabledDatesByRoomId = async (roomId) => {
+  const { rows } = await pool.query(
+    `
+SELECT 
+  bd.check_in_timestamp AS check_in,
+  bd.check_out_timestamp AS check_out
+FROM booking_details bd
+JOIN bookings b ON bd.booking_id = b.booking_id
+WHERE bd.room_id = $1
+  AND b.status IN ('booked', 'checked_in')
+ORDER BY bd.check_in_timestamp
+
+    `,
+    [roomId]
+  );
+
+  return rows;
+};
 module.exports = {
   createBooking,
   createBookingDetail,
@@ -97,9 +151,12 @@ module.exports = {
   getBookingInfoById,
   updateBookingStatusToConfirmed,
   findById,
+  getBookingById,
   getBookingSummaryById,
   updatePaymentStatusById,
   getBookingsForAutoCheckin,
   getBookingsForAutoCheckout,
   updateStatus,
+  getAllBookingsWithDetails,
+  getDisabledDatesByRoomId,
 };

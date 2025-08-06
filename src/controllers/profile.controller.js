@@ -2,6 +2,7 @@ const {
   createHotelFeedbackService,
   getFavoriteRoomService,
   deleteFavoriteRoomService,
+  addFavoriteRoomService
 } = require("../services/profile.service");
 const { success, sendError } = require("../utils/response");
 
@@ -45,19 +46,43 @@ const deleteFavoriteRoomController = async (req, res) => {
     const { room_id } = req.params;
 
     if (!room_id) {
-      return res.status(400).json({ message: "room_id is required" });
+      return sendError(res, 400, "room_id is required")
     }
 
     const result = await deleteFavoriteRoomService(user_id, room_id);
     return success(res, result, "Delete favorite room successfully");
   } catch (error) {
     console.log("Error deleting favorite room", error);
-    return sendError(res, 500, "Failed ");
+    return sendError(res, 500, "Failed to delete room");
   }
+};
+
+const addFavoriteRoomController = async (req, res) => {
+  try {
+    const user_id = req.user?.id;
+    const { room_id } = req.params;
+
+    if (!room_id) {
+      return sendError(res, 400, "room_id is required");
+    }
+
+    const result = await addFavoriteRoomService(user_id, room_id);
+    return success(res, result, "Add room to favorite list successfully");
+
+  } catch (error) {
+    console.log("Error adding room to favorite list", error);
+
+    if (error.message === "Favorite room already in your favorite list") {
+      return sendError(res, 409, error.message); 
+    }
+
+    return sendError(res, 500, "Failed to add room to favorite list");
+  } 
 };
 
 module.exports = {
   createHotelFeedbackController,
   getFavoriteRoomController,
-  deleteFavoriteRoomController
+  deleteFavoriteRoomController,
+  addFavoriteRoomController
 };

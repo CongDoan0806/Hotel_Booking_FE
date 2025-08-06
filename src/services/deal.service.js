@@ -5,8 +5,8 @@ const dealsService = {
     return await dealsRepository.getActiveDeals();
   },
 
-  getAllDeals: async () => {
-    return await dealsRepository.getAllDeals();
+  getAllDeals: async ({ page, limit }) => {
+    return await dealsRepository.getAllDeals({ page, limit });
   },
 
   getDealByRoomType: async (room_type) => {
@@ -14,6 +14,17 @@ const dealsService = {
   },
 
   createDeal: async (dealData) => {
+    let discount = Number(dealData.discount_rate);
+    if (discount > 1) {
+      discount = discount / 100;
+    }
+    if (discount > 1) {
+      discount = 1;
+    }
+    if (discount < 0) {
+      discount = 0;
+    }
+    dealData.discount_rate = discount;
     return await dealsRepository.createDeal(dealData);
   },
 
@@ -29,12 +40,27 @@ const dealsService = {
     return await dealsRepository.getDealById(id);
   },
 
-  getDealsByStatus: async (status) => {
-    return await dealsRepository.getDealsByStatus(status);
+  getDealsByStatus: async (status, limit, page) => {
+    const offset = (page - 1) * limit;
+    const [deals, total] = await Promise.all([
+      dealsRepository.getDealsByStatus(status, limit, offset),
+      dealsRepository.countDealsByStatus(status),
+    ]);
+
+    return {
+      data: deals,
+      total,
+      totalPages: Math.ceil(total / limit),
+    };
   },
 
-  updateDealStatus: async (id) => {
-    return await dealsRepository.updateDealStatus(id);
+  updateDealStatus: async (id, discount_rate) => {
+    const rate = Number(discount_rate);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      throw new Error("Discount rate must be between 0 and 100");
+    }
+
+    return await dealsRepository.updateDealStatus(id, rate);
   },
 
   getDealSummary: async () => {
