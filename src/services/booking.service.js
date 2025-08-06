@@ -248,6 +248,9 @@ const autoUpdateCheckoutStatus = async () => {
 
   return bookings.length;
 };
+const getAllBookingDetailsService = async () => {
+  return await bookingRepo.getAllBookingsWithDetails();
+};
 
 const getDisabledDates = async (roomId) => {
   const rawDates = await bookingRepo.getDisabledDatesByRoomId(roomId);
@@ -266,5 +269,6 @@ module.exports = {
   getBookingSummaryDetailService,
   autoUpdateCheckinStatus,
   autoUpdateCheckoutStatus,
+  getAllBookingDetailsService,
   getDisabledDates,
 };

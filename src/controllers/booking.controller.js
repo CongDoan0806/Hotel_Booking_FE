@@ -136,6 +136,15 @@ const handleAutoUpdateStatus = async (req, res) => {
     return sendError(res, 500, "Failed to auto-update booking status");
   }
 };
+const getAllBookingDetailsController = async (req, res) => {
+  try {
+    const data = await bookingService.getAllBookingDetailsService();
+    return success(res, data, "Fetched all booking details successfully");
+  } catch (err) {
+    console.error("❌ Lỗi khi lấy danh sách bookings:", err);
+    return sendError(res, 500, "Failed to fetch bookings", [err.message]);
+  }
+};
 
 const getDisabledDatesController = async (req, res) => {
   console.log("req.params:", req.params);
@@ -163,5 +172,6 @@ module.exports = {
   confirmBookingController,
   getBookingSummaryDetailController,
   handleAutoUpdateStatus,
+  getAllBookingDetailsController,
   getDisabledDatesController,
 };
