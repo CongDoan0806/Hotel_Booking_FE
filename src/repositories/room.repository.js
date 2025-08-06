@@ -1,5 +1,6 @@
 const Room = require("../models/room.model");
 const pool = require("../config/db");
+const dayjs = require("../utils/dayjs");
 
 const roomRepository = {
   getAll: async (page = 1, perPage = 10) => {
@@ -441,51 +442,68 @@ const roomRepository = {
   },
 
   isRoomAvailable: async (roomId, checkIn, checkOut) => {
+    const checkInDateTime = dayjs(checkIn)
+      .tz("Asia/Ho_Chi_Minh")
+      .hour(14)
+      .minute(0)
+      .second(0)
+      .toDate();
+
+    const checkOutDateTime = dayjs(checkOut)
+      .tz("Asia/Ho_Chi_Minh")
+      .hour(12)
+      .minute(0)
+      .second(0)
+      .toDate();
+
     const { rows } = await pool.query(
       `
     SELECT 1
-    FROM rooms r
-    LEFT JOIN booking_details bd ON r.room_id = bd.room_id
+    FROM booking_details bd
+    JOIN bookings b ON b.booking_id = bd.booking_id
+    WHERE bd.room_id = $1
+      AND b.status IN ('booked', 'checked_in')
       AND NOT (
-        bd.check_in_date <= $2 OR
-        bd.check_out_date >= $3
+        bd.check_out_timestamp <= $2::timestamptz
+        OR bd.check_in_timestamp >= $3::timestamptz
       )
-    WHERE r.room_id = $1
-      AND r.status = 'available'
-      AND bd.booking_id IS NULL
     `,
-      [roomId, checkIn, checkOut]
+      [roomId, checkInDateTime, checkOutDateTime]
     );
 
-    return rows.length > 0;
+    return rows.length === 0;
   },
 
   getRoomDetail: async (roomId) => {
     const { rows } = await pool.query(
       `
-    SELECT
-      r.room_id,
-      r.description,
-      (rl.price + rt.price) AS price, -- Tính giá từ room_level + room_type
-      rl.price AS room_level_price,
-      rt.price AS room_type_price,
-      COALESCE(img.images, '[]')     AS images,
-      COALESCE(am.amenities, '[]')   AS amenities
-    FROM rooms r
-    JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-    JOIN room_types rt ON r.room_type_id = rt.room_type_id
-    LEFT JOIN LATERAL (
-      SELECT json_agg(image_url) AS images
-      FROM room_images
-      WHERE room_id = r.room_id
-    ) img ON TRUE
-    LEFT JOIN LATERAL (
-      SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
-      FROM room_amenities ra
-      JOIN amenities a ON a.amenity_id = ra.amenity_id
-      WHERE ra.room_id = r.room_id
-    ) am ON TRUE
-    WHERE r.room_id = $1
+   SELECT
+  r.room_id,
+  r.description,
+  r.name,
+  (rl.price + rt.price) AS price,
+  rl.price AS room_level_price,
+  rl.name AS room_level, -- Lấy tên cấp độ phòng (room_level)
+  rt.price AS room_type_price,
+  COALESCE(d.discount_rate, 0) AS discount_rate,
+  COALESCE(img.images, '[]') AS images,
+  COALESCE(am.amenities, '[]') AS amenities
+FROM rooms r
+JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+JOIN room_types rt ON r.room_type_id = rt.room_type_id
+LEFT JOIN deals d ON r.deal_id = d.deal_id
+LEFT JOIN LATERAL (
+  SELECT json_agg(image_url) AS images
+  FROM room_images
+  WHERE room_id = r.room_id
+) img ON TRUE
+LEFT JOIN LATERAL (
+  SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
+  FROM room_amenities ra
+  JOIN amenities a ON a.amenity_id = ra.amenity_id
+  WHERE ra.room_id = r.room_id
+) am ON TRUE
+WHERE r.room_id = $1;
     `,
       [roomId]
     );

@@ -8,7 +8,7 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err){
-    return res.status(403).json({ message: "Token invalid" });
+    return res.status(401).json({ message: "Token invalid" }); // change status 401 instead of 403 to match with interceptor
     }
     req.user = user;
     next();
