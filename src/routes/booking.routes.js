@@ -14,6 +14,7 @@ router.get(
   authenticate,
   bookingController.getBookingDetailsByUserIdController
 );
+router.get("/bookings/all", bookingController.getAllBookingDetailsController);
 router.get(
   "/bookings/:booking_id",
   authenticate,
@@ -30,7 +31,6 @@ router.get(
   getBookingSummaryDetailController
 );
 router.post("/booking/auto-status", bookingController.handleAutoUpdateStatus);
-router.get("/reservations", bookingController.getAllBookingDetailsController);
 router.get(
   "/rooms/:roomId/disabled-dates",
   bookingController.getDisabledDatesController
