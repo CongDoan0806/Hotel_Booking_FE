@@ -19,9 +19,11 @@ const {
   getHotelFeedbackController,
   getGuestListController,
   updateUserStatusController,
-  getRateController
+  getRateController,
 } = require("../controllers/admin.controller");
 router.use(authenticateToken, adminOnly);
+
+const roomDealController = require("../controllers/roomDeal.controller");
 
 router.get("/admin/rooms/", roomController.getAllRooms);
 router.get("/admin/rooms/:id", validateRoomId, roomController.getRoomById);
@@ -60,6 +62,12 @@ router.get("/admin/guest-list", getGuestListController);
 
 router.patch("/admin/users/:user_id/status", updateUserStatusController);
 
-router.get('/admin/rate', getRateController)
+router.get("/admin/rate", getRateController);
+
+router.post("/admin/rooms/:room_id/deal", roomDealController.assignDealToRoom);
+
+router.get("/admin/rooms/status/:status", roomController.getRoomsByStatus);
+
+router.put("/admin/rooms/:id/remove-deal", roomController.removeDealFromRoom);
 
 module.exports = router;
