@@ -1,4 +1,3 @@
-// src/controllers/roomDeal.controller.js
 const roomDealService = require("../services/roomDeal.service");
 
 exports.assignDealToRoom = async (req, res) => {

@@ -55,6 +55,25 @@ const roomService = {
       throw new Error(`Failed to get filter options: ${error.message}`);
     }
   },
+  findRoomByName: async (name) => {
+    return await roomRepository.findRoomByName(name);
+  },
+
+  assignDealToRoom: async (roomId, dealId) => {
+    const updatedRoom = await roomRepository.assignDeal(roomId, dealId);
+    if (!updatedRoom) {
+      throw new Error("Room not found or failed to assign deal.");
+    }
+    return updatedRoom;
+  },
+
+  removeDealFromRoom: async (roomId) => {
+    const updatedRoom = await roomRepository.removeDeal(roomId);
+    if (!updatedRoom) {
+      throw new Error("Room not found or deal already removed.");
+    }
+    return updatedRoom;
+  },
 };
 
 module.exports = roomService;

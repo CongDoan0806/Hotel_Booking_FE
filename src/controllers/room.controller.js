@@ -36,6 +36,13 @@ const roomController = {
   createRoom: async (req, res, next) => {
     try {
       const roomData = { ...req.body };
+
+      // Kiểm tra trùng room name
+      const existingRoom = await roomService.findRoomByName(roomData.name);
+      if (existingRoom) {
+        return response.sendError(res, 400, "Room number already exists");
+      }
+
       if (Array.isArray(roomData.image_urls)) {
         roomData.image_urls = roomData.image_urls.map((name) => {
           if (name.startsWith("/uploads/rooms/")) return name;
@@ -44,11 +51,13 @@ const roomController = {
           return "/uploads/rooms/" + name;
         });
       }
+
       if (req.files && req.files.length > 0) {
         roomData.image_urls = req.files.map(
           (f) => "/uploads/rooms/" + f.filename
         );
       }
+
       const newRoom = await roomService.createRoom(roomData);
       return response.success(res, newRoom, "Room created", 201);
     } catch (err) {
@@ -176,6 +185,50 @@ const roomController = {
       return res.status(500).json({
         status: "error",
         message: err.message,
+      });
+    }
+  },
+
+  assignDealToRoom: async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.id);
+      const { deal_id } = req.body;
+
+      if (!deal_id) {
+        return res
+          .status(400)
+          .json({ status: "error", message: "Missing deal_id" });
+      }
+
+      const updatedRoom = await roomService.assignDealToRoom(roomId, deal_id);
+      return res.status(200).json({
+        status: "success",
+        message: "Deal assigned to room successfully",
+        data: updatedRoom,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        status: "error",
+        message: error.message,
+      });
+    }
+  },
+
+  removeDealFromRoom: async (req, res) => {
+    try {
+      const roomId = Number(req.params.id);
+
+      const updatedRoom = await roomService.removeDealFromRoom(roomId);
+
+      res.status(200).json({
+        status: "success",
+        message: "Deal removed from room successfully",
+        data: updatedRoom,
+      });
+    } catch (error) {
+      res.status(400).json({
+        status: "error",
+        message: error.message,
       });
     }
   },
