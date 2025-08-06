@@ -613,7 +613,7 @@ const roomRepository = {
     }
   },
 
-  assignDeal: async (roomId, dealId) => {
+  updateDeal: async (roomId, dealId) => {
     const query = `
     UPDATE rooms 
     SET deal_id = $1 

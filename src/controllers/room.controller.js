@@ -189,31 +189,6 @@ const roomController = {
     }
   },
 
-  assignDealToRoom: async (req, res) => {
-    try {
-      const roomId = parseInt(req.params.id);
-      const { deal_id } = req.body;
-
-      if (!deal_id) {
-        return res
-          .status(400)
-          .json({ status: "error", message: "Missing deal_id" });
-      }
-
-      const updatedRoom = await roomService.assignDealToRoom(roomId, deal_id);
-      return res.status(200).json({
-        status: "success",
-        message: "Deal assigned to room successfully",
-        data: updatedRoom,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        status: "error",
-        message: error.message,
-      });
-    }
-  },
-
   removeDealFromRoom: async (req, res) => {
     try {
       const roomId = Number(req.params.id);
