@@ -477,32 +477,59 @@ const roomRepository = {
   getRoomDetail: async (roomId) => {
     const { rows } = await pool.query(
       `
-   SELECT
+SELECT
   r.room_id,
   r.description,
   r.name,
   (rl.price + rt.price) AS price,
   rl.price AS room_level_price,
-  rl.name AS room_level, -- Lấy tên cấp độ phòng (room_level)
+  rl.name AS room_level,
+  rt.name AS room_type,
   rt.price AS room_type_price,
+  f.name AS floor_name,
   COALESCE(d.discount_rate, 0) AS discount_rate,
   COALESCE(img.images, '[]') AS images,
-  COALESCE(am.amenities, '[]') AS amenities
+  COALESCE(am.amenities, '[]') AS amenities,
+  COALESCE(fb.feedbacks, '[]') AS feedbacks
+
 FROM rooms r
 JOIN room_levels rl ON r.room_level_id = rl.room_level_id
 JOIN room_types rt ON r.room_type_id = rt.room_type_id
 LEFT JOIN deals d ON r.deal_id = d.deal_id
+LEFT JOIN floors f ON r.floor_id = f.floor_id
+
+-- Lấy danh sách ảnh
 LEFT JOIN LATERAL (
   SELECT json_agg(image_url) AS images
   FROM room_images
   WHERE room_id = r.room_id
 ) img ON TRUE
+
+-- Lấy danh sách tiện ích
 LEFT JOIN LATERAL (
   SELECT json_agg(json_build_object('name', a.name, 'icon', a.icon)) AS amenities
   FROM room_amenities ra
   JOIN amenities a ON a.amenity_id = ra.amenity_id
   WHERE ra.room_id = r.room_id
 ) am ON TRUE
+
+-- Lấy danh sách feedbacks theo room_id
+LEFT JOIN LATERAL (
+  SELECT json_agg(
+    json_build_object(
+      'comment', f.comment,
+      'rating', f.rating,
+      'created_at', f.created_at,
+      'user_name', u.name
+    )
+  ) AS feedbacks
+  FROM feedbacks f
+  JOIN booking_details bd ON f.booking_details_id = bd.booking_detail_id
+  JOIN bookings b ON bd.booking_id = b.booking_id
+  JOIN users u ON b.user_id = u.user_id
+  WHERE bd.room_id = r.room_id
+) fb ON TRUE
+
 WHERE r.room_id = $1;
     `,
       [roomId]

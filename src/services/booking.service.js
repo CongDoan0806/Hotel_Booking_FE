@@ -261,6 +261,10 @@ const getDisabledDates = async (roomId) => {
   }));
 };
 
+const autoDeleteExpiredBookingsService = async () => {
+  return await bookingRepo.autoDeleteExpiredBookingsService();
+};
+
 module.exports = {
   createBookingWithDetails,
   getBookingDetailsByUserId,
@@ -271,4 +275,5 @@ module.exports = {
   autoUpdateCheckoutStatus,
   getAllBookingDetailsService,
   getDisabledDates,
+  autoDeleteExpiredBookingsService
 };
