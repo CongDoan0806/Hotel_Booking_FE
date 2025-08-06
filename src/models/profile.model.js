@@ -53,9 +53,31 @@ const deleteFavoriteRoomModel = async (user_id, room_id) => {
   return result.rowCount > 0; 
 };
 
+const addFavoriteRoomModel = async (user_id, room_id) => {
+  const checkQuery = `
+    SELECT 1 FROM favorite_rooms
+    WHERE user_id = $1 AND room_id = $2
+    LIMIT 1
+  `;
+  const checkResult = await pool.query(checkQuery, [user_id, room_id]);
+
+  if (checkResult.rowCount > 0) {
+    return false; 
+  }
+
+  const insertQuery = `
+    INSERT INTO favorite_rooms (user_id, room_id, created_at)
+    VALUES ($1, $2, NOW())
+  `;
+  const result = await pool.query(insertQuery, [user_id, room_id]);
+
+  return result.rowCount > 0;
+};
+
 module.exports = {
     createHotelFeedbackModel,
     getFavoriteRoomModel,
     countFavoriteRoomModel,
-    deleteFavoriteRoomModel
+    deleteFavoriteRoomModel,
+    addFavoriteRoomModel
 }

@@ -2,7 +2,8 @@ const {
   createHotelFeedbackRepo,
   countFavoriteRoomRepo,
   getFavoriteRoomRepo,
-  deleteFavoriteRoomRepo
+  deleteFavoriteRoomRepo,
+  addFavoriteRoomRepo
 } = require("../repositories/profile.repository");
 
 const createHotelFeedbackService = async (user_id, rating, comment) => {
@@ -44,9 +45,19 @@ const deleteFavoriteRoomService = async (user_id, room_id ) => {
   return { message: 'Favorite room deleted successfully' };
 };
 
+const addFavoriteRoomService = async (user_id, room_id) => {
+  const added = await addFavoriteRoomRepo(user_id, room_id);
+
+  if (!added) {
+    throw new Error('Favorite room already in your favorite list')
+  }
+
+  return { message: 'Added to favorites successfully'}
+}
 
 module.exports = {
   createHotelFeedbackService,
   getFavoriteRoomService,
-  deleteFavoriteRoomService
+  deleteFavoriteRoomService,
+  addFavoriteRoomService
 };
