@@ -167,6 +167,9 @@ const autoUpdateCheckoutStatus = async () => {
 
   return bookings.length;
 };
+const getAllBookingDetailsService = async () => {
+  return await bookingRepo.getAllBookingsWithDetails();
+};
 
 module.exports = {
   createBookingWithDetails,
@@ -175,4 +178,5 @@ module.exports = {
   getBookingSummaryDetailService,
   autoUpdateCheckinStatus,
   autoUpdateCheckoutStatus,
+  getAllBookingDetailsService,
 };

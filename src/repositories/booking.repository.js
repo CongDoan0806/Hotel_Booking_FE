@@ -1,18 +1,6 @@
 const pool = require("../config/db");
 const bookingModel = require("../models/booking.model");
-//func check conflict schedule book
-// async function findConflictingBooking(roomId, checkIn, checkOut) {
-//   const { rows } = await pool.query(
-//     `SELECT 1
-//      FROM booking_details
-//      WHERE room_id = $1
-//        AND ($2, $3) OVERLAPS (check_in_date, check_out_date)`,
-//     [roomId, checkIn, checkOut]
-//   );
-//   return rows.length > 0;
-// }
 
-// func create booking
 async function createBooking(userId, totalPrice, client) {
   const { rows } = await client.query(
     `INSERT INTO bookings (user_id, total_price)
@@ -90,6 +78,30 @@ const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
 
+const getAllBookingsWithDetails = async () => {
+  const query = `
+    SELECT
+      b.booking_id,
+      u.name AS user_name,
+      r.name AS room_name,
+      bd.check_in_date,
+      bd.check_out_date,
+      b.status
+    FROM bookings b
+    JOIN booking_details bd ON b.booking_id = bd.booking_id
+    JOIN "users" u ON b.user_id = u.user_id
+    JOIN rooms r ON bd.room_id = r.room_id
+    ORDER BY bd.check_in_date;
+  `;
+  try {
+    const { rows } = await pool.query(query);
+    return rows;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy danh sách booking chi tiết:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   createBooking,
   createBookingDetail,
@@ -102,4 +114,5 @@ module.exports = {
   getBookingsForAutoCheckin,
   getBookingsForAutoCheckout,
   updateStatus,
+  getAllBookingsWithDetails,
 };
