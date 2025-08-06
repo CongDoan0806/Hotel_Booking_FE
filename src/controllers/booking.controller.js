@@ -3,14 +3,13 @@ const bookingService = require('../services/booking.service');
 const { validateBookingInput } = require('../validations/booking.validate');
 const { success, sendError } = require('../utils/response');
 const validateParams = require('../middlewares/validateParams');
+const userService = require('../services/user.service');
 
 // Create booking
 const createBooking = async (req, res) => {
   try {
     const { roomId, checkInDate, checkOutDate } = req.body;
    const userId = req.user?.user_id || req.user?.id;
-    // console.log('🔥 req.user =', userId);
-
 
     const errors = await validateBookingInput({ roomId, checkInDate, checkOutDate });
 
@@ -92,11 +91,75 @@ const handleAutoUpdateStatus = async (req, res) => {
   }
 };
 
+const frontDeskCreateBooking = async (req, res) => {
+  try {
+    console.log("------- BODY RECEIVED FROM FE -------");
+    console.log(req.body);
+
+    const { roomId, checkInDate, checkOutDate, name, phone, email, status } = req.body;
+    console.log("📥 Frontdesk input:", { roomId, checkInDate, checkOutDate, name, phone, email, status });
+
+    let customerUserId;
+
+    const existedUser = await userService.getUserByEmail(email);
+
+    if (existedUser) {
+      customerUserId = existedUser.user_id;
+      console.log("👉 Existing user:", customerUserId);
+    } else {
+      const [first_name, ...rest] = name.split(" ");
+      const last_name = rest.join(" ");
+
+      const newUser = await userService.createUser({
+        first_name,
+        last_name,
+        phone,
+        email,
+        password,
+        role: "user",
+      });
+      customerUserId = newUser.user_id;
+      console.log("✅ Created new user:", customerUserId);
+    }
+
+    const errors = await validateBookingInput({ roomId, checkInDate, checkOutDate });
+    if (errors.length > 0) {
+      return sendError(res, 400, "Room not available for booking", errors);
+    }
+    const room = await roomRepository.getRoomDetail(roomId);
+    if (!room) return sendError(res, 404, "Room not found");
+
+    const booking = await bookingService.createBookingWithDetails(
+      customerUserId,
+      room,
+      checkInDate,
+      checkOutDate,
+      status
+    );
+    console.log("✅ Booking created", booking);
+
+    return success(
+      res,
+      {
+        booking_id: booking.booking_id,
+        user_id: customerUserId,
+        status: booking.status,
+      },
+      "Front-desk booking created successfully",
+      201
+    );
+  } catch (err) {
+    console.error("❌ frontDeskCreateBooking error:", err);
+    return sendError(res, 500, err.message || "Server error");
+  }
+};
+
 module.exports = {
   createBooking,
   createBooking,
   getBookingDetailsByUserIdController,
   confirmBookingController,
   getBookingSummaryDetailController,
-  handleAutoUpdateStatus
+  handleAutoUpdateStatus,
+  frontDeskCreateBooking,
 };

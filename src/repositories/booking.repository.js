@@ -1,18 +1,6 @@
 const pool = require("../config/db");
 const bookingModel = require("../models/booking.model");
-//func check conflict schedule book
-// async function findConflictingBooking(roomId, checkIn, checkOut) {
-//   const { rows } = await pool.query(
-//     `SELECT 1
-//      FROM booking_details
-//      WHERE room_id = $1
-//        AND ($2, $3) OVERLAPS (check_in_date, check_out_date)`,
-//     [roomId, checkIn, checkOut]
-//   );
-//   return rows.length > 0;
-// }
 
-// func create booking
 async function createBooking(userId, totalPrice, client) {
   const { rows } = await client.query(
     `INSERT INTO bookings (user_id, total_price)
@@ -63,7 +51,7 @@ const updateBookingStatusToConfirmed = async (bookingId) => {
     const result = await bookingModel.updateStatusById(bookingId, "booked");
     return result;
   } catch (error) {
-    console.error("❌ Lỗi khi cập nhật trạng thái booking:", error);
+    console.error("❌ Error updating booking status:", error);
     throw error;
   }
 };
@@ -90,6 +78,30 @@ const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
 
+async function createBooking(userId, totalPrice, status, client) {
+  const { rows } = await client.query(
+    `
+      INSERT INTO bookings (user_id, total_price, status)
+      VALUES ($1, $2, $3)
+      RETURNING booking_id, status
+    `,
+    [userId, totalPrice, status]
+  );
+  return rows[0];
+}
+
+async function createBookingDetail(bookingId, detail, client) {
+  const { roomId, pricePerUnit, checkIn, checkOut } = detail;
+  await client.query(
+    `
+    INSERT INTO booking_details
+      (booking_id, room_id, price_per_unit, check_in_date, check_out_date)
+    VALUES ($1, $2, $3, $4, $5)
+  `,
+    [bookingId, roomId, pricePerUnit, checkIn, checkOut]
+  );
+}
+
 module.exports = {
   createBooking,
   createBookingDetail,
@@ -102,4 +114,6 @@ module.exports = {
   getBookingsForAutoCheckin,
   getBookingsForAutoCheckout,
   updateStatus,
+  createBooking,
+  createBookingDetail,
 };

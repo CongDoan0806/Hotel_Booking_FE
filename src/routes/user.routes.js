@@ -7,5 +7,6 @@ const router = express.Router();
 router.get("/users/:id", userController.getUser);
 
 router.put("/users/:id", uploadAvatar.single("avatar"), userController.updateUser);
+router.post("/users", userController.createUser);
 
 module.exports = router;
