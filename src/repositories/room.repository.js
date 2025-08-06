@@ -3,6 +3,101 @@ const pool = require("../config/db");
 const dayjs = require("../utils/dayjs");
 
 const roomRepository = {
+  getRoomsByStatus: async (status, page = 1, perPage = 10) => {
+    const countResult = await pool.query(
+      "SELECT COUNT(*) FROM rooms WHERE status = $1",
+      [status]
+    );
+    const totalItems = parseInt(countResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalItems / perPage);
+    const offset = (page - 1) * perPage;
+
+    const result = await pool.query(
+      `
+    SELECT 
+      r.room_id, r.name, r.description, r.status,
+      r.room_type_id, r.room_level_id, r.floor_id,
+      rt.name AS room_type_name, rt.max_people, rt.price AS room_type_price,
+      rl.name AS room_level_name, rl.price AS room_level_price,
+      f.name AS floor_name,
+      d.deal_id AS deal_id,
+      d.deal_name AS deal_name,
+      d.discount_rate AS deal_discount_rate,
+      d.start_date AS deal_start_date,
+      d.end_date AS deal_end_date
+    FROM rooms r
+    LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    LEFT JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+    LEFT JOIN floors f ON r.floor_id = f.floor_id
+    LEFT JOIN deals d ON r.deal_id = d.deal_id
+    WHERE r.status = $1
+    ORDER BY r.room_id DESC
+    LIMIT $2 OFFSET $3
+    `,
+      [status, perPage, offset]
+    );
+
+    const rooms = result.rows;
+    const roomIds = rooms.map((r) => r.room_id);
+
+    const amenities = await pool.query(
+      `
+    SELECT ra.room_id, a.amenity_id, a.name, a.icon
+    FROM room_amenities ra
+    JOIN amenities a ON a.amenity_id = ra.amenity_id
+    WHERE ra.room_id = ANY($1::int[])
+    `,
+      [roomIds]
+    );
+
+    const images = await pool.query(
+      `SELECT room_id, image_url FROM room_images WHERE room_id = ANY($1::int[])`,
+      [roomIds]
+    );
+
+    const amenitiesMap = {};
+    for (const row of amenities.rows) {
+      if (!amenitiesMap[row.room_id]) amenitiesMap[row.room_id] = [];
+      amenitiesMap[row.room_id].push(row);
+    }
+
+    const imagesMap = {};
+    for (const row of images.rows) {
+      if (!imagesMap[row.room_id]) imagesMap[row.room_id] = [];
+      imagesMap[row.room_id].push(row.image_url);
+    }
+
+    const fullRooms = rooms.map((room) => {
+      const price = (room.room_type_price || 0) + (room.room_level_price || 0);
+      const deal = room.deal_name
+        ? {
+            deal_id: room.deal_id,
+            deal_name: room.deal_name,
+            discount_rate: room.deal_discount_rate,
+            start_date: room.deal_start_date,
+            end_date: room.deal_end_date,
+          }
+        : null;
+      return {
+        ...room,
+        price,
+        amenities: amenitiesMap[room.room_id] || [],
+        images: imagesMap[room.room_id] || [],
+        deal,
+      };
+    });
+
+    return {
+      data: fullRooms,
+      pagination: {
+        currentPage: page,
+        perPage,
+        totalPages,
+        totalItems,
+      },
+    };
+  },
+
   getAll: async (page = 1, perPage = 10) => {
     const countResult = await pool.query("SELECT COUNT(*) FROM rooms");
     const totalItems = parseInt(countResult.rows[0].count, 10);
@@ -16,11 +111,17 @@ const roomRepository = {
         r.room_type_id, r.room_level_id, r.floor_id,
         rt.name AS room_type_name, rt.max_people, rt.price AS room_type_price,
         rl.name AS room_level_name, rl.price AS room_level_price,
-        f.name AS floor_name
+        f.name AS floor_name,
+        d.deal_id AS deal_id,
+        d.deal_name AS deal_name,
+        d.discount_rate AS deal_discount_rate,
+        d.start_date AS deal_start_date,
+        d.end_date AS deal_end_date
       FROM rooms r
       LEFT JOIN room_types rt ON r.room_type_id = rt.room_type_id
       LEFT JOIN room_levels rl ON r.room_level_id = rl.room_level_id
       LEFT JOIN floors f ON r.floor_id = f.floor_id
+      LEFT JOIN deals d ON r.deal_id = d.deal_id
       ORDER BY r.room_id DESC
       LIMIT $1 OFFSET $2
     `,
@@ -57,12 +158,25 @@ const roomRepository = {
       imagesMap[row.room_id].push(row.image_url);
     }
 
-    const fullRooms = rooms.map((room) => ({
-      ...room,
-      price: (room.room_type_price || 0) + (room.room_level_price || 0),
-      amenities: amenitiesMap[room.room_id] || [],
-      images: imagesMap[room.room_id] || [],
-    }));
+    const fullRooms = rooms.map((room) => {
+      const price = (room.room_type_price || 0) + (room.room_level_price || 0);
+      const deal = room.deal_name
+        ? {
+            deal_id: room.deal_id,
+            deal_name: room.deal_name,
+            discount_rate: room.deal_discount_rate,
+            start_date: room.deal_start_date,
+            end_date: room.deal_end_date,
+          }
+        : null;
+      return {
+        ...room,
+        price,
+        amenities: amenitiesMap[room.room_id] || [],
+        images: imagesMap[room.room_id] || [],
+        deal,
+      };
+    });
 
     return {
       data: fullRooms,
@@ -73,6 +187,12 @@ const roomRepository = {
         totalItems,
       },
     };
+  },
+  findRoomByName: async (name) => {
+    const query = `SELECT * FROM rooms WHERE name = $1 LIMIT 1`;
+    const values = [name];
+    const result = await pool.query(query, values);
+    return result.rows[0] || null;
   },
 
   getById: async (id) => {
@@ -575,6 +695,29 @@ WHERE r.room_id = $1;
       throw error;
     }
   },
+
+  updateDeal: async (roomId, dealId) => {
+    const query = `
+    UPDATE rooms 
+    SET deal_id = $1 
+    WHERE room_id = $2 
+    RETURNING *;
+  `;
+    const result = await pool.query(query, [dealId, roomId]);
+    return result.rows[0];
+  },
+
+  removeDeal: async (roomId) => {
+    const query = `
+    UPDATE rooms 
+    SET deal_id = NULL 
+    WHERE room_id = $1
+    RETURNING *;
+  `;
+    const result = await pool.query(query, [roomId]);
+    return result.rows[0];
+  },
+
   getTopLuxuryRooms: async (limit = 3) => {
     const result = await pool.query(
       `

@@ -102,6 +102,17 @@ const Room = {
     const query = `DELETE FROM room_amenities WHERE room_id = $1`;
     await client.query(query, [roomId]);
   },
+  updateDeal: async (roomId, dealId, client) => {
+    const query = `
+    UPDATE rooms
+    SET deal_id = $1
+    WHERE room_id = $2
+    RETURNING *
+  `;
+    const values = [dealId, roomId];
+    const result = await client.query(query, values);
+    return result.rows[0];
+  },
 };
 
 module.exports = Room;
