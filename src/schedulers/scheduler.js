@@ -2,7 +2,7 @@ const dealsRepository = require('../repositories/deal.repository');
 
 async function updateAllDealStatuses() {
     try {
-        const deals = await dealsRepository.getAllDeals();
+        const deals = await dealsRepository.getAllDealsWithoutPagination();
         for (const deal of deals) {
             await dealsRepository.updateDealStatus(deal.deal_id);
         }

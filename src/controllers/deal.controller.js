@@ -12,7 +12,9 @@ const dealController = {
 
   getAllDeals: async (req, res) => {
     try {
-      const deals = await dealService.getAllDeals();
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const deals = await dealService.getAllDeals({ page, limit });
       res.json({ status: "success", data: deals });
     } catch (err) {
       res.status(500).json({ status: "error", message: err.message });
@@ -30,19 +32,41 @@ const dealController = {
   },
 
   createDeal: async (req, res) => {
-      try {
-          const newDeal = await dealService.createDeal(req.body);
-          res.status(201).json({ status: "success", data: newDeal });
-      } catch (err) {
-          if (err.message.includes("overlaps")) {
-              return res.status(400).json({ status: "error", message: err.message });
-          }
-          res.status(500).json({ status: "error", message: err.message });
+    try {
+      let { discount_rate, ...rest } = req.body;
+      let discount = Number(discount_rate);
+      if (discount > 1) {
+        discount = discount / 100;
       }
+      if (discount > 1) discount = 1;
+      if (discount < 0) discount = 0;
+      const newDeal = await dealService.createDeal({
+        ...rest,
+        discount_rate: discount,
+      });
+      res.status(201).json({
+        status: "success",
+        data: newDeal
+      });
+    } catch (err) {
+      if (err.message.includes("overlaps")) {
+        return res.status(400).json({ status: "error", message: err.message });
+      }
+      res.status(500).json({ status: "error", message: err.message });
+    }
   },
 
   updateDeal: async (req, res) => {
     try {
+      let { discount_rate } = req.body;
+      discount_rate = Number(discount_rate);
+      if (isNaN(discount_rate) || discount_rate < 0 || discount_rate > 100) {
+        return res.status(400).json({
+          status: "error",
+          message: "Discount rate must be between 0 and 100",
+        });
+      }
+      req.body.discount_rate = discount_rate;
       const updated = await dealService.updateDeal(req.params.id, req.body);
       res.json({ status: "success", data: updated });
     } catch (err) {
@@ -74,8 +98,19 @@ const dealController = {
   getDealsByStatusController: async (req, res) => {
     try {
       const status = req.params.status;
-      const deals = await dealService.getDealsByStatus(status);
-      res.json({ status: "success", data: deals });
+      const limit = parseInt(req.query.limit) || 10;
+      const page = parseInt(req.query.page) || 1;
+
+      const result = await dealService.getDealsByStatus(status, limit, page);
+
+      res.json({
+        status: "success",
+        items: result.data,     // ← đổi từ `data` → `items`
+        total: result.total,
+        totalPages: result.totalPages,
+        page,
+        limit,
+      });
     } catch (err) {
       res.status(500).json({ status: "error", message: err.message });
     }

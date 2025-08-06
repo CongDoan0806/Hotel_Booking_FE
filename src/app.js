@@ -41,6 +41,13 @@ cron.schedule("0 0 * * *", () => {
     console.error("Error updating deal statuses:", error.message);
   });
 });
+updateAllDealStatuses()
+  .then(() => {
+    console.log("Đã cập nhật trạng thái deal khi khởi động app.");
+  })
+  .catch((error) => {
+    console.error("Lỗi khi cập nhật deal lúc khởi động:", error.message);
+  });
 
 app.use(cors());
 app.use(express.json());
