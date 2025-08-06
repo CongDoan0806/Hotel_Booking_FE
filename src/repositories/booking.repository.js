@@ -1,7 +1,6 @@
 const pool = require("../config/db");
 const bookingModel = require("../models/booking.model");
 
-// func create booking
 async function createBooking(userId, totalPrice, client) {
   const { rows } = await client.query(
     `INSERT INTO bookings (user_id, total_price)
@@ -14,7 +13,14 @@ async function createBooking(userId, totalPrice, client) {
 
 async function createBookingDetail(bookingId, detail, client) {
   try {
-    const { roomId, pricePerUnit, checkIn, checkOut, checkInTimestamp, checkOutTimestamp } = detail;
+    const {
+      roomId,
+      pricePerUnit,
+      checkIn,
+      checkOut,
+      checkInTimestamp,
+      checkOutTimestamp,
+    } = detail;
 
     await client.query(
       `INSERT INTO booking_details
@@ -27,15 +33,14 @@ async function createBookingDetail(bookingId, detail, client) {
         checkIn || null,
         checkOut || null,
         checkInTimestamp || null,
-        checkOutTimestamp || null
+        checkOutTimestamp || null,
       ]
     );
   } catch (err) {
-    console.error('Failed to insert booking detail:', err.message);
+    console.error("Failed to insert booking detail:", err.message);
     throw err;
   }
 }
-
 
 const getDealDiscount = async (roomTypeId, inDate, outDate) => {
   const { rows } = await pool.query(
@@ -97,7 +102,30 @@ const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
 
-// select date to disable
+const getAllBookingsWithDetails = async () => {
+  const query = `
+    SELECT
+      b.booking_id,
+      u.name AS user_name,
+      r.name AS room_name,
+      bd.check_in_date,
+      bd.check_out_date,
+      b.status
+    FROM bookings b
+    JOIN booking_details bd ON b.booking_id = bd.booking_id
+    JOIN "users" u ON b.user_id = u.user_id
+    JOIN rooms r ON bd.room_id = r.room_id
+    ORDER BY bd.check_in_date;
+  `;
+  try {
+    const { rows } = await pool.query(query);
+    return rows;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy danh sách booking chi tiết:", error);
+    throw error;
+  }
+};
+
 const getDisabledDatesByRoomId = async (roomId) => {
   const { rows } = await pool.query(
     `
@@ -129,6 +157,6 @@ module.exports = {
   getBookingsForAutoCheckin,
   getBookingsForAutoCheckout,
   updateStatus,
-  // autoDeleteExpiredBookingsService,
+  getAllBookingsWithDetails,
   getDisabledDatesByRoomId,
 };

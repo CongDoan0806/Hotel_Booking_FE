@@ -124,10 +124,20 @@ const dealsRepository = {
     return rows[0];
   },
 
-  getDealsByStatus: async function(status) {
-    const { rows } = await pool.query(`
-      SELECT * FROM deals WHERE status = $1`, [status]);
+  getDealsByStatus: async function (status, limit, offset) {
+    const { rows } = await pool.query(
+      `SELECT * FROM deals WHERE status = $1 ORDER BY deal_id DESC LIMIT $2 OFFSET $3`,
+      [status, limit, offset]
+    );
     return rows;
+  },
+
+  countDealsByStatus: async function (status) {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*) FROM deals WHERE status = $1`,
+      [status]
+    );
+    return parseInt(rows[0].count, 10);
   },
 
   updateDealStatus: async function (id) {
