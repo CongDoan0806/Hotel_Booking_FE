@@ -107,6 +107,7 @@ const getFeedbackModel = async () => {
       SELECT 
         u.name AS customer_name,
         r.name AS room_name,
+        f.rating,
         f.comment
       FROM feedbacks f
       JOIN booking_details bd ON f.booking_details_id = bd.booking_detail_id
