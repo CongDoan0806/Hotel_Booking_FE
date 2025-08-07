@@ -188,6 +188,4 @@ module.exports = {
   getAllBookingsWithDetails,
   getDisabledDatesByRoomId,
   autoDeleteExpiredBookingsService
-  createBooking,
-  createBookingDetail,
 };
