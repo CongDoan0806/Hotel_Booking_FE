@@ -34,6 +34,7 @@ const getBookingByUserId = async (user_id) => {
       bd.check_out_date,
 
       r.room_id,
+      r.description,  
       r.name AS room_name,
       r.description AS room_description,
 
