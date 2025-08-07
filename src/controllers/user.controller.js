@@ -83,9 +83,45 @@ const updateUser = async (req, res) => {
   }
 };
 
+const createUser = async (req, res) => {
+  try {
+    console.log("➡️ [CREATE USER] req.body:", req.body);
+
+    const { name, phone, email } = req.body;
+
+    if (!name || !phone || !email) {
+      return res.status(400).json({ message: "name, phone, email are required" });
+    }
+
+    const [first_name, ...rest] = name.trim().split(" ");
+    const last_name = rest.join(" ");
+    const password = "123456";
+
+    const newUser = await userService.createUser({
+      first_name,
+      last_name,
+      phone,
+      email,
+      password,
+      role: "user",
+    });
+
+    console.log("✅ Created User:", newUser); 
+
+    return res.status(201).json({
+      message: "User created",
+      data: newUser,
+    });
+  } catch (err) {
+    console.error("❌ CREATE USER ERROR:", err);  
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 
 module.exports = {
   getUser,
   updateUser,
   upload,
+  createUser,
 };
