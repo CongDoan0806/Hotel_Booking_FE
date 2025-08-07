@@ -9,11 +9,35 @@ const dealsRepository = {
     return rows;
   },
 
-  getAllDeals: async function() {
-    const { rows } = await pool.query(`
-      SELECT * FROM deals`);
-    return rows;
+  getAllDeals: async function({ page, limit }) {
+    const offset = (page - 1) * limit;
+
+    const deals = await pool.query(`
+      SELECT * FROM deals
+      ORDER BY deal_id DESC
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+
+    const count = await pool.query(`SELECT COUNT(*) FROM deals`);
+    
+    return {
+      items: deals.rows,
+      total: parseInt(count.rows[0].count),
+      page,
+      limit,
+      totalPages: Math.ceil(count.rows[0].count / limit),
+    };
   },
+  getAllDealsWithoutPagination: async function () {
+    const result = await pool.query(`
+      SELECT deal_id, start_date, end_date 
+      FROM deals
+      ORDER BY start_date DESC
+    `);
+    return result.rows;
+  },
+
+
 
   createDeal: async function({ deal_name, discount_rate, start_date, end_date }) {
     const start = new Date(start_date);
@@ -100,29 +124,46 @@ const dealsRepository = {
     return rows[0];
   },
 
-  getDealsByStatus: async function(status) {
-    const { rows } = await pool.query(`
-      SELECT * FROM deals WHERE status = $1`, [status]);
+  getDealsByStatus: async function (status, limit, offset) {
+    const { rows } = await pool.query(
+      `SELECT * FROM deals WHERE status = $1 ORDER BY deal_id DESC LIMIT $2 OFFSET $3`,
+      [status, limit, offset]
+    );
     return rows;
   },
 
-  updateDealStatus: async function(id) {
-    const currentDate = new Date();
-    let status;
+  countDealsByStatus: async function (status) {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*) FROM deals WHERE status = $1`,
+      [status]
+    );
+    return parseInt(rows[0].count, 10);
+  },
 
-    const { rows } = await pool.query(`SELECT start_date, end_date FROM deals WHERE deal_id = $1`, [id]);
+  updateDealStatus: async function (id) {
+    const currentDate = new Date();
+
+    const { rows } = await pool.query(
+      `SELECT start_date, end_date FROM deals WHERE deal_id = $1`,
+      [id]
+    );
+
     if (rows.length > 0) {
       const deal = rows[0];
-      if (currentDate < new Date(deal.start_date)) {
-        status = 'New';
-      } else if (currentDate >= new Date(deal.start_date) && currentDate <= new Date(deal.end_date)) {
-        status = 'Ongoing';
+      const start = new Date(deal.start_date);
+      const end = new Date(deal.end_date);
+
+      let status;
+      if (currentDate < start) {
+        status = "New";
+      } else if (currentDate >= start && currentDate <= end) {
+        status = "Ongoing";
       } else {
-        status = 'Finished';
+        status = "Finished";
       }
 
-      await pool.query(`
-        UPDATE deals SET status = $1 WHERE deal_id = $2`,
+      await pool.query(
+        `UPDATE deals SET status = $1 WHERE deal_id = $2`,
         [status, id]
       );
     }

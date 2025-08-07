@@ -1,10 +1,13 @@
 const bookingRepo = require("../repositories/booking.repository");
 const paymentRepo = require("../repositories/payment.repository");
+const userRepo = require("../models/auth.model");
 const {
   updateStatusById,
   updateRoomStatusByBookingId,
 } = require("../models/booking.model");
 const db = require("../config/db");
+const { sendBookingEmail } = require("../utils/emailService");
+const dayjs = require("dayjs");
 
 const handleSuccess = async ({
   booking_id,
@@ -18,14 +21,14 @@ const handleSuccess = async ({
   if (!booking) {
     throw new Error("Booking not found");
   }
-  
+
   const existedPayment = await paymentRepo.checkPaymentExists(booking_id);
   if (existedPayment) {
     throw new Error("This booking has already been paid.");
   }
 
   await updateStatusById(booking_id, "booked");
-  await updateRoomStatusByBookingId(booking_id, "booked");
+  // await updateRoomStatusByBookingId(booking_id, "booked");
   await bookingRepo.updatePaymentStatusById(booking_id, "paid");
 
   const paymentRecord = await paymentRepo.createPayment({
@@ -37,6 +40,49 @@ const handleSuccess = async ({
     method,
     paid_at: new Date(),
   });
+
+  const user = await userRepo.getUserById(booking.user_id);
+  if (!user) throw new Error("User not found");
+
+  const userBookings = await bookingRepo.getBookingInfoById(booking.user_id);
+const newestBooking = [...userBookings].sort((a, b) => b.booking_id - a.booking_id)[0];
+  console.log("n:", newestBooking);
+
+  const checkInDate = dayjs(newestBooking.check_in_date);
+  const checkOutDate = dayjs(newestBooking.check_out_date);
+
+  const checkInFormatted = `${checkInDate.format("YYYY-MM-DD")}`;
+  const checkOutFormatted = `${checkOutDate.format(
+    "YYYY-MM-DD"
+  )}`;
+
+  const nights = checkOutDate.diff(checkInDate, "day");
+
+  const room = {
+    room_type_name: newestBooking.room_type,
+    room_level_name: newestBooking.room_level,
+  };
+
+  const emailPayload = {
+    user: {
+      email: user.email,
+      name:
+        `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Guest",
+    },
+    booking: {
+      booking_id: newestBooking.booking_id.toString(),
+      check_in_date: checkInFormatted,
+      check_out_date: checkOutFormatted,
+    },
+    room,
+    total_price: Number(
+      newestBooking.discounted_unit_price
+    ),
+    nights,
+  };
+
+  await sendBookingEmail(emailPayload);
+  console.log(emailPayload);
   return paymentRecord;
 };
 
