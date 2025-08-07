@@ -102,6 +102,9 @@ const getBookingsForAutoCheckout = async (currentDate) => {
 const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
+const autoDeleteExpiredBookingsService = async () => {
+  return await bookingModel.deleteExpiredPendingBookings();
+};
 
 async function createBooking(userId, totalPrice, status, client) {
   const { rows } = await client.query(
@@ -184,6 +187,7 @@ module.exports = {
   updateStatus,
   getAllBookingsWithDetails,
   getDisabledDatesByRoomId,
+  autoDeleteExpiredBookingsService
   createBooking,
   createBookingDetail,
 };

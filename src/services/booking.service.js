@@ -204,6 +204,10 @@ const getDisabledDates = async (roomId) => {
   }));
 };
 
+const autoDeleteExpiredBookingsService = async () => {
+  return await bookingRepo.autoDeleteExpiredBookingsService();
+};
+
 const createBookingWithDetails = async (userId, room, checkIn, checkOut, status) => {
   const nights = dayjs(checkOut).diff(dayjs(checkIn), "day");
   if (nights <= 0) throw new Error("Invalid date range (checkOut > checkIn)");
@@ -250,5 +254,6 @@ module.exports = {
   autoUpdateCheckoutStatus,
   getAllBookingDetailsService,
   getDisabledDates,
+  autoDeleteExpiredBookingsService
   createBookingWithDetails,
 };
