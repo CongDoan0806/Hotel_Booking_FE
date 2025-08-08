@@ -40,6 +40,8 @@ const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5, status) =
     groupedBookings[bookingId].total_discounted_price += discountedPrice;
 
     groupedBookings[bookingId].booking_details.push({
+      booking_detail_id: r.booking_detail_id,
+      room_description: r.description,
       room_id: r.room_id,
       room_name: r.room_name,
       room_type: r.room_type,

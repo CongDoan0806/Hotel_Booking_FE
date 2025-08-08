@@ -3,7 +3,9 @@ const {
   countFavoriteRoomRepo,
   getFavoriteRoomRepo,
   deleteFavoriteRoomRepo,
-  addFavoriteRoomRepo
+  addFavoriteRoomRepo,
+  createRoomFeedbackRepo,
+  getUserAndRoomRepo
 } = require("../repositories/profile.repository");
 
 const createHotelFeedbackService = async (user_id, rating, comment) => {
@@ -12,6 +14,37 @@ const createHotelFeedbackService = async (user_id, rating, comment) => {
   }
 
   return await createHotelFeedbackRepo(user_id, rating, comment);
+};
+
+const createRoomFeedbackService = async (user_id, booking_detail_id, rating, comment) => {
+  const info = await getUserAndRoomRepo(booking_detail_id);
+
+  if (!rating || !comment) {
+    throw new Error("Rating and comment are required");
+  }
+
+  if (!info) {
+    throw new Error("Booking detail not found");
+  }
+
+  if (info.user_id !== user_id) {
+    throw new Error("You are not authorized to comment on this booking");
+  }
+
+  const room_id = info.room_id;
+  const bookingDetailId = info.booking_detail_id
+  await createRoomFeedbackRepo(booking_detail_id, rating, comment);
+
+  return {
+    room_id: room_id,
+    room_name: room_name,
+    booking_detail_id: bookingDetailId,
+    room_description: room_description,
+    result: {
+      rating,
+      comment
+    }
+  }
 };
 
 const getFavoriteRoomService = async (page = 1, perPage = 10, user_id) => {
@@ -59,5 +92,6 @@ module.exports = {
   createHotelFeedbackService,
   getFavoriteRoomService,
   deleteFavoriteRoomService,
-  addFavoriteRoomService
+  addFavoriteRoomService,
+  createRoomFeedbackService,
 };

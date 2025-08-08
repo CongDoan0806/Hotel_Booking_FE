@@ -261,5 +261,5 @@ module.exports = {
   getAllBookingDetailsController,
   getDisabledDatesController,
   handleAutoDeleteExpiredBookings,
-  frontDeskCreateBooking,
+  frontDeskCreateBooking
 };
