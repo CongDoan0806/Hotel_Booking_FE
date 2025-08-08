@@ -3,14 +3,18 @@ const bookingService = require("../services/booking.service");
 const { validateBookingInput } = require("../validations/booking.validate");
 const { success, sendError } = require("../utils/response");
 const validateParams = require("../middlewares/validateParams");
-const userService = require('../services/user.service');
+const userService = require("../services/user.service");
 
 // Create booking
 const createBooking = async (req, res) => {
   try {
     const { roomId, checkInDate, checkOutDate } = req.body;
     const userId = req.user?.user_id || req.user?.id;
-    const errors = await validateBookingInput({ roomId, checkInDate, checkOutDate });
+    const errors = await validateBookingInput({
+      roomId,
+      checkInDate,
+      checkOutDate,
+    });
 
     if (errors.length > 0) {
       return sendError(res, 400, "Room not available for booking", errors);
@@ -139,7 +143,7 @@ const handleAutoDeleteExpiredBookings = async (req, res) => {
     return success(res, { deleted }, `Đã xoá ${deleted} booking quá hạn.`);
   } catch (err) {
     console.error(err);
-    return sendError(res, 500, 'Lỗi khi xoá booking quá hạn');
+    return sendError(res, 500, "Lỗi khi xoá booking quá hạn");
   }
 };
 const getAllBookingDetailsController = async (req, res) => {
@@ -175,8 +179,17 @@ const frontDeskCreateBooking = async (req, res) => {
     console.log("------- BODY RECEIVED FROM FE -------");
     console.log(req.body);
 
-    const { roomId, checkInDate, checkOutDate, name, phone, email, status } = req.body;
-    console.log("📥 Frontdesk input:", { roomId, checkInDate, checkOutDate, name, phone, email, status });
+    const { roomId, checkInDate, checkOutDate, name, phone, email, status } =
+      req.body;
+    console.log("📥 Frontdesk input:", {
+      roomId,
+      checkInDate,
+      checkOutDate,
+      name,
+      phone,
+      email,
+      status,
+    });
 
     let customerUserId;
 
@@ -201,7 +214,11 @@ const frontDeskCreateBooking = async (req, res) => {
       console.log("✅ Created new user:", customerUserId);
     }
 
-    const errors = await validateBookingInput({ roomId, checkInDate, checkOutDate });
+    const errors = await validateBookingInput({
+      roomId,
+      checkInDate,
+      checkOutDate,
+    });
     if (errors.length > 0) {
       return sendError(res, 400, "Room not available for booking", errors);
     }
@@ -243,5 +260,6 @@ module.exports = {
   handleAutoUpdateStatus,
   getAllBookingDetailsController,
   getDisabledDatesController,
-  handleAutoDeleteExpiredBookings
+  handleAutoDeleteExpiredBookings,
+  frontDeskCreateBooking
 };
