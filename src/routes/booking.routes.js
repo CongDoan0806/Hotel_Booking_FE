@@ -35,4 +35,17 @@ router.get(
   "/rooms/:roomId/disabled-dates",
   bookingController.getDisabledDatesController
 );
+
+router.get("/bookings/all", bookingController.getAllBookingDetailsController);
+router.get(
+  "/rooms/:roomId/disabled-dates",
+  bookingController.getDisabledDatesController
+);
+
+//Admin
+router.post(
+  "/bookings/front-desk",
+  authenticate,
+  bookingController.frontDeskCreateBooking
+);
 module.exports = router;
