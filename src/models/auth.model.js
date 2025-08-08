@@ -1,8 +1,10 @@
 const db = require('../config/db');
 
-const findByEmail = (email) =>
-  db.query('SELECT * FROM users WHERE email = $1', [email]);
-
+const findByEmail = async (email) => {
+  const query = `SELECT * FROM users WHERE email = $1 LIMIT 1`;
+  const result = await db.query(query, [email]);
+  return result.rows[0];
+};
 const createUser = async (name, firstname, lastname, email, password, role) => {
   const query = `
     INSERT INTO users (name, first_name, last_name, email, password, role)
