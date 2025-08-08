@@ -12,7 +12,7 @@ const {
 const redis = require("../utils/redis");
 const { sendOTPEmail } = require("../utils/emailService");
 const UserRepo = require("../repositories/user.repository");
-const { sendError } = require('../utils/response');
+const { sendError } = require("../utils/response");
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -32,9 +32,9 @@ const login = async (email, password) => {
   const result = await findByEmail(email);
   const user = result.rows[0];
 
-  if (user.status === 'blocked') {
-    console.log('Your account has been blocked by admin')
-    return sendError(res, 403, "Your account has been blocked by admin")
+  if (user.status === "blocked") {
+    console.log("Your account has been blocked by admin");
+    return sendError(res, 403, "Your account has been blocked by admin");
   }
 
   if (!user) throw new Error("Sai email hoặc mật khẩu");
@@ -206,6 +206,12 @@ const hashPassword = async (password) => {
 };
 
 const comparePassword = async (currentPassword, hashedPassword) => {
+  if (
+    typeof currentPassword !== "string" ||
+    typeof hashedPassword !== "string"
+  ) {
+    throw new Error("Password comparison failed: invalid input(s)");
+  }
   return await bcrypt.compare(currentPassword, hashedPassword);
 };
 
