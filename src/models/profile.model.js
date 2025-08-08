@@ -11,6 +11,29 @@ const createHotelFeedbackModel = async (user_id, rating, comment) => {
   return result.rows[0];
 };
 
+const getUserAndRoomModel = async (booking_detail_id) => {
+  const query = `
+    SELECT b.user_id, bd.room_id, r.description, bd.booking_detail_id, r.name
+    FROM booking_details bd
+    JOIN rooms r ON r.room_id = bd.room_id
+    JOIN bookings b ON bd.booking_id = b.booking_id
+    WHERE bd.booking_detail_id = $1
+  `;
+  const result = await pool.query(query, [booking_detail_id]);
+  return result.rows[0];
+};
+
+const createRoomFeedbackModel = async (booking_details_id, rating, comment) => {
+  const query = `
+    INSERT INTO feedbacks (booking_details_id, rating, comment)
+    VALUES ($1, $2, $3)
+    RETURNING *
+  `;
+  const result = await pool.query(query, [booking_details_id, rating, comment]);
+  return result.rowCount > 0;
+} 
+
+
 const getFavoriteRoomModel = async (user_id, limit, offset ) => {
   const query = `
     SELECT 
@@ -79,5 +102,7 @@ module.exports = {
     getFavoriteRoomModel,
     countFavoriteRoomModel,
     deleteFavoriteRoomModel,
-    addFavoriteRoomModel
+    addFavoriteRoomModel,
+    createRoomFeedbackModel,
+    getUserAndRoomModel
 }
