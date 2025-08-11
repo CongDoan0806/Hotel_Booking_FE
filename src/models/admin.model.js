@@ -1,28 +1,40 @@
 const pool = require("../config/db");
 
-const getUserListModel = async () => {
-  const query = `
-       SELECT 
-            u.*, 
-            b.booking_id, b.status AS booking_status, 
-            bd.booking_detail_id,  bd.price_per_unit, bd.check_in_date, bd.check_out_date,
-            r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
-        FROM users u
-        LEFT JOIN bookings b ON u.user_id = b.user_id
-        LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
-        LEFT JOIN rooms r ON bd.room_id = r.room_id
-        ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC;
-
-    `;
-
-  const result = await pool.query(query);
-  return result.rows;
-};
-const getCheckinGuestsModel = async () => {
+const getUserListModel = async (limit, offset) => {
   const query = `
     SELECT 
-      u.*, 
-      b.booking_id, 
+      u.user_id, u.email, u.role, u.is_active,
+      b.booking_id, b.status AS booking_status, b.total_price,
+      bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
+      r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
+    FROM users u
+    LEFT JOIN bookings b ON u.user_id = b.user_id
+    LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
+    LEFT JOIN rooms r ON bd.room_id = r.room_id
+    WHERE u.role <> 'admin'
+    ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC
+    LIMIT $1 OFFSET $2
+  `;
+  const result = await pool.query(query, [limit, offset]);
+  return result.rows;
+};
+
+const countUsersModel = async () => {
+  const query = `
+    SELECT COUNT(*) 
+    FROM bookings b
+    JOIN users u ON b.user_id = u.user_id
+    WHERE u.role <> 'admin'
+  `;
+  const result = await pool.query(query);
+  return parseInt(result.rows[0].count, 10);
+};
+
+const getCheckinGuestsModel = async (limit, offset) => {
+  const query = `
+    SELECT 
+      u.user_id, u.email, u.role, u.is_active,
+      b.booking_id, b.status AS booking_status, b.total_price,
       bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
       r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
     FROM users u
@@ -31,18 +43,33 @@ const getCheckinGuestsModel = async () => {
     JOIN rooms r ON bd.room_id = r.room_id
     WHERE bd.check_in_date <= CURRENT_DATE
       AND bd.check_out_date > CURRENT_DATE
-    ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC;
+      AND u.role <> 'admin'
+    ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC
+    LIMIT $1 OFFSET $2
   `;
-
-  const result = await pool.query(query);
+  const result = await pool.query(query, [limit, offset]);
   return result.rows;
 };
 
-const getCheckoutGuestsModel = async () => {
+const countCheckinGuestsModel = async () => {
+  const query = `
+    SELECT COUNT(DISTINCT u.user_id) AS count
+    FROM users u
+    JOIN bookings b ON u.user_id = b.user_id
+    JOIN booking_details bd ON b.booking_id = bd.booking_id
+    WHERE bd.check_in_date <= CURRENT_DATE
+      AND bd.check_out_date > CURRENT_DATE
+      AND u.role <> 'admin'
+  `;
+  const result = await pool.query(query);
+  return parseInt(result.rows[0].count, 10);
+};
+
+const getCheckoutGuestsModel = async (limit, offset) => {
   const query = `
     SELECT 
-      u.*, 
-      b.booking_id, 
+      u.user_id, u.email, u.role, u.is_active,
+      b.booking_id, b.status AS booking_status, b.total_price,
       bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
       r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
     FROM users u
@@ -50,11 +77,25 @@ const getCheckoutGuestsModel = async () => {
     JOIN booking_details bd ON b.booking_id = bd.booking_id
     JOIN rooms r ON bd.room_id = r.room_id
     WHERE bd.check_out_date < CURRENT_DATE
-    ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC;
+    AND u.role <> 'admin'
+    ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC
+    LIMIT $1 OFFSET $2
   `;
-
-  const result = await pool.query(query);
+  const result = await pool.query(query, [limit, offset]);
   return result.rows;
+};
+
+const countCheckoutGuestsModel = async () => {
+  const query = `
+    SELECT COUNT(DISTINCT u.user_id) AS count
+    FROM users u
+    JOIN bookings b ON u.user_id = b.user_id
+    JOIN booking_details bd ON b.booking_id = bd.booking_id
+    WHERE bd.check_out_date < CURRENT_DATE
+    AND u.role <> 'admin'
+  `;
+  const result = await pool.query(query);
+  return parseInt(result.rows[0].count, 10);
 };
 
 const getAdminDashboardStatusModel = async () => {
@@ -268,6 +309,7 @@ const totalRoomModel = async () => {
 };
 module.exports = {
   getUserListModel,
+  countUsersModel,
   getCheckinGuestsModel,
   getCheckoutGuestsModel,
   getAdminDashboardStatusModel,
@@ -281,5 +323,7 @@ module.exports = {
   getRateModel,
   getTotalRevenueModel,
   getBestSellerRoomModel,
-  totalRoomModel
+  totalRoomModel,
+  countCheckinGuestsModel,
+  countCheckoutGuestsModel
 };
