@@ -24,7 +24,7 @@ const createBooking = async (req, res) => {
     if (!room) {
       return sendError(res, 404, "Room not found");
     }
-
+    
     const booking = await bookingService.createBookingWithDetails(
       userId,
       room,

@@ -3,17 +3,35 @@ const bookingRepo = require("../repositories/booking.repository");
 const dayjs = require("../utils/dayjs");
 
 const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
-  const nights = dayjs(checkOut, "YYYY-MM-DD").diff(
-    dayjs(checkIn, "YYYY-MM-DD"),
-    "day"
-  );
+  const checkInDate = dayjs(checkIn).startOf("day");
+const checkOutDate = dayjs(checkOut).startOf("day");
 
-  const discount = await bookingRepo.getDealDiscount(
-    room.deal_id,
+const nights = checkOutDate.diff(checkInDate, "day");
+
+if (nights <= 0) {
+  throw new Error("Check-out must be after check-in");
+}
+
+  const discountRate = await bookingRepo.getDiscountRateByRoomId(
+    room.room_id,
     checkIn,
     checkOut
   );
-  const totalPrice = nights * room.price * (1 - discount);
+
+  const pricePerNight = room.price;
+  const originalPrice = pricePerNight * nights;
+  const discountAmount = originalPrice * discountRate;
+  const totalPrice = parseFloat((originalPrice - discountAmount).toFixed(2));
+  console.log({
+    checkInDate,
+    checkOutDate,
+    pricePerNight,
+    nights,
+    discountRate,
+    originalPrice,
+    discountAmount,
+    totalPrice,
+  });
 
   const client = await pool.connect();
   try {
@@ -24,18 +42,26 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
       totalPrice,
       client
     );
-    const checkInTimestamp = checkIn
-      ? dayjs(checkIn).hour(14).minute(0).second(0).millisecond(0).toDate()
-      : null;
 
-    const checkOutTimestamp = checkOut
-      ? dayjs(checkOut).hour(12).minute(0).second(0).millisecond(0).toDate()
-      : null;
+    const checkInTimestamp = dayjs(checkIn)
+      .hour(14)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+      .toDate();
+
+    const checkOutTimestamp = dayjs(checkOut)
+      .hour(12)
+      .minute(0)
+      .second(0)
+      .millisecond(0)
+      .toDate();
+
     await bookingRepo.createBookingDetail(
       bookingId,
       {
         roomId: room.room_id,
-        pricePerUnit: room.price,
+        pricePerUnit: pricePerNight,
         checkIn,
         checkOut,
         checkInTimestamp,
@@ -58,7 +84,13 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
     client.release();
   }
 };
-const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5, status) => {
+
+const getBookingDetailsByUserId = async (
+  user_id,
+  page = 1,
+  limit = 5,
+  status
+) => {
   const rows = await bookingRepo.getBookingInfoById(user_id);
 
   if (rows.length === 0) throw new Error("No bookings found for this user");
@@ -120,7 +152,9 @@ const getBookingDetailsByUserId = async (user_id, page = 1, limit = 5, status) =
     room_quantity: b.booking_details.length,
   }));
 
-  const filtered = status ? bookingsArray.filter(b => b.status === status) : bookingsArray;
+  const filtered = status
+    ? bookingsArray.filter((b) => b.status === status)
+    : bookingsArray;
 
   const total = filtered.length;
   const totalPages = Math.ceil(total / limit);
@@ -168,7 +202,7 @@ const getBookingDetailsById = async (booking_id) => {
 
     const unit_price =
       Number(r.room_type_price || 0) + Number(r.room_level_price || 0);
-    const discounted_unit_price = Number(r.discounted_unit_price || unit_price); 
+    const discounted_unit_price = Number(r.discounted_unit_price || unit_price);
     const detailPrice = unit_price * quantity * nights;
     const discountedPrice = discounted_unit_price * quantity * nights;
 
@@ -188,7 +222,7 @@ const getBookingDetailsById = async (booking_id) => {
       discounted_unit_price,
       deal_discount_rate: r.discount_rate,
       price_per_unit: r.price_per_unit, // có thể bỏ nếu không cần
-      price_per_unit: r.price_per_unit, 
+      price_per_unit: r.price_per_unit,
     });
   });
 
@@ -301,7 +335,6 @@ const autoDeleteExpiredBookingsService = async () => {
 //   }
 // };
 
-
 module.exports = {
   createBookingWithDetails,
   getBookingDetailsByUserId,
@@ -312,5 +345,5 @@ module.exports = {
   autoUpdateCheckoutStatus,
   getAllBookingDetailsService,
   getDisabledDates,
-  autoDeleteExpiredBookingsService
+  autoDeleteExpiredBookingsService,
 };

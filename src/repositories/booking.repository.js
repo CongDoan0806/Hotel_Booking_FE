@@ -12,6 +12,7 @@ async function createBooking(userId, totalPrice, client) {
   return rows[0].booking_id;
 }
 
+
 async function createBookingDetail(bookingId, detail, client) {
   try {
     const {
@@ -43,15 +44,16 @@ async function createBookingDetail(bookingId, detail, client) {
   }
 }
 
-const getDealDiscount = async (roomTypeId, inDate, outDate) => {
+const getDiscountRateByRoomId = async (roomId, checkIn, checkOut) => {
   const { rows } = await pool.query(
-    `SELECT discount_rate
-     FROM deals
-     WHERE deal_id = $1
-       AND ($2, $3) OVERLAPS (start_date, end_date)
-       AND status = 'Ongoing'
+    `SELECT d.discount_rate
+     FROM rooms r
+     JOIN deals d ON r.deal_id = d.deal_id
+     WHERE r.room_id = $1
+       AND d.status = 'Ongoing'
+       AND ($2, $3) OVERLAPS (d.start_date, d.end_date)
      LIMIT 1`,
-    [roomTypeId, inDate, outDate]
+    [roomId, checkIn, checkOut]
   );
   return rows[0]?.discount_rate || 0;
 };
@@ -175,7 +177,7 @@ ORDER BY bd.check_in_timestamp
 module.exports = {
   createBooking,
   createBookingDetail,
-  getDealDiscount,
+  getDiscountRateByRoomId,
   getBookingInfoById,
   updateBookingStatusToConfirmed,
   findById,

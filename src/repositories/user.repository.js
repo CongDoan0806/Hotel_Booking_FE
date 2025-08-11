@@ -39,7 +39,7 @@ const updateUser = async (userId, userData) => {
 
   const result = await pool.query(
     `UPDATE users SET
-      name - $1,
+      name = $1,
       first_name = $2,
       last_name = $3,
       email = $4,
