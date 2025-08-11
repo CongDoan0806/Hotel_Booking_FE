@@ -103,30 +103,21 @@ const roomController = {
     try {
       // Thêm phân trang parameters
       const page = Number.parseInt(req.query.page, 10) || 1;
-      const perPage = Number.parseInt(req.query.perPage, 10) || 5; // Mặc định 5 items
+      const perPage = Number.parseInt(req.query.perPage, 10) || 22; // Mặc định 5 items
 
       const filters = {
-        min_price: req.query.min_price
-          ? Number.parseFloat(req.query.min_price)
-          : undefined,
-        max_price: req.query.max_price
-          ? Number.parseFloat(req.query.max_price)
-          : undefined,
-        room_type: req.query.room_type
-          ? Number.parseInt(req.query.room_type)
-          : undefined,
-        people: req.query.people
-          ? Number.parseInt(req.query.people)
-          : undefined,
+        min_price: req.query.min_price ? Number.parseFloat(req.query.min_price) : undefined,
+        max_price: req.query.max_price ? Number.parseFloat(req.query.max_price) : undefined,
+        room_type: req.query.room_type ? Number.parseInt(req.query.room_type) : undefined,
+        people: req.query.people ? Number.parseInt(req.query.people) : undefined,
         check_in_date: req.query.check_in_date || undefined,
         check_out_date: req.query.check_out_date || undefined,
         amenities: req.query.amenities || undefined,
         has_deal: req.query.has_deal || undefined,
         status: req.query.status || undefined,
-        room_level: req.query.room_level
-          ? Number.parseInt(req.query.room_level)
-          : undefined,
+        room_level: req.query.room_level ? Number.parseInt(req.query.room_level) : undefined,
         floor: req.query.floor ? Number.parseInt(req.query.floor) : undefined,
+        rating: req.query.rating ? Number.parseInt(req.query.rating) : undefined, // **Thêm dòng này**
       };
 
       // Gọi service với pagination
