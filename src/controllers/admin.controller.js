@@ -1,5 +1,5 @@
 const {
-  getUserlistService,
+  getUserListService,
   getCheckinGuestsService,
   getCheckoutGuestsService,
   getAdminDashboardStatusService,
@@ -18,7 +18,7 @@ const getUserListController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
-    const { users, pagination } = await getUserlistService(page, perPage);
+    const { users, pagination } = await getUserListService(page, perPage);
 
     return success(res, { users, pagination }, "Get user list successfully");
   } catch (err) {
@@ -29,8 +29,12 @@ const getUserListController = async (req, res) => {
 
 const getCheckinGuestsController = async (req, res) => {
   try {
-    const guests = await getCheckinGuestsService();
-    return success(res, guests, "Get check-in guests successfully");
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 10;
+
+    const { users, pagination } = await getCheckinGuestsService(page, perPage);
+
+    return success(res, { users, pagination }, "Get check-in guests successfully");
   } catch (error) {
     console.error("Error fetching check-in guests:", error);
     return sendError(res, 500, "Error while getting check-in guests");
@@ -39,13 +43,18 @@ const getCheckinGuestsController = async (req, res) => {
 
 const getCheckoutGuestsController = async (req, res) => {
   try {
-    const guests = await getCheckoutGuestsService();
-    return success(res, guests, "Get checkout guests successfully");
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 10;
+
+    const { users, pagination } = await getCheckoutGuestsService(page, perPage);
+
+    return success(res, { users, pagination }, "Get checkout guests successfully");
   } catch (error) {
     console.error("Error fetching checkout guests:", error);
     return sendError(res, 500, "Error while getting checkout guests");
   }
 };
+
 
 const getAdminDashboardStatusController = async (req, res) => {
   try {
