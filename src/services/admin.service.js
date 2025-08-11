@@ -1,4 +1,3 @@
-const { getUserListModel } = require('../models/admin.model');
 const { getCheckinGuestsRepo, 
   getCheckoutGuestsRepo, 
   getAdminDashboardStatusRepo, 
@@ -13,131 +12,52 @@ const { getCheckinGuestsRepo,
 getRateRepo,
 getTotalRevenueRepo,
 getBestSellerRoomRepo,
-totalRoomRepo
+totalRoomRepo,
 } = require('../repositories/admin.repository');
-const { all } = require('../routes/admin.routes');
 
-const groupGuestsByUser = (rawData) => {
-  const groupedData = {};
+const { mapUserBookings } = require('../utils/mapUserBookings');
 
-  rawData.forEach((row) => {
-    const {
-      user_id, email, role, is_active,
-      booking_id, booking_status, payment_status,
-      booking_detail_id, service_name, quantity, price_per_unit, check_in_date, check_out_date,
-      room_id, room_name, room_description, room_price, room_type_id, floor_id
-    } = row;
-
-    if (!groupedData[user_id]) {
-      groupedData[user_id] = {
-        user_id,
-        email,
-        role,
-        is_active,
-        bookings: {}
-      };
-    }
-
-    if (booking_id) {
-      if (!groupedData[user_id].bookings[booking_id]) {
-        groupedData[user_id].bookings[booking_id] = {
-          booking_id,
-          status: booking_status,
-          payment_status,
-          total_price: 0,
-          booking_details: []
-        };
-      }
-
-      const detailPrice = price_per_unit ? parseFloat(price_per_unit) * Number(quantity || 1) : 0;
-      groupedData[user_id].bookings[booking_id].total_price += detailPrice;
-
-      if (booking_detail_id) {
-        groupedData[user_id].bookings[booking_id].booking_details.push({
-          booking_detail_id,
-          service_name,
-          quantity,
-          price_per_unit,
-          check_in_date,
-          check_out_date,
-          room: room_id && {
-            room_id,
-            name: room_name,
-            description: room_description,
-            price: room_price,
-            room_type_id,
-            floor_id
-          }
-        });
-      }
-    }
-  });
-
-  return Object.values(groupedData).map(user => ({
-    ...user,
-    bookings: Object.values(user.bookings).map(b => ({
-      ...b,
-      total_price: b.total_price.toFixed(2)
-    }))
-  }));
-};
-
-const getUserlistService = async (page = 1, perPage = 10) => {
-  const rawData = await getUserListModel();
-  const fullResult = groupGuestsByUser(rawData);
-
-  const totalItems = fullResult.length;
-  const totalPages = Math.ceil(totalItems / perPage);
-  const startIndex = (page - 1) * perPage;
-  const paginatedUsers = fullResult.slice(startIndex, startIndex + perPage);
+const getUserListService = async (page, perPage) => {
+  const offset = (page - 1) * perPage;
+  const { users: rows, totalUsers } = await getUserListRepo(perPage, offset);
 
   return {
-    users: paginatedUsers,
+    users: mapUserBookings(rows),
     pagination: {
-      currentPage: page,
+      total: totalUsers,
+      page,
       perPage,
-      totalPages,
-      totalItems
+      totalPages: Math.ceil(totalUsers / perPage)
     }
   };
 };
 
 const getCheckinGuestsService = async (page = 1, perPage = 10) => {
-  const rawData = await getCheckinGuestsRepo();
-  const fullResult = groupGuestsByUser(rawData);
-
-  const totalItems = fullResult.length;
-  const totalPages = Math.ceil(totalItems / perPage);
-  const startIndex = (page - 1) * perPage;
-  const paginatedUsers = fullResult.slice(startIndex, startIndex + perPage);
+  const offset = (page - 1) * perPage;
+  const { users: rows, totalUsers } = await getCheckinGuestsRepo(perPage, offset);
 
   return {
-    users: paginatedUsers,
+    users: mapUserBookings(rows, ['is_active']),
     pagination: {
-      currentPage: page,
+      total: totalUsers,
+      page,
       perPage,
-      totalPages,
-      totalItems
+      totalPages: Math.ceil(totalUsers / perPage)
     }
   };
 };
 
 const getCheckoutGuestsService = async (page = 1, perPage = 10) => {
-  const rawData = await getCheckoutGuestsRepo();
-  const fullResult = groupGuestsByUser(rawData);
-
-  const totalItems = fullResult.length;
-  const totalPages = Math.ceil(totalItems / perPage);
-  const startIndex = (page - 1) * perPage;
-  const paginatedUsers = fullResult.slice(startIndex, startIndex + perPage);
+  const offset = (page - 1) * perPage;
+  const { users: rows, totalUsers } = await getCheckoutGuestsRepo(perPage, offset);
 
   return {
-    users: paginatedUsers,
+    users: mapUserBookings(rows, ['is_active']),
     pagination: {
-      currentPage: page,
+      total: totalUsers,
+      page,
       perPage,
-      totalPages,
-      totalItems
+      totalPages: Math.ceil(totalUsers / perPage)
     }
   };
 };
@@ -225,7 +145,7 @@ const getRateService = async (page = 1, perPage = 10, month, year) => {
 
 
 module.exports = {
-  getUserlistService,
+  getUserListService,
   getCheckinGuestsService,
   getCheckoutGuestsService,
   getAdminDashboardStatusService,
@@ -235,5 +155,5 @@ module.exports = {
   getTop5MostBookedRoomsService,
   getGuestListService,
   updateUserStatusService,
-  getRateService
+  getRateService,
 };
