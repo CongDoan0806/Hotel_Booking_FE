@@ -2,7 +2,13 @@ const pool = require("../config/db");
 const bookingRepo = require("../repositories/booking.repository");
 const dayjs = require("../utils/dayjs");
 
-const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
+const createBookingWithDetails = async (
+  userId,
+  room,
+  checkIn,
+  checkOut,
+  status
+) => {
   const checkInDate = dayjs(checkIn).startOf("day");
   const checkOutDate = dayjs(checkOut).startOf("day");
 
@@ -33,6 +39,7 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
   //   totalPrice,
   // });
 
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -40,7 +47,8 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
     const bookingId = await bookingRepo.createBooking(
       userId,
       totalPrice,
-      client
+      client,
+      status || "booked"
     );
 
     const checkInTimestamp = dayjs(checkIn)
@@ -76,6 +84,7 @@ const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
       booking_id: bookingId,
       total_price: totalPrice,
       nights,
+      status: status || "booked",
     };
   } catch (err) {
     await client.query("ROLLBACK");
@@ -153,7 +162,6 @@ const getBookingDetailsByUserId = async (
   }));
 
   bookingsArray.sort((a, b) => b.booking_id - a.booking_id);
-
   const filtered = status
     ? bookingsArray.filter((b) => b.status === status)
     : bookingsArray;
@@ -223,7 +231,6 @@ const getBookingDetailsById = async (booking_id) => {
       unit_price,
       discounted_unit_price,
       deal_discount_rate: r.discount_rate,
-      price_per_unit: r.price_per_unit, // có thể bỏ nếu không cần
       price_per_unit: r.price_per_unit,
     });
   });
@@ -298,44 +305,7 @@ const getDisabledDates = async (roomId) => {
   }));
 };
 
-const autoDeleteExpiredBookingsService = async () => {
-  return await bookingRepo.autoDeleteExpiredBookingsService();
-};
 
-// const createBookingWithDetails = async (userId, room, checkIn, checkOut, status) => {
-//   const nights = dayjs(checkOut).diff(dayjs(checkIn), "day");
-//   if (nights <= 0) throw new Error("Invalid date range (checkOut > checkIn)");
-
-//   const discount = await bookingRepo.getDealDiscount(room.room_type_id, checkIn, checkOut);
-//   const totalPrice = nights * room.price * (1 - discount);
-
-//   const client = await pool.connect();
-//   try {
-//     await client.query("BEGIN");
-
-//     const bookingRow = await bookingRepo.createBooking(userId, totalPrice, status, client);
-
-//     await bookingRepo.createBookingDetail(bookingRow.booking_id, {
-//       roomId: room.room_id,
-//       pricePerUnit: room.price,
-//       checkIn,
-//       checkOut,
-//     }, client);
-
-//     await client.query("COMMIT");
-//     return {
-//       booking_id: bookingRow.booking_id,
-//       status: bookingRow.status,
-//       total_price: totalPrice,
-//       nights,
-//     };
-//   } catch (err) {
-//     await client.query("ROLLBACK");
-//     throw err;
-//   } finally {
-//     client.release();
-//   }
-// };
 
 module.exports = {
   createBookingWithDetails,
@@ -347,5 +317,4 @@ module.exports = {
   autoUpdateCheckoutStatus,
   getAllBookingDetailsService,
   getDisabledDates,
-  autoDeleteExpiredBookingsService,
 };

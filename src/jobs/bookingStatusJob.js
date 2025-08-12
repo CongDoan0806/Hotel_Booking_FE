@@ -7,12 +7,11 @@ cron.schedule("*/10 * * * * *", async () => {
   const today = now.format("YYYY-MM-DD");
   const time = now.format("HH:mm:ss");
 
-  console.log(`[${today} ${time}] 🔁 Booking cron job started`);
+  // console.log(`[${today} ${time}] 🔁 Booking cron job started`);
 
   try {
     const checkinCount = await bookingService.autoUpdateCheckinStatus();
     const checkoutCount = await bookingService.autoUpdateCheckoutStatus();
-    const deletedCount = await bookingService.autoDeleteExpiredBookingsService();
 
     // console.log(
     //   `[${today} ${time}] ✅ Updated check-in: ${checkinCount}, check-out: ${checkoutCount},delete:${deletedCount}`

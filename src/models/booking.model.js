@@ -20,43 +20,6 @@ class Booking {
   }
 }
 
-const deleteExpiredPendingBookings = async () => {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-
-    const { rows } = await client.query(`
-      SELECT booking_id FROM bookings
-      WHERE status IS NULL
-    `);
-
-    const bookingIds = rows.map((row) => row.booking_id);
-
-    if (bookingIds.length === 0) {
-      await client.query("COMMIT");
-      return 0;
-    }
-
-    await client.query(
-      `DELETE FROM booking_details WHERE booking_id = ANY($1::int[])`,
-      [bookingIds]
-    );
-
-    const deleteResult = await client.query(
-      `DELETE FROM bookings WHERE booking_id = ANY($1::int[])`,
-      [bookingIds]
-    );
-
-    await client.query("COMMIT");
-    return deleteResult.rowCount;
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("❌fail:", err);
-    throw err;
-  } finally {
-    client.release();
-  }
-};
 // func to select bookingdetail's user
 const getBookingByUserId = async (user_id, page = 1, limit = 5, status) => {
   const offset = (page - 1) * limit;
@@ -78,7 +41,6 @@ const getBookingByUserId = async (user_id, page = 1, limit = 5, status) => {
       bd.check_out_date,
 
       r.room_id,
-      r.description,  
       r.name AS room_name,
       r.description AS room_description,
 
@@ -302,6 +264,5 @@ module.exports = {
   findBookingsForAutoCheckin,
   findBookingsForAutoCheckout,
   updateBookingStatus,
-  deleteExpiredPendingBookings,
   Booking,
 };
