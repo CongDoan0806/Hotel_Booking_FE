@@ -55,6 +55,7 @@ const getBookingByUserId = async (user_id, page = 1, limit = 5, status) => {
       rl.price AS room_level_price,
 
       d.deal_id,
+      d.deal_name,
       d.discount_rate,
 
       (rt.price + rl.price) AS total_price,
