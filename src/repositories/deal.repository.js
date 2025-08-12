@@ -124,19 +124,60 @@ const dealsRepository = {
     return rows[0];
   },
 
-  getDealsByStatus: async function (status, limit, offset) {
-    const { rows } = await pool.query(
-      `SELECT * FROM deals WHERE status = $1 ORDER BY deal_id DESC LIMIT $2 OFFSET $3`,
-      [status, limit, offset]
-    );
+  getDealsFiltered: async function (status, startDate, endDate, limit, offset) {
+    let query = `SELECT * FROM deals WHERE 1=1`;
+    const params = [];
+    let paramIndex = 1;
+
+    if (status) {
+      query += ` AND status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+
+    if (startDate) {
+      query += ` AND start_date >= $${paramIndex}`;
+      params.push(startDate);
+      paramIndex++;
+    }
+
+    if (endDate) {
+      query += ` AND end_date <= $${paramIndex}`;
+      params.push(endDate);
+      paramIndex++;
+    }
+
+    query += ` ORDER BY deal_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
+
+    const { rows } = await pool.query(query, params);
     return rows;
   },
 
-  countDealsByStatus: async function (status) {
-    const { rows } = await pool.query(
-      `SELECT COUNT(*) FROM deals WHERE status = $1`,
-      [status]
-    );
+  countDealsFiltered: async function (status, startDate, endDate) {
+    let query = `SELECT COUNT(*) FROM deals WHERE 1=1`;
+    const params = [];
+    let paramIndex = 1;
+
+    if (status) {
+      query += ` AND status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+
+    if (startDate) {
+      query += ` AND start_date >= $${paramIndex}`;
+      params.push(startDate);
+      paramIndex++;
+    }
+
+    if (endDate) {
+      query += ` AND end_date <= $${paramIndex}`;
+      params.push(endDate);
+      paramIndex++;
+    }
+
+    const { rows } = await pool.query(query, params);
     return parseInt(rows[0].count, 10);
   },
 
