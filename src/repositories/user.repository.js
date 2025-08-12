@@ -33,8 +33,8 @@ const updateUser = async (userId, userData) => {
     avatar_url,
     gender,
     date_of_birth,
-    role = "user",
-    is_active = true,
+    role = 'user',
+    is_active = true
   } = userData;
 
   const result = await pool.query(
@@ -61,7 +61,7 @@ const updateUser = async (userId, userData) => {
       address,
       role,
       is_active,
-      userId,
+      userId
     ]
   );
 
