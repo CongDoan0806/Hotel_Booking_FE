@@ -1,7 +1,6 @@
 const pool = require("../config/db");
 const bookingModel = require("../models/booking.model");
 
-
 async function createBooking(userId, totalPrice, client) {
   const { rows } = await client.query(
     `INSERT INTO bookings (user_id, total_price)
@@ -11,7 +10,6 @@ async function createBooking(userId, totalPrice, client) {
   );
   return rows[0].booking_id;
 }
-
 
 async function createBookingDetail(bookingId, detail, client) {
   try {
@@ -44,16 +42,15 @@ async function createBookingDetail(bookingId, detail, client) {
   }
 }
 
-const getDiscountRateByRoomId = async (roomId, checkIn, checkOut) => {
+const getDiscountRateByRoomId = async (roomId) => {
   const { rows } = await pool.query(
     `SELECT d.discount_rate
      FROM rooms r
      JOIN deals d ON r.deal_id = d.deal_id
      WHERE r.room_id = $1
        AND d.status = 'Ongoing'
-       AND ($2, $3) OVERLAPS (d.start_date, d.end_date)
      LIMIT 1`,
-    [roomId, checkIn, checkOut]
+    [roomId]
   );
   return rows[0]?.discount_rate || 0;
 };
@@ -189,5 +186,5 @@ module.exports = {
   updateStatus,
   getAllBookingsWithDetails,
   getDisabledDatesByRoomId,
-  autoDeleteExpiredBookingsService
+  autoDeleteExpiredBookingsService,
 };

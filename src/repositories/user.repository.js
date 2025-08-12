@@ -38,19 +38,18 @@ const updateUser = async (userId, userData) => {
   } = userData;
 
   const result = await pool.query(
-    `UPDATE users SET
-      name = $1,
-      first_name = $2,
-      last_name = $3,
-      email = $4,
-      phone = $5,
-      avatar_url = $6,
-      gender = $7,
-      date_of_birth = $8,
-      address = $9,
-      role = $10,
-      is_active = $11
-    WHERE user_id = $12`,
+    `UPDATE users SET 
+      first_name = $1, 
+      last_name = $2, 
+      email = $3, 
+      phone = $4, 
+      avatar_url = $5, 
+      gender = $6, 
+      date_of_birth = $7,
+      address = $8,
+      role = $9,
+      is_active = $10
+    WHERE user_id = $11`,
     [
       first_name,
       last_name,

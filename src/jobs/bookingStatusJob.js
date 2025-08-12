@@ -14,9 +14,9 @@ cron.schedule("*/10 * * * * *", async () => {
     const checkoutCount = await bookingService.autoUpdateCheckoutStatus();
     const deletedCount = await bookingService.autoDeleteExpiredBookingsService();
 
-    console.log(
-      `[${today} ${time}] ✅ Updated check-in: ${checkinCount}, check-out: ${checkoutCount},delete:${deletedCount}`
-    );
+    // console.log(
+    //   `[${today} ${time}] ✅ Updated check-in: ${checkinCount}, check-out: ${checkoutCount},delete:${deletedCount}`
+    // );
   } catch (err) {
     console.error(`[${today} ${time}] ❌ Cron job error:`, err);
   }

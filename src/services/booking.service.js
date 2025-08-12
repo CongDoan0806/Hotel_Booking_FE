@@ -4,13 +4,13 @@ const dayjs = require("../utils/dayjs");
 
 const createBookingWithDetails = async (userId, room, checkIn, checkOut) => {
   const checkInDate = dayjs(checkIn).startOf("day");
-const checkOutDate = dayjs(checkOut).startOf("day");
+  const checkOutDate = dayjs(checkOut).startOf("day");
 
-const nights = checkOutDate.diff(checkInDate, "day");
+  const nights = checkOutDate.diff(checkInDate, "day");
 
-if (nights <= 0) {
-  throw new Error("Check-out must be after check-in");
-}
+  if (nights <= 0) {
+    throw new Error("Check-out must be after check-in");
+  }
 
   const discountRate = await bookingRepo.getDiscountRateByRoomId(
     room.room_id,
@@ -22,16 +22,16 @@ if (nights <= 0) {
   const originalPrice = pricePerNight * nights;
   const discountAmount = originalPrice * discountRate;
   const totalPrice = parseFloat((originalPrice - discountAmount).toFixed(2));
-  console.log({
-    checkInDate,
-    checkOutDate,
-    pricePerNight,
-    nights,
-    discountRate,
-    originalPrice,
-    discountAmount,
-    totalPrice,
-  });
+  // console.log({
+  //   checkInDate,
+  //   checkOutDate,
+  //   pricePerNight,
+  //   nights,
+  //   discountRate,
+  //   originalPrice,
+  //   discountAmount,
+  //   totalPrice,
+  // });
 
   const client = await pool.connect();
   try {
@@ -151,6 +151,8 @@ const getBookingDetailsByUserId = async (
     total_discounted_price: Number(b.total_discounted_price.toFixed(2)),
     room_quantity: b.booking_details.length,
   }));
+
+  bookingsArray.sort((a, b) => b.booking_id - a.booking_id);
 
   const filtered = status
     ? bookingsArray.filter((b) => b.status === status)
