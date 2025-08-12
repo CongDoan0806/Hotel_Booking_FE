@@ -210,6 +210,7 @@ const getGuestListModel = async (limit, offset) => {
   FROM users u
   LEFT JOIN bookings b ON u.user_id = b.user_id
   LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
+  WHERE u.role <> 'admin'
   GROUP BY u.user_id, u.name, u.email, u.phone, u.status
   ORDER BY u.user_id
   LIMIT $1 OFFSET $2;
