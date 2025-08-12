@@ -1,4 +1,4 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
 const findByEmail = async (email) => {
   const query = `SELECT * FROM users WHERE email = $1 LIMIT 1`;
@@ -10,19 +10,21 @@ const createUser = async (name, firstname, lastname, email, password, role) => {
     INSERT INTO users (name, first_name, last_name, email, password, role)
     VALUES ($1, $2, $3, $4, $5, $6)
   `;
-  await db.query(query, [name,firstname, lastname, email, password, role]);
+  await db.query(query, [name, firstname, lastname, email, password, role]);
 };
 
-
 const updatePassword = (userId, hashedPassword) => {
-  return db.query(
-    'UPDATE users SET password = $1 WHERE user_id = $2',
-    [hashedPassword, userId]
-  );
+  return db.query("UPDATE users SET password = $1 WHERE user_id = $2", [
+    hashedPassword,
+    userId,
+  ]);
 };
 
 const updateRefreshToken = (userId, refreshToken) =>
-  db.query(`UPDATE users SET refresh_token = $1 WHERE user_id = $2`, [refreshToken, userId]);
+  db.query(`UPDATE users SET refresh_token = $1 WHERE user_id = $2`, [
+    refreshToken,
+    userId,
+  ]);
 
 const findUserByRefreshToken = (refreshToken) =>
   db.query(`SELECT * FROM users WHERE refresh_token = $1`, [refreshToken]);
@@ -40,23 +42,22 @@ const getUserById = async (userId) => {
 
 const updateEmail = async (userId, email) => {
   const result = await db.query(
-    'UPDATE users SET email = $1 WHERE user_id = $2 RETURNING *',
+    "UPDATE users SET email = $1 WHERE user_id = $2 RETURNING *",
     [email, userId]
   );
 
   if (result.rowCount === 0) {
-    throw new Error('No user updated');
+    throw new Error("No user updated");
   }
 
   return result.rows[0];
 };
 module.exports = {
-    findByEmail,
-    createUser,
-    updateRefreshToken,
-    findUserByRefreshToken,
-    updatePassword,
-    getUserById,
-    updateEmail,
+  findByEmail,
+  createUser,
+  updateRefreshToken,
+  findUserByRefreshToken,
+  updatePassword,
+  getUserById,
+  updateEmail,
 };
-

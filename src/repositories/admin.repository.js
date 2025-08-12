@@ -1,6 +1,9 @@
 const {getUserListModel,
+    countUsersModel,
     getCheckinGuestsModel, 
+    countCheckinGuestsModel,
     getCheckoutGuestsModel, 
+    countCheckoutGuestsModel,
     getAdminDashboardStatusModel, 
     getAdminDashboardDealModel, 
     getFeedbackModel, 
@@ -15,17 +18,24 @@ getBestSellerRoomModel,
 totalRoomModel
 } = require('../models/admin.model');
 
-const getUserListRepo = async () => {
-    return await getUserListModel();
-}
+const getUserListRepo = async (limit, offset) => {
+  const users = await getUserListModel(limit, offset);
+  const totalUsers = await countUsersModel();
+  return { users, totalUsers };
+};
 
-const getCheckinGuestsRepo = async () => {
-    return await getCheckinGuestsModel();
-}
+const getCheckinGuestsRepo = async (limit, offset) => {
+  const users = await getCheckinGuestsModel(limit, offset);
+  const totalUsers = await countCheckinGuestsModel();
+  return { users, totalUsers };
+};
 
-const getCheckoutGuestsRepo = async () => {
-    return await getCheckoutGuestsModel();
-}
+const getCheckoutGuestsRepo = async (limit, offset) => {
+  const users = await getCheckoutGuestsModel(limit, offset);
+  const totalUsers = await countCheckoutGuestsModel();
+  return { users, totalUsers };
+};
+
 
 const getAdminDashboardStatusRepo = async () => {
     return await getAdminDashboardStatusModel();
