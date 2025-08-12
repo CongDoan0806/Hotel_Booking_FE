@@ -150,6 +150,7 @@ const getBookingDetailsByUserId = async (
       unit_price,
       discounted_unit_price,
       deal_discount_rate: r.discount_rate,
+      deal_name:r.deal_name,
       price_per_unit: r.price_per_unit,
     });
   });
