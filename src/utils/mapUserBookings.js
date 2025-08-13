@@ -7,10 +7,12 @@ function mapUserBookings(rows, extraFields = []) {
         user_id: row.user_id,
         email: row.email,
         role: row.role,
-        bookings: []
+        name: row.name,
+        phone: row.phone,
+        bookings: [],
       };
 
-      extraFields.forEach(field => {
+      extraFields.forEach((field) => {
         baseUser[field] = row[field];
       });
 
@@ -19,14 +21,14 @@ function mapUserBookings(rows, extraFields = []) {
 
     if (row.booking_id) {
       let booking = usersMap[row.user_id].bookings.find(
-        b => b.booking_id === row.booking_id
+        (b) => b.booking_id === row.booking_id
       );
       if (!booking) {
         booking = {
           booking_id: row.booking_id,
           status: row.booking_status,
           total_price: row.total_price,
-          booking_details: []
+          booking_details: [],
         };
         usersMap[row.user_id].bookings.push(booking);
       }
@@ -42,8 +44,8 @@ function mapUserBookings(rows, extraFields = []) {
             name: row.room_name,
             description: row.room_description,
             room_type_id: row.room_type_id,
-            floor_id: row.floor_id
-          }
+            floor_id: row.floor_id,
+          },
         });
       }
     }
