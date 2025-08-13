@@ -12,6 +12,7 @@ const {
 const redis = require("../utils/redis");
 const { sendOTPEmail } = require("../utils/emailService");
 const UserRepo = require("../repositories/user.repository");
+const { sendError } = require('../utils/response');
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -28,20 +29,18 @@ const generateRefreshToken = (user) => {
 };
 
 const login = async (email, password) => {
-  const user = await findByEmail(email); 
+  const result = await findByEmail(email);
+  const user = result.rows[0];
 
-  if (!user) {
-    throw new Error("Account does not exist.");
+  if (user.status === 'blocked') {
+    console.log('Your account has been blocked by admin')
+    return sendError(res, 403, "Your account has been blocked by admin")
   }
 
-  if (user.status === "blocked") {
-    throw new Error("Account has been locked by admin.");
-  }
+  if (!user) throw new Error("Sai email hoặc mật khẩu");
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new Error("Wrong email or password.");
-  }
+  if (!isMatch) throw new Error("Sai email hoặc mật khẩu");
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
@@ -64,7 +63,6 @@ const login = async (email, password) => {
     refreshToken,
   };
 };
-
 
 const register = async ({
   name,
