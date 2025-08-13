@@ -1,13 +1,11 @@
 const pool = require("../config/db");
 const bookingModel = require("../models/booking.model");
 
-
-async function createBooking(userId, totalPrice, client) {
+async function createBooking(userId, totalPrice, client,status) {
   const { rows } = await client.query(
-    `INSERT INTO bookings (user_id, total_price)
-     VALUES ($1, $2)
-     RETURNING booking_id`,
-    [userId, totalPrice]
+    `INSERT INTO bookings (user_id, total_price, status)
+     VALUES ($1, $2, $3) RETURNING booking_id`,
+    [userId, totalPrice, status]
   );
   return rows[0].booking_id;
 }
@@ -43,15 +41,15 @@ async function createBookingDetail(bookingId, detail, client) {
   }
 }
 
-const getDealDiscount = async (roomTypeId, inDate, outDate) => {
+const getDiscountRateByRoomId = async (roomId) => {
   const { rows } = await pool.query(
-    `SELECT discount_rate
-     FROM deals
-     WHERE deal_id = $1
-       AND ($2, $3) OVERLAPS (start_date, end_date)
-       AND status = 'Ongoing'
+    `SELECT d.discount_rate
+     FROM rooms r
+     JOIN deals d ON r.deal_id = d.deal_id
+     WHERE r.room_id = $1
+       AND d.status = 'Ongoing'
      LIMIT 1`,
-    [roomTypeId, inDate, outDate]
+    [roomId]
   );
   return rows[0]?.discount_rate || 0;
 };
@@ -102,33 +100,6 @@ const getBookingsForAutoCheckout = async (currentDate) => {
 const updateStatus = async (bookingId, status) => {
   return await bookingModel.updateBookingStatus(bookingId, status);
 };
-const autoDeleteExpiredBookingsService = async () => {
-  return await bookingModel.deleteExpiredPendingBookings();
-};
-
-async function createBooking(userId, totalPrice, status, client) {
-  const { rows } = await client.query(
-    `
-      INSERT INTO bookings (user_id, total_price, status)
-      VALUES ($1, $2, $3)
-      RETURNING booking_id, status
-    `,
-    [userId, totalPrice, status]
-  );
-  return rows[0];
-}
-
-async function createBookingDetail(bookingId, detail, client) {
-  const { roomId, pricePerUnit, checkIn, checkOut } = detail;
-  await client.query(
-    `
-    INSERT INTO booking_details
-      (booking_id, room_id, price_per_unit, check_in_date, check_out_date)
-    VALUES ($1, $2, $3, $4, $5)
-  `,
-    [bookingId, roomId, pricePerUnit, checkIn, checkOut]
-  );
-}
 
 const getAllBookingsWithDetails = async () => {
   const query = `
@@ -175,7 +146,7 @@ ORDER BY bd.check_in_timestamp
 module.exports = {
   createBooking,
   createBookingDetail,
-  getDealDiscount,
+  getDiscountRateByRoomId,
   getBookingInfoById,
   updateBookingStatusToConfirmed,
   findById,
@@ -187,5 +158,6 @@ module.exports = {
   updateStatus,
   getAllBookingsWithDetails,
   getDisabledDatesByRoomId,
-  autoDeleteExpiredBookingsService
+  // autoDeleteExpiredBookingsService,
+
 };

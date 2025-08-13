@@ -24,7 +24,7 @@ const createBooking = async (req, res) => {
     if (!room) {
       return sendError(res, 404, "Room not found");
     }
-
+    
     const booking = await bookingService.createBookingWithDetails(
       userId,
       room,
@@ -137,15 +137,6 @@ const handleAutoUpdateStatus = async (req, res) => {
   }
 };
 
-const handleAutoDeleteExpiredBookings = async (req, res) => {
-  try {
-    const deleted = await bookingService.autoDeleteExpiredBookingsService();
-    return success(res, { deleted }, `Đã xoá ${deleted} booking quá hạn.`);
-  } catch (err) {
-    console.error(err);
-    return sendError(res, 500, "Lỗi khi xoá booking quá hạn");
-  }
-};
 const getAllBookingDetailsController = async (req, res) => {
   try {
     const data = await bookingService.getAllBookingDetailsService();
@@ -207,7 +198,7 @@ const frontDeskCreateBooking = async (req, res) => {
         last_name,
         phone,
         email,
-        password,
+        password: "123456",
         role: "user",
       });
       customerUserId = newUser.user_id;
@@ -260,6 +251,5 @@ module.exports = {
   handleAutoUpdateStatus,
   getAllBookingDetailsController,
   getDisabledDatesController,
-  handleAutoDeleteExpiredBookings,
   frontDeskCreateBooking
 };

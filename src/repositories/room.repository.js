@@ -284,52 +284,14 @@ const roomRepository = {
   },
 
   getFilteredRooms: async (filters, page = 1, perPage = 5) => {
-    let countQuery = `
-      SELECT COUNT(DISTINCT r.room_id) as total
-      FROM rooms r
-      JOIN room_types rt ON r.room_type_id = rt.room_type_id
-      JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-      JOIN floors f ON r.floor_id = f.floor_id
-      LEFT JOIN deals d 
-          ON r.deal_id = d.deal_id
-         AND d.start_date <= CURRENT_DATE 
-         AND d.end_date >= CURRENT_DATE
-      WHERE 1=1
-    `;
-    // Tạo query chính với LIMIT và OFFSET
-    let query = `
-      SELECT 
-          r.*,
-          rt.name AS room_type_name,
-         rt.max_people,
-         rt.price AS base_price,
-         rl.name AS room_level_name,
-         rl.price AS level_price,
-         f.name AS floor_name,
-         d.deal_id AS deal_id,
-         d.deal_name AS deal_name,
-         d.discount_rate AS deal_discount_rate,
-         d.start_date AS deal_start_date,
-         d.end_date AS deal_end_date
-     FROM rooms r
-     JOIN room_types rt ON r.room_type_id = rt.room_type_id
-     JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-     JOIN floors f ON r.floor_id = f.floor_id
-     LEFT JOIN deals d 
-         ON r.deal_id = d.deal_id
-        AND d.start_date <= CURRENT_DATE 
-        AND d.end_date >= CURRENT_DATE
-     WHERE 1=1
-    `;
-
     const values = [];
     const countValues = [];
     const amenityFilters = filters.amenities
       ? filters.amenities.split(",").map(Number)
       : [];
 
-    // Xây dựng điều kiện WHERE cho cả count query và main query
-    let whereConditions = "";
+    // Câu điều kiện WHERE
+    let whereConditions = "WHERE 1=1";
 
     if (filters.min_price) {
       values.push(filters.min_price);
@@ -358,7 +320,7 @@ const roomRepository = {
     if (filters.check_in_date && filters.check_out_date) {
       const idx1 = values.length + 1;
       const idx2 = values.length + 2;
-      const condition = `
+      whereConditions += `
         AND r.room_id NOT IN (
           SELECT bd.room_id
           FROM booking_details bd
@@ -369,7 +331,6 @@ const roomRepository = {
           )
         )
       `;
-      whereConditions += condition;
       values.push(filters.check_in_date, filters.check_out_date);
       countValues.push(filters.check_in_date, filters.check_out_date);
     }
@@ -379,7 +340,7 @@ const roomRepository = {
       countValues.push(amenityFilters, amenityFilters.length);
       const idxA1 = values.length - 1;
       const idxA2 = values.length;
-      const condition = `
+      whereConditions += `
         AND r.room_id IN (
           SELECT ra.room_id
           FROM room_amenities ra
@@ -388,7 +349,6 @@ const roomRepository = {
           HAVING COUNT(DISTINCT ra.amenity_id) = $${idxA2}
         )
       `;
-      whereConditions += condition;
     }
 
     if (filters.status) {
@@ -409,37 +369,96 @@ const roomRepository = {
       whereConditions += ` AND r.floor_id = $${values.length}`;
     }
 
-    // Thêm điều kiện WHERE vào cả 2 query
-    countQuery += whereConditions;
-    query += whereConditions;
+    let havingClause = "";
+    if (filters.rating !== undefined) {
+      if (Number(filters.rating) === 0) {
+        havingClause = "HAVING AVG(fb.rating) IS NULL";
+      } else {
+        values.push(Number(filters.rating));
+        countValues.push(Number(filters.rating));
+        havingClause = `HAVING CEIL(AVG(fb.rating)) = $${values.length}`;
+      }
+    }
 
-    // Thực hiện count query để lấy tổng số records
-    const countResult = await pool.query(countQuery, countValues);
-    const totalItems = Number.parseInt(countResult.rows[0].total, 10);
-    const totalPages = Math.ceil(totalItems / perPage);
+    // COUNT QUERY - đếm tổng số phòng thỏa mãn điều kiện, có rating filter
+    const countQuery = `
+      SELECT COUNT(*) AS total FROM (
+        SELECT r.room_id
+        FROM rooms r
+        JOIN room_types rt ON r.room_type_id = rt.room_type_id
+        JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+        JOIN floors f ON r.floor_id = f.floor_id
+        LEFT JOIN deals d 
+          ON r.deal_id = d.deal_id
+          AND d.start_date <= CURRENT_DATE 
+          AND d.end_date >= CURRENT_DATE
+        LEFT JOIN booking_details bd ON r.room_id = bd.room_id
+        LEFT JOIN feedbacks fb ON bd.booking_detail_id = fb.booking_details_id
+        ${whereConditions}
+        GROUP BY r.room_id
+        ${havingClause}
+      ) sub
+    `;
 
-    // Thêm ORDER BY, LIMIT và OFFSET vào main query
+    // MAIN QUERY để lấy dữ liệu chi tiết phòng + rating
+    let query = `
+      SELECT 
+        r.room_id,
+        r.name,
+        r.description,
+        rt.name AS room_type_name,
+        rt.max_people,
+        rt.price AS base_price,
+        rl.name AS room_level_name,
+        rl.price AS level_price,
+        f.name AS floor_name,
+        d.deal_id,
+        d.deal_name,
+        d.discount_rate AS deal_discount_rate,
+        d.start_date AS deal_start_date,
+        d.end_date AS deal_end_date,
+        CEIL(AVG(fb.rating)) AS rating
+      FROM rooms r
+      JOIN room_types rt ON r.room_type_id = rt.room_type_id
+      JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+      JOIN floors f ON r.floor_id = f.floor_id
+      LEFT JOIN deals d 
+        ON r.deal_id = d.deal_id
+        AND d.status = 'Ongoing'
+      LEFT JOIN booking_details bd ON r.room_id = bd.room_id
+      LEFT JOIN feedbacks fb ON bd.booking_detail_id = fb.booking_details_id
+      ${whereConditions}
+      GROUP BY 
+        r.room_id, r.name, r.description,
+        rt.name, rt.max_people, rt.price,
+        rl.name, rl.price,
+        f.name,
+        d.deal_id, d.deal_name, d.discount_rate, d.start_date, d.end_date
+      ${havingClause}
+      ORDER BY r.room_id DESC
+      LIMIT $${values.length + 1} OFFSET $${values.length + 2}
+    `;
+
     const offset = (page - 1) * perPage;
-    query += ` ORDER BY r.room_id DESC LIMIT $${values.length + 1} OFFSET $${
-      values.length + 2
-    }`;
     values.push(perPage, offset);
 
+    // Thực hiện count query
+    const countResult = await pool.query(countQuery, countValues);
+    const totalItems = Number(countResult.rows[0].total) || 0;
+    const totalPages = Math.ceil(totalItems / perPage);
+
+    // Thực hiện query lấy dữ liệu
     const roomResult = await pool.query(query, values);
     const rooms = roomResult.rows;
 
     if (rooms.length === 0) {
       return {
         data: [],
-        pagination: {
-          currentPage: page,
-          perPage,
-          totalPages,
-          totalItems,
-        },
+        pagination: { currentPage: page, perPage, totalPages, totalItems },
       };
     }
 
+    // Lấy room_ids để truy vấn amenities và images
     const roomIds = rooms.map((r) => r.room_id);
 
     // Lấy tiện ích
@@ -459,7 +478,7 @@ const roomRepository = {
     `;
     const imageResult = await pool.query(imageQuery, [roomIds]);
 
-    // Gộp dữ liệu
+    // Gộp dữ liệu tiện ích
     const amenitiesMap = {};
     for (const row of amenityResult.rows) {
       if (!amenitiesMap[row.room_id]) amenitiesMap[row.room_id] = [];
@@ -470,15 +489,17 @@ const roomRepository = {
       });
     }
 
+    // Gộp dữ liệu ảnh
     const imagesMap = {};
     for (const row of imageResult.rows) {
       if (!imagesMap[row.room_id]) imagesMap[row.room_id] = [];
       imagesMap[row.room_id].push(row.image_url);
     }
 
-    let finalRooms = rooms.map((room) => {
-      const basePrice = Number.parseFloat(room.base_price || 0);
-      const levelPrice = Number.parseFloat(room.level_price || 0);
+    // Chuẩn bị dữ liệu trả về
+    const finalRooms = rooms.map((room) => {
+      const basePrice = Number(room.base_price || 0);
+      const levelPrice = Number(room.level_price || 0);
       const totalPrice = basePrice + levelPrice;
       const finalPrice = room.deal_discount_rate
         ? totalPrice * (1 - room.deal_discount_rate)
@@ -509,24 +530,13 @@ const roomRepository = {
         amenities: amenitiesMap[room.room_id] || [],
         images: imagesMap[room.room_id] || [],
         deal: deal,
+        rating: room.rating || null,
       };
     });
 
-    // Lọc theo has_deal sau khi đã phân trang
-    if (filters.has_deal === "true") {
-      finalRooms = finalRooms.filter((room) => room.deal !== null);
-    } else if (filters.has_deal === "false") {
-      finalRooms = finalRooms.filter((room) => room.deal === null);
-    }
-
     return {
       data: finalRooms,
-      pagination: {
-        currentPage: page,
-        perPage,
-        totalPages,
-        totalItems,
-      },
+      pagination: { currentPage: page, perPage, totalPages, totalItems },
     };
   },
 
@@ -609,7 +619,9 @@ SELECT
   rl.name AS room_level,
   rt.name AS room_type,
   rt.price AS room_type_price,
+  rt.max_people,
   f.name AS floor_name,
+  d.deal_name,
   COALESCE(d.discount_rate, 0) AS discount_rate,
   COALESCE(img.images, '[]') AS images,
   COALESCE(am.amenities, '[]') AS amenities,
