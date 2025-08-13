@@ -206,6 +206,12 @@ const hashPassword = async (password) => {
 };
 
 const comparePassword = async (currentPassword, hashedPassword) => {
+  if (
+    typeof currentPassword !== "string" ||
+    typeof hashedPassword !== "string"
+  ) {
+    throw new Error("Password comparison failed: invalid input(s)");
+  }
   return await bcrypt.compare(currentPassword, hashedPassword);
 };
 

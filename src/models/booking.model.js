@@ -4,7 +4,7 @@ const pool = require("../config/db");
 class Booking {
   static async create({ user_id, total_price }) {
     const query = `
-      INSERT INTO bookings (user_id,status total_price)
+      INSERT INTO bookings (user_id,status, total_price)
       VALUES ($1, $2,$3)
       RETURNING *;
     `;
@@ -21,8 +21,14 @@ class Booking {
 }
 
 // func to select bookingdetail's user
-const getBookingByUserId = async (user_id) => {
-  const query = `
+const getBookingByUserId = async (user_id, page = 1, limit = 5, status) => {
+  const offset = (page - 1) * limit;
+
+  // Mảng params để truyền tham số cho query
+  const values = [user_id];
+
+  // Query base
+  let query = `
     SELECT
       b.booking_id,
       b.user_id,
@@ -38,7 +44,6 @@ const getBookingByUserId = async (user_id) => {
       r.name AS room_name,
       r.description AS room_description,
 
-      -- Lấy danh sách ảnh dưới dạng JSON array
       COALESCE(img.images, '[]') AS room_images,
 
       rt.room_type_id,
@@ -50,19 +55,17 @@ const getBookingByUserId = async (user_id) => {
       rl.price AS room_level_price,
 
       d.deal_id,
+      d.deal_name,
       d.discount_rate,
 
-      -- Giá gốc 1 phòng
       (rt.price + rl.price) AS total_price,
 
-      -- Giá sau khi giảm giá nếu có deal
       ROUND(((rt.price + rl.price) * (1 - COALESCE(d.discount_rate, 0)))::numeric, 2) AS discounted_unit_price
 
     FROM bookings b
     JOIN booking_details bd ON b.booking_id = bd.booking_id
     LEFT JOIN rooms r ON bd.room_id = r.room_id
 
-    -- LATERAL JOIN để lấy danh sách ảnh theo room_id
     LEFT JOIN LATERAL (
       SELECT json_agg(ri.image_url) AS images
       FROM room_images ri
@@ -74,10 +77,18 @@ const getBookingByUserId = async (user_id) => {
     LEFT JOIN deals d ON d.deal_id = r.deal_id
 
     WHERE b.user_id = $1
-    ORDER BY b.booking_id DESC;
   `;
 
-  const values = [user_id];
+  // Nếu có status lọc thêm vào điều kiện WHERE
+  if (status && status !== 'all') {
+    query += ` AND b.status = $2`;
+    values.push(status);
+  }
+
+  // Thêm order, limit, offset cho phân trang
+  query += ` ORDER BY b.booking_id DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+  values.push(limit, offset);
+
   const result = await pool.query(query, values);
   return result.rows;
 };
