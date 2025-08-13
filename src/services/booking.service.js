@@ -18,7 +18,7 @@ const createBookingWithDetails = async (
     throw new Error("Check-out must be after check-in");
   }
 
-  const discountRate = await bookingRepo.getDealDiscount(
+  const discountRate = await bookingRepo.getDiscountRateByRoomId(
     room.room_id,
     checkIn,
     checkOut
@@ -28,16 +28,17 @@ const createBookingWithDetails = async (
   const originalPrice = pricePerNight * nights;
   const discountAmount = originalPrice * discountRate;
   const totalPrice = parseFloat((originalPrice - discountAmount).toFixed(2));
-  console.log({
-    checkInDate,
-    checkOutDate,
-    pricePerNight,
-    nights,
-    discountRate,
-    originalPrice,
-    discountAmount,
-    totalPrice,
-  });
+  // console.log({
+  //   checkInDate,
+  //   checkOutDate,
+  //   pricePerNight,
+  //   nights,
+  //   discountRate,
+  //   originalPrice,
+  //   discountAmount,
+  //   totalPrice,
+  // });
+
 
   const client = await pool.connect();
   try {
@@ -149,6 +150,7 @@ const getBookingDetailsByUserId = async (
       unit_price,
       discounted_unit_price,
       deal_discount_rate: r.discount_rate,
+      deal_name:r.deal_name,
       price_per_unit: r.price_per_unit,
     });
   });
@@ -160,6 +162,7 @@ const getBookingDetailsByUserId = async (
     room_quantity: b.booking_details.length,
   }));
 
+  bookingsArray.sort((a, b) => b.booking_id - a.booking_id);
   const filtered = status
     ? bookingsArray.filter((b) => b.status === status)
     : bookingsArray;
@@ -302,6 +305,8 @@ const getDisabledDates = async (roomId) => {
     to: row.check_out,
   }));
 };
+
+
 
 module.exports = {
   createBookingWithDetails,

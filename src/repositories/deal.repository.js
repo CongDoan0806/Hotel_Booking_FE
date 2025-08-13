@@ -135,14 +135,16 @@ const dealsRepository = {
       paramIndex++;
     }
 
-    if (startDate) {
-      query += ` AND start_date >= $${paramIndex}`;
+    if (startDate && endDate) {
+      query += ` AND start_date::date >= $${paramIndex}::date AND end_date::date <= $${paramIndex + 1}::date`;
+      params.push(startDate, endDate);
+      paramIndex += 2;
+    } else if (startDate) {
+      query += ` AND start_date::date = $${paramIndex}::date`;
       params.push(startDate);
       paramIndex++;
-    }
-
-    if (endDate) {
-      query += ` AND end_date <= $${paramIndex}`;
+    } else if (endDate) {
+      query += ` AND end_date::date = $${paramIndex}::date`;
       params.push(endDate);
       paramIndex++;
     }

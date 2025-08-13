@@ -46,7 +46,7 @@ const handleSuccess = async ({
 
   const userBookings = await bookingRepo.getBookingInfoById(booking.user_id);
 const newestBooking = [...userBookings].sort((a, b) => b.booking_id - a.booking_id)[0];
-  console.log("n:", newestBooking);
+  // console.log("n:", newestBooking);
 
   const checkInDate = dayjs(newestBooking.check_in_date);
   const checkOutDate = dayjs(newestBooking.check_out_date);
@@ -82,7 +82,7 @@ const newestBooking = [...userBookings].sort((a, b) => b.booking_id - a.booking_
   };
 
   await sendBookingEmail(emailPayload);
-  console.log(emailPayload);
+  // console.log(emailPayload);
   return paymentRecord;
 };
 

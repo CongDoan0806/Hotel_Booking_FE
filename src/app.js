@@ -4,6 +4,7 @@ const path = require("path");
 const logger = require("./middlewares/logger");
 const errorHandler = require("./middlewares/errorHandle");
 const app = express();
+app.disable('etag');
 require("./jobs/bookingStatusJob");
 
 const adminRoutes = require("./routes/admin.routes");
@@ -48,8 +49,14 @@ updateAllDealStatuses()
   .catch((error) => {
     console.error("Lỗi khi cập nhật deal lúc khởi động:", error.message);
   });
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(logger);
