@@ -14,7 +14,7 @@ cron.schedule("*/10 * * * * *", async () => {
     const checkoutCount = await bookingService.autoUpdateCheckoutStatus();
 
     console.log(
-      `[${today} ${time}] ✅ Updated check-in: ${checkinCount}, check-out: ${checkoutCount},delete:${deletedCount}`
+      `[${today} ${time}] ✅ Updated check-in: ${checkinCount}, check-out: ${checkoutCount}`
     );
   } catch (err) {
     console.error(`[${today} ${time}] ❌ Cron job error:`, err);
