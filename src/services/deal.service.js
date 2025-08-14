@@ -40,11 +40,12 @@ const dealsService = {
     return await dealsRepository.getDealById(id);
   },
 
-  getDealsByStatus: async (status, limit, page) => {
+  getDealsFiltered: async (status, startDate, endDate, limit, page) => {
     const offset = (page - 1) * limit;
+
     const [deals, total] = await Promise.all([
-      dealsRepository.getDealsByStatus(status, limit, offset),
-      dealsRepository.countDealsByStatus(status),
+      dealsRepository.getDealsFiltered(status, startDate, endDate, limit, offset),
+      dealsRepository.countDealsFiltered(status, startDate, endDate),
     ]);
 
     return {
