@@ -37,22 +37,26 @@ const updateUser = async (userId, userData) => {
     is_active = true
   } = userData;
 
+  const full_name = `${first_name} ${last_name}`.trim(); // nối và loại bỏ khoảng trắng thừa
+
   const result = await pool.query(
     `UPDATE users SET 
       first_name = $1, 
       last_name = $2, 
-      email = $3, 
-      phone = $4, 
-      avatar_url = $5, 
-      gender = $6, 
-      date_of_birth = $7,
-      address = $8,
-      role = $9,
-      is_active = $10
-    WHERE user_id = $11`,
+      name = $3,
+      email = $4, 
+      phone = $5, 
+      avatar_url = $6, 
+      gender = $7, 
+      date_of_birth = $8,
+      address = $9,
+      role = $10,
+      is_active = $11
+    WHERE user_id = $12`,
     [
       first_name,
       last_name,
+      full_name,
       email,
       phone,
       avatar_url,
@@ -65,8 +69,9 @@ const updateUser = async (userId, userData) => {
     ]
   );
 
-  return result.rowCount > 0;
+  return result;
 };
+
 
 const createUser = async ({
   name,
