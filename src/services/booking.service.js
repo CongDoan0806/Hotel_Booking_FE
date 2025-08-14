@@ -138,7 +138,7 @@ const getBookingDetailsByUserId = async (
 
     groupedBookings[bookingId].booking_details.push({
       booking_detail_id: r.booking_detail_id,
-      room_description: r.description,
+      room_description: r.room_description,
       room_id: r.room_id,
       room_name: r.room_name,
       room_type: r.room_type,

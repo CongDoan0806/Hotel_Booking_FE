@@ -2,7 +2,9 @@ const {createHotelFeedbackModel,
     getFavoriteRoomModel,
     countFavoriteRoomModel,
     deleteFavoriteRoomModel,
-    addFavoriteRoomModel
+    addFavoriteRoomModel,
+    createRoomFeedbackModel,
+    getUserAndRoomModel
 } = require('../models/profile.model');
 
 const createHotelFeedbackRepo = async (user_id, rating, comment) => {
@@ -24,11 +26,21 @@ const deleteFavoriteRoomRepo = async(user_id, room_id) => {
 const addFavoriteRoomRepo = async(user_id, room_id) => {
     return await addFavoriteRoomModel(user_id, room_id);
 }
+
+const getUserAndRoomRepo = async (booking_detail_id) => {
+    return await getUserAndRoomModel(booking_detail_id)
+}
+
+const createRoomFeedbackRepo = async (booking_detail_id, rating, comment) => {
+    return await createRoomFeedbackModel(booking_detail_id, rating, comment);
+}
 module.exports = {
     createHotelFeedbackRepo,
     getFavoriteRoomRepo,
     countFavoriteRoomRepo,
     deleteFavoriteRoomRepo,
-    addFavoriteRoomRepo
+    addFavoriteRoomRepo,
+    createRoomFeedbackRepo,
+    getUserAndRoomRepo
 };
     

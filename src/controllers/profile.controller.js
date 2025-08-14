@@ -2,7 +2,8 @@ const {
   createHotelFeedbackService,
   getFavoriteRoomService,
   deleteFavoriteRoomService,
-  addFavoriteRoomService
+  addFavoriteRoomService,
+  createRoomFeedbackService
 } = require("../services/profile.service");
 const { success, sendError } = require("../utils/response");
 
@@ -80,9 +81,31 @@ const addFavoriteRoomController = async (req, res) => {
   } 
 };
 
+const createRoomFeedbackController = async (req, res) => {
+  try {
+    const { booking_detail_id, rating, comment } = req.body;
+    const user_id = req.user?.id;
+
+    if (!booking_detail_id || !rating || !comment) {
+      return sendError(res, 400, "Missing required fields")
+    }
+
+    const result = await createRoomFeedbackService(user_id,booking_detail_id, rating, comment);
+
+    if (result) {
+      return success(res, result, "Feedback submitted successfully")
+    } else {
+      return sendError(res, 500, "Failed to create feedback")
+    }
+  } catch (error) {
+    console.error("Error creating room feedback:",error);
+    return sendError(res, 500, "Server error")
+  }
+};
 module.exports = {
   createHotelFeedbackController,
   getFavoriteRoomController,
   deleteFavoriteRoomController,
-  addFavoriteRoomController
+  addFavoriteRoomController,
+  createRoomFeedbackController
 };
