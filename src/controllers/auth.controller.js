@@ -133,17 +133,41 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.forgotPasswordHandler = async (req, res) => {
-  const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-  const user = await UserModel.findByEmail(email);
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  await redis.set(`otp:${email}`, otp, "EX", 300);
+    const user = await getUserByEmail(email.trim().toLowerCase());
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "Email not found",
+      });
+    }
 
-  await sendOTPEmail(email, `${otp}`);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  res.json({ status: "success", message: "OTP sent to your email" });
+    await redis.set(`otp:${email.trim().toLowerCase()}`, otp, "EX", 120);
+    await sendOTPEmail(email.trim().toLowerCase(), otp);
+
+    return res.json({
+      status: "success",
+      message: "OTP sent to your email",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
+  }
 };
+
 
 exports.verifyOtpHandler = async (req, res) => {
   try {
@@ -163,7 +187,7 @@ exports.verifyOtpHandler = async (req, res) => {
     }
 
     const resetToken = Math.random().toString(36).substring(2);
-    await redis.set(`reset:${email}`, resetToken, "EX", 600);
+    await redis.set(`reset:${email}`, resetToken, "EX", 300);
 
     await redis.del(`otp:${email}`);
 
