@@ -14,10 +14,14 @@ const validateRoom = [
         if (req.method === "PUT" && req.params.id) {
           const currentRoomId = parseInt(req.params.id, 10);
           if (result.rows.some((r) => r.room_id !== currentRoomId)) {
-            throw new Error("Room name already exists");
+            throw new Error(
+              "Room number already exists. Please enter a unique room number."
+            );
           }
         } else {
-          throw new Error("Room name already exists");
+          throw new Error(
+            "Room number already exists. Please enter a unique room number."
+          );
         }
       }
       return true;

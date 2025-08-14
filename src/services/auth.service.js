@@ -37,10 +37,10 @@ const login = async (email, password) => {
     return sendError(res, 403, "Your account has been blocked by admin")
   }
 
-  if (!user) throw new Error("Sai email hoặc mật khẩu");
+  if (!user) throw new Error("Wrong email or password");
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error("Sai email hoặc mật khẩu");
+  if (!isMatch) throw new Error("Wrong email or password");
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
