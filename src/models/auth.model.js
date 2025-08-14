@@ -1,7 +1,7 @@
 const db = require("../config/db");
 
 const findByEmail = (email) =>
-  db.query('SELECT * FROM users WHERE email = $1', [email]);
+  db.query("SELECT * FROM users WHERE email = $1", [email]);
 
 const createUser = async (name, firstname, lastname, email, password, role) => {
   const query = `
@@ -51,11 +51,24 @@ const updateEmail = async (userId, email) => {
 
   return result.rows[0];
 };
+
+const getUserByEmail = async (email) => {
+  const result = await db.query(
+    `SELECT user_id, first_name, last_name, email, password, phone, gender,
+            to_char(date_of_birth, 'YYYY-MM-DD') AS date_of_birth,
+            avatar_url, address, role, is_active
+     FROM users WHERE email = $1`,
+    [email]
+  );
+  return result.rows[0];
+};
+
 module.exports = {
   findByEmail,
   createUser,
   updateRefreshToken,
   findUserByRefreshToken,
+  getUserByEmail,
   updatePassword,
   getUserById,
   updateEmail,

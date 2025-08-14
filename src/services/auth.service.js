@@ -12,7 +12,7 @@ const {
 const redis = require("../utils/redis");
 const { sendOTPEmail } = require("../utils/emailService");
 const UserRepo = require("../repositories/user.repository");
-const { sendError } = require('../utils/response');
+const { sendError } = require("../utils/response");
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -32,15 +32,15 @@ const login = async (email, password) => {
   const result = await findByEmail(email);
   const user = result.rows[0];
 
-  if (user.status === 'blocked') {
-    console.log('Your account has been blocked by admin')
-    return sendError(res, 403, "Your account has been blocked by admin")
+  if (user.status === "blocked") {
+    console.log("Your account has been blocked by admin");
+    return sendError(res, 403, "Your account has been blocked by admin");
   }
 
-  if (!user) throw new Error("Wrong email or password");
+  if (!user) throw new Error("Incorrect email or password");
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error("Wrong email or password");
+  if (!isMatch) throw new Error("Incorrect email or password");
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
@@ -74,7 +74,7 @@ const register = async ({
 }) => {
   const existing = await findByEmail(email);
   if (existing.rows.length > 0) {
-    throw new Error("Email đã tồn tại");
+    throw new Error("Email already exists");
   }
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -87,7 +87,7 @@ const register = async ({
     role || "user"
   );
 
-  return { message: "Đăng ký thành công" };
+  return { message: "Registration successful" };
 };
 
 const refreshAccessToken = async (refreshToken) => {
@@ -98,7 +98,7 @@ const refreshAccessToken = async (refreshToken) => {
   const user = result.rows[0];
 
   if (!user || user.refresh_token !== refreshToken) {
-    throw new Error("Refresh token không hợp lệ");
+    throw new Error("Refresh token is invalid");
   }
 
   return generateAccessToken(user);
@@ -106,23 +106,23 @@ const refreshAccessToken = async (refreshToken) => {
 
 const resetPassword = async (email, password) => {
   if (!email || !email.includes("@")) {
-    throw new Error("Email không hợp lệ");
+    throw new Error("Invalid email");
   }
 
   if (!password || password.length < 6) {
-    throw new Error("Mật khẩu phải có ít nhất 6 ký tự");
+    throw new Error("Password must be at least 6 characters");
   }
 
   const result = await findByEmail(email);
   const user = result.rows[0];
   if (!user) {
-    throw new Error("Email không tồn tại");
+    throw new Error("Email does not exist");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  await updatePassword(user.user_id, hashedPassword);
+  await updatePassword(userId, hashedPassword);
 
-  return { message: "Đặt lại mật khẩu thành công", password };
+  return { message: "Password reset successful", password };
 };
 
 const logout = async (refreshToken) => {
@@ -134,12 +134,12 @@ const logout = async (refreshToken) => {
   const user = result.rows[0];
 
   if (!user) {
-    throw new Error("Token không hợp lệ hoặc đã hết hạn");
+    throw new Error("Token is invalid or has expired");
   }
 
   await updateRefreshToken(user.user_id, null);
 
-  return { message: "Đăng xuất thành công" };
+  return { message: "Logout successful" };
 };
 
 const generateOtp = () => {
@@ -249,6 +249,65 @@ const changePassword = async (
     return { success: false, status: 500, message: "Internal server error" };
   }
 };
+
+const OTP_TTL = Number(process.env.OTP_TTL_SECONDS || 300);
+const RESET_TTL = Number(process.env.RESET_TTL_SECONDS || 900);
+
+const forgotPassword = async (email) => {
+  const user = await UserModel.findByEmail(email);
+  if (!user) {
+    return { success: false, status: 404, message: "Email does not exist" };
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  await OtpModel.create({
+    email,
+    otp,
+    expiresAt: Date.now() + 2 * 60 * 1000,
+  });
+
+  await sendEmail(
+    email,
+    "Password Reset OTP",
+    `Your OTP is: ${otp}`
+  );
+
+  return { success: true, message: "OTP sent to email" };
+};
+
+const verifyOtp = async (email, otp) => {
+  const record = await OtpModel.findValidOtp(email, otp);
+  const user = await UserModel.findByEmail(email);
+  if (!record) {
+    return {
+      success: false,
+      status: 400,
+      message: "OTP is invalid or has expired",
+    };
+  }
+
+  const resetToken = generateRefreshToken(user);
+
+  return { success: true, message: "OTP is valid", resetToken };
+};
+
+const confirmResetPassword = async (token, password) => {
+  const tokenRecord = await ResetTokenModel.findValidToken(token);
+  if (!tokenRecord) {
+    return {
+      success: false,
+      status: 400,
+      message: "Token is invalid or has expired",
+    };
+  }
+
+  const hashed = await bcrypt.hash(password, 10);
+  await UserModel.updatePassword(tokenRecord.email, hashed);
+
+  return { success: true, message: "Password changed successfully" };
+};
+
 module.exports = {
   login,
   refreshAccessToken,
@@ -258,4 +317,7 @@ module.exports = {
   requestEmailChange,
   verifyEmailChange,
   changePassword,
+  forgotPassword,
+  verifyOtp,
+  confirmResetPassword,
 };
