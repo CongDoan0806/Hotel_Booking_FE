@@ -3,7 +3,7 @@ const pool = require("../config/db");
 const getUserListModel = async (limit, offset) => {
   const query = `
     SELECT 
-      u.user_id, u.email, u.name, u.phone, u.role, u.is_active,
+      u.user_id, u.email, CONCAT(u.first_name, ' ', u.last_name) AS name, u.phone, u.role, u.is_active,
       b.booking_id, b.status AS booking_status, b.total_price,
       bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
       r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
@@ -41,8 +41,7 @@ const getCheckinGuestsModel = async (limit, offset) => {
     JOIN bookings b ON u.user_id = b.user_id
     JOIN booking_details bd ON b.booking_id = bd.booking_id
     JOIN rooms r ON bd.room_id = r.room_id
-    WHERE bd.check_in_date <= CURRENT_DATE
-      AND bd.check_out_date > CURRENT_DATE
+    WHERE b.status = 'checked_in'
       AND u.role <> 'admin'
     ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC
     LIMIT $1 OFFSET $2
@@ -76,7 +75,7 @@ const getCheckoutGuestsModel = async (limit, offset) => {
     JOIN bookings b ON u.user_id = b.user_id
     JOIN booking_details bd ON b.booking_id = bd.booking_id
     JOIN rooms r ON bd.room_id = r.room_id
-    WHERE bd.check_out_date < CURRENT_DATE
+    WHERE b.status = 'checked_out'
     AND u.role <> 'admin'
     ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC
     LIMIT $1 OFFSET $2
