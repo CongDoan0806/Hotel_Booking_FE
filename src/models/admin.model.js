@@ -3,7 +3,7 @@ const pool = require("../config/db");
 const getUserListModel = async (limit, offset) => {
   const query = `
     SELECT 
-      u.user_id, u.email, u.role, u.is_active,
+      u.user_id, u.email, u.name, u.phone, u.role, u.is_active,
       b.booking_id, b.status AS booking_status, b.total_price,
       bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
       r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
@@ -33,7 +33,7 @@ const countUsersModel = async () => {
 const getCheckinGuestsModel = async (limit, offset) => {
   const query = `
     SELECT 
-      u.user_id, u.email, u.role, u.is_active,
+      u.user_id, u.email, u.name, u.phone, u.role, u.is_active,
       b.booking_id, b.status AS booking_status, b.total_price,
       bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
       r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
@@ -68,7 +68,7 @@ const countCheckinGuestsModel = async () => {
 const getCheckoutGuestsModel = async (limit, offset) => {
   const query = `
     SELECT 
-      u.user_id, u.email, u.role, u.is_active,
+      u.user_id, u.email, u.name, u.phone, u.role, u.is_active,
       b.booking_id, b.status AS booking_status, b.total_price,
       bd.booking_detail_id, bd.price_per_unit, bd.check_in_date, bd.check_out_date,
       r.room_id, r.name AS room_name, r.description AS room_description, r.room_type_id, r.floor_id
@@ -230,7 +230,7 @@ const updateUserStatusModel = async (user_id, status) => {
   await pool.query(query, [status.toLowerCase(), user_id]);
 };
 
-const getRateModel = async (month, year,limit, offset) => {
+const getRateModel = async (month, year, limit, offset) => {
   const query = `
     SELECT
       r.room_id,
@@ -298,7 +298,6 @@ const getTotalRevenueModel = async (month, year) => {
   return result.rows[0].total_revenue;
 };
 
-
 const totalRoomModel = async () => {
   const query = `
     SELECT COUNT(DISTINCT r.room_id) AS total
@@ -326,5 +325,5 @@ module.exports = {
   getBestSellerRoomModel,
   totalRoomModel,
   countCheckinGuestsModel,
-  countCheckoutGuestsModel
+  countCheckoutGuestsModel,
 };

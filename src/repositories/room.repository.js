@@ -19,6 +19,7 @@ const roomRepository = {
       r.room_type_id, r.room_level_id, r.floor_id,
       rt.name AS room_type_name, rt.max_people, rt.price AS room_type_price,
       rl.name AS room_level_name, rl.price AS room_level_price,
+      (COALESCE(rt.price, 0) + COALESCE(rl.price, 0)) AS total_price,
       f.name AS floor_name,
       d.deal_id AS deal_id,
       d.deal_name AS deal_name,
@@ -111,6 +112,7 @@ const roomRepository = {
         r.room_type_id, r.room_level_id, r.floor_id,
         rt.name AS room_type_name, rt.max_people, rt.price AS room_type_price,
         rl.name AS room_level_name, rl.price AS room_level_price,
+        (COALESCE(rt.price, 0) + COALESCE(rl.price, 0)) AS total_price,
         f.name AS floor_name,
         d.deal_id AS deal_id,
         d.deal_name AS deal_name,
@@ -124,6 +126,7 @@ const roomRepository = {
       LEFT JOIN deals d ON r.deal_id = d.deal_id
       ORDER BY r.room_id DESC
       LIMIT $1 OFFSET $2
+
     `,
       [perPage, offset]
     );
