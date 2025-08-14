@@ -12,7 +12,7 @@ const getUserListModel = async (limit, offset) => {
     LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
     LEFT JOIN rooms r ON bd.room_id = r.room_id
     WHERE u.role <> 'admin'
-    ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC
+    ORDER BY b.booking_id ASC
     LIMIT $1 OFFSET $2
   `;
   const result = await pool.query(query, [limit, offset]);
@@ -43,7 +43,7 @@ const getCheckinGuestsModel = async (limit, offset) => {
     JOIN rooms r ON bd.room_id = r.room_id
     WHERE b.status = 'checked_in'
       AND u.role <> 'admin'
-    ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC
+    ORDER BY b.booking_id ASC
     LIMIT $1 OFFSET $2
   `;
   const result = await pool.query(query, [limit, offset]);
@@ -77,7 +77,7 @@ const getCheckoutGuestsModel = async (limit, offset) => {
     JOIN rooms r ON bd.room_id = r.room_id
     WHERE b.status = 'checked_out'
     AND u.role <> 'admin'
-    ORDER BY u.user_id ASC, b.booking_id ASC, bd.booking_detail_id ASC
+    ORDER BY b.booking_id ASC
     LIMIT $1 OFFSET $2
   `;
   const result = await pool.query(query, [limit, offset]);
