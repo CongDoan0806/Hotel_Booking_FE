@@ -6,9 +6,16 @@ const {
   createHotelFeedbackController,
   deleteFavoriteRoomController,
   addFavoriteRoomController,
+  createRoomFeedbackController,
 } = require("../controllers/profile.controller");
 
 router.post("/profile/hotel-feedback", createHotelFeedbackController);
+
+router.post(
+  "/profile/room-feedback",
+  authenticateToken,
+  createRoomFeedbackController
+);
 
 router.get(
   "/profile/favorite_rooms",
@@ -23,9 +30,9 @@ router.delete(
 );
 
 router.post(
-    "/profile/add-favorite-room/:room_id",
-    authenticateToken,
-    addFavoriteRoomController
-)
+  "/profile/add-favorite-room/:room_id",
+  authenticateToken,
+  addFavoriteRoomController
+);
 
 module.exports = router;

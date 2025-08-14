@@ -30,7 +30,7 @@ const findUserByRefreshToken = (refreshToken) =>
 
 const getUserById = async (userId) => {
   const result = await db.query(
-    `SELECT user_id, first_name, last_name, email, password, phone, gender,
+    `SELECT user_id, name, first_name, last_name, email, password, phone, gender,
             to_char(date_of_birth, 'YYYY-MM-DD') AS date_of_birth,
             avatar_url, address, role, is_active
      FROM users WHERE user_id = $1`,

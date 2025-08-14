@@ -95,21 +95,31 @@ const dealController = {
     }
   },
 
-  getDealsByStatusController: async (req, res) => {
+  getDealsFilteredController: async (req, res) => {
     try {
-      const status = req.params.status;
+      const status = req.query.status || null;
       const limit = parseInt(req.query.limit) || 10;
       const page = parseInt(req.query.page) || 1;
+      const startDate = req.query.startDate || null;
+      const endDate = req.query.endDate || null;
 
-      const result = await dealService.getDealsByStatus(status, limit, page);
+      const result = await dealService.getDealsFiltered(
+        status,
+        startDate,
+        endDate,
+        limit,
+        page
+      );
 
       res.json({
         status: "success",
-        items: result.data,     // ← đổi từ `data` → `items`
+        items: result.data,
         total: result.total,
         totalPages: result.totalPages,
         page,
         limit,
+        startDate,
+        endDate,
       });
     } catch (err) {
       res.status(500).json({ status: "error", message: err.message });
