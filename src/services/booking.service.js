@@ -102,7 +102,7 @@ const getBookingDetailsByUserId = async (
 ) => {
   const rows = await bookingRepo.getBookingInfoById(user_id);
 
-  if (rows.length === 0) throw new Error("No bookings found for this user");
+  // if (rows.length === 0) throw new Error("No bookings found for this user");
 
   const groupedBookings = {};
   rows.forEach((r) => {
