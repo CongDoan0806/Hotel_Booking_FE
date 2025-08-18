@@ -20,7 +20,9 @@ const getUser = async (req, res) => {
   try {
     const user = await userService.getUserById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
     return res.status(200).json({ success: true, data: user });
   } catch (error) {
@@ -87,37 +89,38 @@ const createUser = async (req, res) => {
   try {
     console.log("➡️ [CREATE USER] req.body:", req.body);
 
-    const { name, phone, email } = req.body;
+    const { name, firstName, lastName, phone, email } = req.body;
 
     if (!name || !phone || !email) {
-      return res.status(400).json({ message: "name, phone, email are required" });
+      return res
+        .status(400)
+        .json({ message: "name, phone, email are required" });
     }
-
-    const [first_name, ...rest] = name.trim().split(" ");
-    const last_name = rest.join(" ");
     const password = "123456";
 
     const newUser = await userService.createUser({
-      first_name,
-      last_name,
+      name,
+      first_name: firstName,
+      last_name: lastName,
       phone,
       email,
-      password,
+      password: "123456",
       role: "user",
     });
 
-    console.log("✅ Created User:", newUser); 
+    console.log("✅ Created User:", newUser);
 
     return res.status(201).json({
       message: "User created",
       data: newUser,
     });
   } catch (err) {
-    console.error("❌ CREATE USER ERROR:", err);  
-    return res.status(500).json({ message: "Server error", error: err.message });
+    console.error("❌ CREATE USER ERROR:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
   }
 };
-
 
 module.exports = {
   getUser,
