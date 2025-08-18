@@ -75,8 +75,8 @@ const updateUser = async (userId, userData) => {
 
 const createUser = async ({
   name,
-  first_name,
-  last_name,
+  first_name: firstName,
+  last_name: lastName,
   email,
   phone,
   password,
@@ -86,7 +86,7 @@ const createUser = async ({
     `INSERT INTO users (name, first_name, last_name, email, phone, password, role)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,
-    [name, first_name, last_name, email, phone, password, role]
+    [name, firstName, lastName, email, phone, password, role]
   );
   return rows[0];
 };

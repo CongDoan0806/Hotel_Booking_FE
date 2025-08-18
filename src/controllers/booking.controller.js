@@ -170,16 +170,19 @@ const frontDeskCreateBooking = async (req, res) => {
     console.log("------- BODY RECEIVED FROM FE -------");
     console.log(req.body);
 
-    const { roomId, checkInDate, checkOutDate, name, phone, email, status } =
+    const { roomId, checkInDate, checkOutDate, firstName, lastName, phone, email, status, name } =
       req.body;
+
     console.log("📥 Frontdesk input:", {
       roomId,
       checkInDate,
       checkOutDate,
-      name,
+      firstName,
+      lastName,
       phone,
       email,
       status,
+      name
     });
 
     let customerUserId;
@@ -190,12 +193,10 @@ const frontDeskCreateBooking = async (req, res) => {
       customerUserId = existedUser.user_id;
       console.log("👉 Existing user:", customerUserId);
     } else {
-      const [first_name, ...rest] = name.split(" ");
-      const last_name = rest.join(" ");
-
       const newUser = await userService.createUser({
-        first_name,
-        last_name,
+        name: `${firstName} ${lastName}`,
+        first_name: firstName,
+        last_name: lastName,
         phone,
         email,
         password: "123456",
