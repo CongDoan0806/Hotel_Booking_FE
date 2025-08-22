@@ -1,10 +1,4 @@
-const {
-  createHotelFeedbackService,
-  getFavoriteRoomService,
-  deleteFavoriteRoomService,
-  addFavoriteRoomService,
-  createRoomFeedbackService
-} = require("../services/profile.service");
+const profileService = require("../services/profile.service");
 const { success, sendError } = require("../utils/response");
 
 const createHotelFeedbackController = async (req, res) => {
@@ -15,7 +9,7 @@ const createHotelFeedbackController = async (req, res) => {
       return sendError(res, 400, "User ID, rating, and comment are required");
     }
 
-    const feedback = await createHotelFeedbackService(user_id, rating, comment);
+    const feedback = await profileService.createHotelFeedbackService(user_id, rating, comment);
     return success(res, feedback, "Hotel feedback created successfully");
   } catch (err) {
     console.error("Error creating hotel feedback:", err);
@@ -33,7 +27,7 @@ const getFavoriteRoomController = async (req, res) => {
     if (!user_id) {
       return sendError(res, 401, "Unauthorized");
     }
-    const data = await getFavoriteRoomService(page, perPage, user_id);
+    const data = await profileService.getFavoriteRoomService(page, perPage, user_id);
     return success(res, data, "Get rate successfully");
   } catch (error) {
     console.error("Error fetching rate:", error);
@@ -50,7 +44,7 @@ const deleteFavoriteRoomController = async (req, res) => {
       return sendError(res, 400, "room_id is required")
     }
 
-    const result = await deleteFavoriteRoomService(user_id, room_id);
+    const result = await profileService.deleteFavoriteRoomService(user_id, room_id);
     return success(res, result, "Delete favorite room successfully");
   } catch (error) {
     console.log("Error deleting favorite room", error);
@@ -67,7 +61,7 @@ const addFavoriteRoomController = async (req, res) => {
       return sendError(res, 400, "room_id is required");
     }
 
-    const result = await addFavoriteRoomService(user_id, room_id);
+    const result = await profileService.addFavoriteRoomService(user_id, room_id);
     return success(res, result, "Add room to favorite list successfully");
 
   } catch (error) {
@@ -90,7 +84,7 @@ const createRoomFeedbackController = async (req, res) => {
       return sendError(res, 400, "Missing required fields")
     }
 
-    const result = await createRoomFeedbackService(user_id,booking_detail_id, rating, comment);
+    const result = await profileService.createRoomFeedbackService(user_id, booking_detail_id, rating, comment);
 
     if (result) {
       return success(res, result, "Feedback submitted successfully")

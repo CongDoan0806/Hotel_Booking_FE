@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 
 const sendOTPEmail = async (to, otp) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `"Sticky Hotel" <${process.env.EMAIL_USER}>`,
     to,
     subject: "OTP Verification Code",
     text: `Your OTP code is: ${otp}`,

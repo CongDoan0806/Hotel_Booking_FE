@@ -1,24 +1,17 @@
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
-const { updatePassword, getUserByEmail } = require("../models/auth.model");
-const {
-  login,
-  resetPassword,
-  register,
-  logout,
-} = require("../services/auth.service");
+const UserModel = require("../models/auth.model");
 const authService = require("../services/auth.service");
 const { success, sendError } = require("../utils/response");
 // const { verifyOtp, forgotPassword,confirmResetPassword } = require("../services/auth.service");
 const { sendOTPEmail } = require("../utils/emailService");
-const UserModel = require("../models/auth.model");
 const redis = require("../utils/redis");
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const { user, accessToken, refreshToken } = await login(email, password);
+    const { user, accessToken, refreshToken } = await authService.login(email, password);
 
     return success(
       res,
@@ -39,7 +32,7 @@ exports.register = async (req, res) => {
   const { name, firstname, lastname, email, password, role } = req.body;
 
   try {
-    const result = await register({
+    const result = await authService.register({
       name,
       firstname,
       lastname,
@@ -58,7 +51,7 @@ exports.resetPassword = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const result = await resetPassword(email, password);
+    const result = await authService.resetPassword(email, password);
     return success(res, result, "Password reset successfully");
   } catch (error) {
     return sendError(res, 400, error.message || "Password reset failed");
@@ -69,7 +62,7 @@ exports.logout = async (req, res) => {
   const refreshToken = req.body.refreshToken;
 
   try {
-    const result = await logout(refreshToken);
+    const result = await authService.logout(refreshToken);
     return success(res, result, "Logout successful");
   } catch (error) {
     console.error("Logout error:", error.message);
@@ -143,7 +136,7 @@ exports.forgotPasswordHandler = async (req, res) => {
       });
     }
 
-    const user = await getUserByEmail(email.trim().toLowerCase());
+    const user = await UserModel.getUserByEmail(email.trim().toLowerCase());
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -209,7 +202,7 @@ exports.resetPasswordHandler = async (req, res) => {
         .json({ status: "error", message: "Invalid or expired reset token" });
     }
 
-    const user = await getUserByEmail(email);
+    const user = await UserModel.getUserByEmail(email);
     if (!user) {
       return res
         .status(404)
@@ -217,7 +210,7 @@ exports.resetPasswordHandler = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await updatePassword(user.user_id, hashedPassword);
+    await UserModel.updatePassword(user.user_id, hashedPassword);
     await redis.del(`reset:${email}`);
 
     res.json({ status: "success", message: "Password updated successfully" });

@@ -1,26 +1,18 @@
-const {
-  createHotelFeedbackRepo,
-  countFavoriteRoomRepo,
-  getFavoriteRoomRepo,
-  deleteFavoriteRoomRepo,
-  addFavoriteRoomRepo,
-  createRoomFeedbackRepo,
-  getUserAndRoomRepo
-} = require("../repositories/profile.repository");
+const profileRepo = require("../repositories/profile.repository");
 
 const createHotelFeedbackService = async (user_id, rating, comment) => {
   if (!rating || !comment) {
     throw new Error("Rating and comment are required");
   }
 
-  return await createHotelFeedbackRepo(user_id, rating, comment);
+  return await profileRepo.createHotelFeedbackRepo(user_id, rating, comment);
 };
 
 const getFavoriteRoomService = async (page = 1, perPage = 10, user_id) => {
   const offset = (page - 1) * perPage;
   const [favoriteRoom, totalRoom] = await Promise.all([
-    getFavoriteRoomRepo(user_id, perPage, offset),
-    countFavoriteRoomRepo(user_id),
+    profileRepo.getFavoriteRoomRepo(user_id, perPage, offset),
+    profileRepo.countFavoriteRoomRepo(user_id),
   ]);
 
   const totalPages = Math.ceil(totalRoom / perPage);
@@ -38,7 +30,7 @@ const getFavoriteRoomService = async (page = 1, perPage = 10, user_id) => {
 };
 
 const deleteFavoriteRoomService = async (user_id, room_id ) => {
-  const deleted = await deleteFavoriteRoomRepo(user_id, room_id);
+  const deleted = await profileRepo.deleteFavoriteRoomRepo(user_id, room_id);
 
   if (!deleted) {
     throw new Error('Favorite room not found or already deleted');
@@ -48,7 +40,7 @@ const deleteFavoriteRoomService = async (user_id, room_id ) => {
 };
 
 const addFavoriteRoomService = async (user_id, room_id) => {
-  const added = await addFavoriteRoomRepo(user_id, room_id);
+  const added = await profileRepo.addFavoriteRoomRepo(user_id, room_id);
 
   if (!added) {
     throw new Error('Favorite room already in your favorite list')
@@ -58,7 +50,7 @@ const addFavoriteRoomService = async (user_id, room_id) => {
 }
 
 const createRoomFeedbackService = async (user_id, booking_detail_id, rating, comment) => {
-  const info = await getUserAndRoomRepo(booking_detail_id);
+  const info = await profileRepo.getUserAndRoomRepo(booking_detail_id);
 
   if (!rating || !comment) {
     throw new Error("Rating and comment are required");
@@ -74,7 +66,7 @@ const createRoomFeedbackService = async (user_id, booking_detail_id, rating, com
 
   const room_id = info.room_id;
   const bookingDetailId = info.booking_detail_id
-  await createRoomFeedbackRepo(booking_detail_id, rating, comment);
+  await profileRepo.createRoomFeedbackRepo(booking_detail_id, rating, comment);
 
   return {
     room_id: room_id,

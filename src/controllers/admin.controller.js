@@ -1,16 +1,4 @@
-const {
-  getUserListService,
-  getCheckinGuestsService,
-  getCheckoutGuestsService,
-  getAdminDashboardStatusService,
-  getAdminDashboardDealService,
-  getFeedbackService,
-  getTop5MostBookedRoomsService,
-  getHotelFeedbackService,
-  getGuestListService,
-  updateUserStatusService,
-  getRateService,
-} = require("../services/admin.service");
+const adminService = require("../services/admin.service");
 const { success, sendError } = require("../utils/response");
 
 const getUserListController = async (req, res) => {
@@ -18,7 +6,7 @@ const getUserListController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
-    const { users, pagination } = await getUserListService(page, perPage);
+    const { users, pagination } = await adminService.getUserListService(page, perPage);
 
     return success(res, { users, pagination }, "Get user list successfully");
   } catch (err) {
@@ -32,7 +20,7 @@ const getCheckinGuestsController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
-    const { users, pagination } = await getCheckinGuestsService(page, perPage);
+    const { users, pagination } = await adminService.getCheckinGuestsService(page, perPage);
 
     return success(res, { users, pagination }, "Get check-in guests successfully");
   } catch (error) {
@@ -46,7 +34,7 @@ const getCheckoutGuestsController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
-    const { users, pagination } = await getCheckoutGuestsService(page, perPage);
+    const { users, pagination } = await adminService.getCheckoutGuestsService(page, perPage);
 
     return success(res, { users, pagination }, "Get checkout guests successfully");
   } catch (error) {
@@ -58,7 +46,7 @@ const getCheckoutGuestsController = async (req, res) => {
 
 const getAdminDashboardStatusController = async (req, res) => {
   try {
-    const status = await getAdminDashboardStatusService();
+    const status = await adminService.getAdminDashboardStatusService();
     return success(res, status, "Get admin dashboard status successfully");
   } catch (err) {
     console.error("Error fetching admin dashboard status:", err);
@@ -68,7 +56,7 @@ const getAdminDashboardStatusController = async (req, res) => {
 
 const getAdminDashboardDealController = async (req, res) => {
   try {
-    const deals = await getAdminDashboardDealService();
+    const deals = await adminService.getAdminDashboardDealService();
     return success(res, deals, "Get admin dashboard deals successfully");
   } catch (err) {
     console.error("Error fetching admin dashboard deals:", err);
@@ -78,7 +66,7 @@ const getAdminDashboardDealController = async (req, res) => {
 
 const getFeedbackController = async (req, res) => {
   try {
-    const feedbacks = await getFeedbackService();
+    const feedbacks = await adminService.getFeedbackService();
     return success(res, feedbacks, "Get feedbacks successfully");
   } catch (err) {
     console.error("Error fetching feedbacks:", err);
@@ -104,7 +92,7 @@ const getTop5MostBookedRoomsController = async (req, res) => {
       );
     }
 
-    const rooms = await getTop5MostBookedRoomsService(
+    const rooms = await adminService.getTop5MostBookedRoomsService(
       Number(month),
       Number(year)
     );
@@ -122,7 +110,7 @@ const getTop5MostBookedRoomsController = async (req, res) => {
 
 const getHotelFeedbackController = async (req, res) => {
   try {
-    const feedbacks = await getHotelFeedbackService();
+    const feedbacks = await adminService.getHotelFeedbackService();
     return success(res, feedbacks, "Get hotel feedbacks successfully");
   } catch (err) {
     console.error("Error fetching hotel feedbacks:", err);
@@ -135,7 +123,7 @@ const getGuestListController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
 
-    const result = await getGuestListService(page, perPage);
+    const result = await adminService.getGuestListService(page, perPage);
     return success(res, result, "Get guest list successfully");
   } catch (error) {
     console.error("Error fetching guest list:", error);
@@ -152,7 +140,7 @@ const updateUserStatusController = async (req, res) => {
   }
 
   try {
-    const result = await updateUserStatusService(user_id, status);
+    const result = await adminService.updateUserStatusService(user_id, status);
     return success(res, result, "User status updated successfully");
   } catch (error) {
     console.error("Error updating user status:", error);
@@ -178,7 +166,7 @@ const getRateController = async (req, res) => {
     }
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
-    const data = await getRateService(
+    const data = await adminService.getRateService(
       page,
       perPage,
       Number(month),

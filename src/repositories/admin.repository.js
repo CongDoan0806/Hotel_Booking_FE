@@ -1,87 +1,69 @@
-const {getUserListModel,
-    countUsersModel,
-    getCheckinGuestsModel, 
-    countCheckinGuestsModel,
-    getCheckoutGuestsModel, 
-    countCheckoutGuestsModel,
-    getAdminDashboardStatusModel, 
-    getAdminDashboardDealModel, 
-    getFeedbackModel, 
-    getTop5MostBookedRoomsModel, 
-    getHotelFeedbackModel, 
-    getGuestListModel,
-    countGuestListModel,
-    updateUserStatusModel,
-    getRateModel,
-    getTotalRevenueModel,
-getBestSellerRoomModel,
-totalRoomModel
-} = require('../models/admin.model');
+const adminModel = require('../models/admin.model');
 
 const getUserListRepo = async (limit, offset) => {
-  const users = await getUserListModel(limit, offset);
-  const totalUsers = await countUsersModel();
+  const users = await adminModel.getUserListModel(limit, offset);
+  const totalUsers = await adminModel.countUsersModel();
   return { users, totalUsers };
 };
 
 const getCheckinGuestsRepo = async (limit, offset) => {
-  const users = await getCheckinGuestsModel(limit, offset);
-  const totalUsers = await countCheckinGuestsModel();
+  const users = await adminModel.getCheckinGuestsModel(limit, offset);
+  const totalUsers = await adminModel.countCheckinGuestsModel();
   return { users, totalUsers };
 };
 
 const getCheckoutGuestsRepo = async (limit, offset) => {
-  const users = await getCheckoutGuestsModel(limit, offset);
-  const totalUsers = await countCheckoutGuestsModel();
+  const users = await adminModel.getCheckoutGuestsModel(limit, offset);
+  const totalUsers = await adminModel.countCheckoutGuestsModel();
   return { users, totalUsers };
 };
 
 
 const getAdminDashboardStatusRepo = async () => {
-    return await getAdminDashboardStatusModel();
+    return await adminModel.getAdminDashboardStatusModel();
 }
 
 const getAdminDashboardDealRepo = async () => {
-    return await getAdminDashboardDealModel(); 
+    return await adminModel.getAdminDashboardDealModel(); 
 }
 
 const getFeedbackRepo = async () => {
-    return await getFeedbackModel();
+    return await adminModel.getFeedbackModel();
 }
 
 const getTop5MostBookedRoomsRepo = async (month, year) => {
-    return await getTop5MostBookedRoomsModel(month, year);
+    return await adminModel.getTop5MostBookedRoomsModel(month, year);
 }
 
 const getHotelFeedbackRepo = async () => {
-  return await getHotelFeedbackModel();
+  return await adminModel.getHotelFeedbackModel();
 }
 
 const getGuestListRepo = async (limit, offset)  => {
-    return await getGuestListModel(limit, offset) ;
+    return await adminModel.getGuestListModel(limit, offset) ;
 }
 
 const countGuestListRepo = async () => {
-    return await countGuestListModel();
+    return await adminModel.countGuestListModel();
 }
 
 const updateUserStatusRepo = async (user_id, status) => {
-    return await updateUserStatusModel(user_id, status);
+    return await adminModel.updateUserStatusModel(user_id, status);
 }
 
 const getRateRepo = async (limit, offset, month, year) => {
-    return await getRateModel(limit, offset, month, year);
+    return await adminModel.getRateModel(limit, offset, month, year);
 }
 
 const getTotalRevenueRepo = async (month, year) => {
-  return await getTotalRevenueModel(month, year);
+  return await adminModel.getTotalRevenueModel(month, year);
 };
 
 const getBestSellerRoomRepo = async (month, year) => {
-    return await getBestSellerRoomModel(month, year)
+    return await adminModel.getBestSellerRoomModel(month, year);
 }
 const totalRoomRepo = async () => {
-    return await totalRoomModel();
+    return await adminModel.totalRoomModel();
 }
 module.exports = {
     getUserListRepo,
