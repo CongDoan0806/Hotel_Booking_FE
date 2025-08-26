@@ -20,6 +20,7 @@ const {
   getGuestListController,
   updateUserStatusController,
   getRateController,
+  getRateDetailController
 } = require("../controllers/admin.controller");
 router.use(authenticateToken, adminOnly);
 
@@ -63,6 +64,8 @@ router.get("/admin/guest-list", getGuestListController);
 router.patch("/admin/users/:user_id/status", updateUserStatusController);
 
 router.get("/admin/rate", getRateController);
+
+router.get("/admin/rate-detail/:room_id", getRateDetailController);
 
 router.post("/admin/rooms/:room_id/deal", roomDealController.assignDealToRoom);
 

@@ -150,7 +150,7 @@ const getFeedbackModel = async () => {
         f.rating,
         f.comment
       FROM feedbacks f
-      JOIN booking_details bd ON f.booking_details_id = bd.booking_detail_id
+      JOIN booking_details bd ON f.booking_detail_id = bd.booking_detail_id
       JOIN bookings b ON bd.booking_id = b.booking_id
       JOIN users u ON b.user_id = u.user_id
       JOIN rooms r ON bd.room_id = r.room_id
@@ -234,6 +234,7 @@ const getRateModel = async (month, year, limit, offset) => {
     SELECT
       r.room_id,
       r.name AS room_number,
+      d.deal_name AS deal_name,
       rt.name AS room_type,
       rl.name AS room_level,
       (rt.price + rl.price) AS original_price,
@@ -241,19 +242,24 @@ const getRateModel = async (month, year, limit, offset) => {
         WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
           AND EXTRACT(YEAR FROM bd.check_in_date) = $2
       ) AS number_of_booking,
-      SUM(b.total_price) FILTER (
-        WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
-          AND EXTRACT(YEAR FROM bd.check_in_date) = $2
-      ) AS total_revenue
-  FROM rooms r
-  JOIN room_types rt ON r.room_type_id = rt.room_type_id
-  JOIN room_levels rl ON r.room_level_id = rl.room_level_id
-  LEFT JOIN booking_details bd ON bd.room_id = r.room_id
-  LEFT JOIN bookings b ON b.booking_id = bd.booking_id
-  GROUP BY r.room_id, r.name, rt.name, rl.name, rt.price, rl.price
-  ORDER BY number_of_booking DESC
-  LIMIT $3 OFFSET $4;
 
+      SUM(
+        (rt.price + rl.price)
+        * GREATEST(1, (bd.check_out_date - bd.check_in_date))
+        * (1 - COALESCE(d.discount_rate, 0))
+      ) AS total_revenue
+      
+    FROM rooms r
+    LEFT JOIN deals d ON r.deal_id = d.deal_id
+    JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+    JOIN booking_details bd ON bd.room_id = r.room_id
+    JOIN bookings b ON b.booking_id = bd.booking_id
+    WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
+      AND EXTRACT(YEAR FROM bd.check_in_date) = $2
+    GROUP BY r.room_id, r.name, rt.name, rl.name, rt.price, rl.price, d.deal_name, d.discount_rate
+    ORDER BY number_of_booking DESC
+    LIMIT $3 OFFSET $4;
   `;
   const result = await pool.query(query, [limit, offset, month, year]);
   return result.rows;
@@ -297,14 +303,43 @@ const getTotalRevenueModel = async (month, year) => {
   return result.rows[0].total_revenue;
 };
 
-const totalRoomModel = async () => {
+const totalRoomModel = async (month, year) => {
   const query = `
     SELECT COUNT(DISTINCT r.room_id) AS total
     FROM rooms r
     LEFT JOIN booking_details bd ON bd.room_id = r.room_id
+    WHERE EXTRACT(MONTH FROM bd.check_in_date) = $1
+      AND EXTRACT(YEAR FROM bd.check_in_date) = $2
   `;
-  const result = await pool.query(query);
+  const result = await pool.query(query, [month, year]);
   return parseInt(result.rows[0].total);
+};
+
+const getRateDetailModel = async (room_id, month, year) => {
+  const query = `
+    SELECT
+    r.name as room_number,
+      b.booking_id AS booking_id,
+      d.deal_name AS deal_name,
+      bd.check_in_date || ' - ' || bd.check_out_date AS date_of_stay,
+       GREATEST(1, (bd.check_out_date - bd.check_in_date)) AS number_of_days,
+      (
+        (rt.price + rl.price) * 
+GREATEST(1, (bd.check_out_date - bd.check_in_date))
+        * (1 - COALESCE(d.discount_rate, 0))
+      ) AS price
+    FROM rooms r
+    LEFT JOIN deals d ON r.deal_id = d.deal_id
+    JOIN room_types rt ON r.room_type_id = rt.room_type_id
+    JOIN room_levels rl ON r.room_level_id = rl.room_level_id
+    LEFT JOIN booking_details bd ON bd.room_id = r.room_id
+    LEFT JOIN bookings b ON b.booking_id = bd.booking_id
+    WHERE r.room_id = $1
+      AND EXTRACT(MONTH FROM bd.check_in_date) = $2
+      AND EXTRACT(YEAR FROM bd.check_in_date) = $3;
+    `;
+    const result = await pool.query(query, [room_id,month, year]);
+  return result.rows;
 };
 module.exports = {
   getUserListModel,
@@ -325,4 +360,5 @@ module.exports = {
   totalRoomModel,
   countCheckinGuestsModel,
   countCheckoutGuestsModel,
+  getRateDetailModel
 };

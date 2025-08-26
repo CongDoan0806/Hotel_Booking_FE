@@ -78,19 +78,19 @@ const getTop5MostBookedRoomsController = async (req, res) => {
   try {
     const { month, year } = req.query;
 
-    const currentYear = new Date().getFullYear();
+    // const currentYear = new Date().getFullYear();
 
     if (!month || !year) {
       return sendError(res, 400, "Month and year are required");
     }
 
-    if (Number(year) > currentYear) {
-      return sendError(
-        res,
-        400,
-        `Cannot select future year beyond ${currentYear}`
-      );
-    }
+    // if (Number(year) > currentYear) {
+    //   return sendError(
+    //     res,
+    //     400,
+    //     `Cannot select future year beyond ${currentYear}`
+    //   );
+    // }
 
     const rooms = await adminService.getTop5MostBookedRoomsService(
       Number(month),
@@ -151,19 +151,19 @@ const updateUserStatusController = async (req, res) => {
 const getRateController = async (req, res) => {
   try {
     const { month, year } = req.query;
-    const currentYear = new Date().getFullYear();
+    // const currentYear = new Date().getFullYear();
 
     if (!month || !year) {
       return sendError(res, 400, "Month and year are required");
     }
 
-    if (Number(year) > currentYear) {
-      return sendError(
-        res,
-        400,
-        `Cannot select future year beyond ${currentYear}`
-      );
-    }
+    // if (Number(year) > currentYear) {
+    //   return sendError(
+    //     res,
+    //     400,
+    //     `Cannot select future year beyond ${currentYear}`
+    //   );
+    // }
     const page = parseInt(req.query.page) || 1;
     const perPage = parseInt(req.query.perPage) || 10;
     const data = await adminService.getRateService(
@@ -182,6 +182,23 @@ const getRateController = async (req, res) => {
     return sendError(res, 500, "Failed to fetch rate data");
   }
 };
+
+const getRateDetailController = async (req, res) => {
+  const { room_id } = req.params;
+   const { month, year } = req.query;
+
+  if (!room_id || !month || !year) {
+    return sendError(res, 400, "Room ID, month, and year are required");
+  }
+
+  try {
+    const rateDetail = await getRateDetailService(room_id,month,year);
+    return success(res, rateDetail, "Get rate detail successfully");
+  } catch (error) {
+    console.error("Error fetching rate detail:", error);
+    return sendError(res, 500, "Failed to fetch rate detail");
+  }
+};
 module.exports = {
   getUserListController,
   getCheckinGuestsController,
@@ -194,4 +211,5 @@ module.exports = {
   getGuestListController,
   updateUserStatusController,
   getRateController,
+  getRateDetailController
 };

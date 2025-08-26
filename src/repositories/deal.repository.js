@@ -1,7 +1,7 @@
 const pool = require("../config/db");
 
 const dealsRepository = {
-  getActiveDeals: async function() {
+  getActiveDeals: async function () {
     const { rows } = await pool.query(`
       SELECT * FROM deals
       WHERE status = 'Ongoing';
@@ -9,17 +9,20 @@ const dealsRepository = {
     return rows;
   },
 
-  getAllDeals: async function({ page, limit }) {
+  getAllDeals: async function ({ page, limit }) {
     const offset = (page - 1) * limit;
 
-    const deals = await pool.query(`
+    const deals = await pool.query(
+      `
       SELECT * FROM deals
       ORDER BY deal_id DESC
       LIMIT $1 OFFSET $2
-    `, [limit, offset]);
+    `,
+      [limit, offset]
+    );
 
     const count = await pool.query(`SELECT COUNT(*) FROM deals`);
-    
+
     return {
       items: deals.rows,
       total: parseInt(count.rows[0].count),
@@ -37,9 +40,12 @@ const dealsRepository = {
     return result.rows;
   },
 
-
-
-  createDeal: async function({ deal_name, discount_rate, start_date, end_date }) {
+  createDeal: async function ({
+    deal_name,
+    discount_rate,
+    start_date,
+    end_date,
+  }) {
     const start = new Date(start_date);
     const end = new Date(end_date);
     end.setHours(23, 59, 59, 999);
@@ -50,14 +56,15 @@ const dealsRepository = {
     let status;
 
     if (currentDate < start) {
-      status = 'New';
+      status = "New";
     } else if (currentDate >= start && currentDate <= end) {
-      status = 'Ongoing';
+      status = "Ongoing";
     } else {
-      status = 'Finished';
+      status = "Finished";
     }
 
-    const { rows } = await pool.query(`
+    const { rows } = await pool.query(
+      `
       INSERT INTO deals (deal_name, discount_rate, start_date, end_date, status)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *`,
@@ -67,7 +74,10 @@ const dealsRepository = {
     return rows[0];
   },
 
-  updateDeal: async function(id, { deal_name, discount_rate, start_date, end_date }) {
+  updateDeal: async function (
+    id,
+    { deal_name, discount_rate, start_date, end_date }
+  ) {
     const start = new Date(start_date);
     const end = new Date(end_date);
     end.setHours(23, 59, 59, 999);
@@ -76,14 +86,15 @@ const dealsRepository = {
     let status;
 
     if (currentDate < start) {
-      status = 'New';
+      status = "New";
     } else if (currentDate >= start && currentDate <= end) {
-      status = 'Ongoing';
+      status = "Ongoing";
     } else {
-      status = 'Finished';
+      status = "Finished";
     }
 
-    const { rows } = await pool.query(`
+    const { rows } = await pool.query(
+      `
       UPDATE deals
       SET deal_name = $1,
           discount_rate = $2,
@@ -98,12 +109,15 @@ const dealsRepository = {
     return rows[0];
   },
 
-  deleteDeal: async function(id) {
-    const { rows } = await pool.query(`DELETE FROM deals WHERE deal_id = $1 RETURNING *`, [id]);
+  deleteDeal: async function (id) {
+    const { rows } = await pool.query(
+      `DELETE FROM deals WHERE deal_id = $1 RETURNING *`,
+      [id]
+    );
     return rows[0];
   },
 
-  validateDeal: function({ start_date, end_date }) {
+  validateDeal: function ({ start_date, end_date }) {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
 
@@ -118,9 +132,12 @@ const dealsRepository = {
     }
   },
 
-  getDealById: async function(id) {
-    const { rows } = await pool.query(`
-      SELECT * FROM deals WHERE deal_id = $1`, [id]);
+  getDealById: async function (id) {
+    const { rows } = await pool.query(
+      `
+      SELECT * FROM deals WHERE deal_id = $1`,
+      [id]
+    );
     return rows[0];
   },
 
@@ -136,7 +153,9 @@ const dealsRepository = {
     }
 
     if (startDate && endDate) {
-      query += ` AND start_date::date >= $${paramIndex}::date AND end_date::date <= $${paramIndex + 1}::date`;
+      query += ` AND start_date::date >= $${paramIndex}::date AND end_date::date <= $${
+        paramIndex + 1
+      }::date`;
       params.push(startDate, endDate);
       paramIndex += 2;
     } else if (startDate) {
@@ -149,7 +168,9 @@ const dealsRepository = {
       paramIndex++;
     }
 
-    query += ` ORDER BY deal_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    query += ` ORDER BY deal_id DESC LIMIT $${paramIndex} OFFSET $${
+      paramIndex + 1
+    }`;
     params.push(limit, offset);
 
     const { rows } = await pool.query(query, params);
@@ -205,14 +226,14 @@ const dealsRepository = {
         status = "Finished";
       }
 
-      await pool.query(
-        `UPDATE deals SET status = $1 WHERE deal_id = $2`,
-        [status, id]
-      );
+      await pool.query(`UPDATE deals SET status = $1 WHERE deal_id = $2`, [
+        status,
+        id,
+      ]);
     }
   },
 
-  getDealSummary: async function() {
+  getDealSummary: async function () {
     const { rows } = await pool.query(`
       SELECT 
           COUNT(*) AS total_deals,

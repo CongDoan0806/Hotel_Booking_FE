@@ -20,6 +20,7 @@ const getFavoriteRoomModel = async (user_id, limit, offset) => {
       rl.name AS room_level,
       r.description as room_description,
       CONCAT(MIN(ri.image_url)) AS image_url
+      
     FROM favorite_rooms fr
     JOIN rooms r ON fr.room_id = r.room_id
     JOIN room_types rt ON r.room_type_id = rt.room_type_id

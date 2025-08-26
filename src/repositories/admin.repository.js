@@ -62,8 +62,12 @@ const getTotalRevenueRepo = async (month, year) => {
 const getBestSellerRoomRepo = async (month, year) => {
     return await adminModel.getBestSellerRoomModel(month, year);
 }
-const totalRoomRepo = async () => {
-    return await adminModel.totalRoomModel();
+const totalRoomRepo = async (month, year) => {
+    return await adminModel.totalRoomModel(month, year);
+}
+
+const getRateDetailRepo = async (room_id, month, year) => {
+    return await adminModel.getRateDetailModel(room_id, month, year);
 }
 module.exports = {
     getUserListRepo,
@@ -80,5 +84,6 @@ module.exports = {
     getRateRepo,
     getTotalRevenueRepo,
     getBestSellerRoomRepo,
-    totalRoomRepo
+    totalRoomRepo,
+    getRateDetailRepo
 }

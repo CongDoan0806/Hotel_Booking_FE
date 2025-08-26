@@ -41,6 +41,43 @@
 - Node.js  
 - Express  
 - PostgreSQL  
-- Sequelize (ORM)
 - JWT (Authentication)  
 - dotenv  
+
+// Database Setup & Migration
+
+- Prerequisites
+    + Node.js installed (>= 18 recommended)
+    + PostgreSQL installed and running
+    +.env file configured with database credentials:
+        DB_USER=postgres
+        DB_PASSWORD=your_password
+        DB_NAME=booking_hotel
+        DB_HOST=127.0.0.1
+        DB_PORT=5432
+
+- Sequelize CLI installed (locally):
+    $ npm install --save-dev sequelize-cli
+
+- Install dependencies:
+    $ npm install
+
+- Make sure the database exists:
+    CREATE DATABASE booking_hotel;
+
+- Run migrations:
+    + Run all migrations to create tables and enum types:
+        $ npx sequelize-cli db:migrate
+    + Undo last migration:
+        $ npx sequelize-cli db:migrate:undo
+    + Undo all migrations:
+        $ npx sequelize-cli db:migrate:undo:all
+
+
+- Run seeders:
+    + Run all seed data:
+        $ npx sequelize-cli db:seed:all
+    + Undo last seeder:
+        $ npx sequelize-cli db:seed:undo
+    + Undo all seeders:
+        $ npx sequelize-cli db:seed:undo:all

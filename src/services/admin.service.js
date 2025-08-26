@@ -1,10 +1,13 @@
-const adminRepo = require('../repositories/admin.repository');
+const adminRepo = require("../repositories/admin.repository");
 
-const { mapUserBookings } = require('../utils/mapUserBookings');
+const { mapUserBookings } = require("../utils/mapUserBookings");
 
 const getUserListService = async (page, perPage) => {
   const offset = (page - 1) * perPage;
-  const { users: rows, totalUsers } = await adminRepo.getUserListRepo(perPage, offset);
+  const { users: rows, totalUsers } = await adminRepo.getUserListRepo(
+    perPage,
+    offset
+  );
 
   return {
     users: mapUserBookings(rows),
@@ -12,48 +15,54 @@ const getUserListService = async (page, perPage) => {
       total: totalUsers,
       page,
       perPage,
-      totalPages: Math.ceil(totalUsers / perPage)
-    }
+      totalPages: Math.ceil(totalUsers / perPage),
+    },
   };
 };
 
 const getCheckinGuestsService = async (page = 1, perPage = 10) => {
   const offset = (page - 1) * perPage;
-  const { users: rows, totalUsers } = await adminRepo.getCheckinGuestsRepo(perPage, offset);
+  const { users: rows, totalUsers } = await adminRepo.getCheckinGuestsRepo(
+    perPage,
+    offset
+  );
 
   return {
-    users: mapUserBookings(rows, ['is_active']),
+    users: mapUserBookings(rows, ["is_active"]),
     pagination: {
       total: totalUsers,
       page,
       perPage,
-      totalPages: Math.ceil(totalUsers / perPage)
-    }
+      totalPages: Math.ceil(totalUsers / perPage),
+    },
   };
 };
 
 const getCheckoutGuestsService = async (page = 1, perPage = 10) => {
   const offset = (page - 1) * perPage;
-  const { users: rows, totalUsers } = await adminRepo.getCheckoutGuestsRepo(perPage, offset);
+  const { users: rows, totalUsers } = await adminRepo.getCheckoutGuestsRepo(
+    perPage,
+    offset
+  );
 
   return {
-    users: mapUserBookings(rows, ['is_active']),
+    users: mapUserBookings(rows, ["is_active"]),
     pagination: {
       total: totalUsers,
       page,
       perPage,
-      totalPages: Math.ceil(totalUsers / perPage)
-    }
+      totalPages: Math.ceil(totalUsers / perPage),
+    },
   };
 };
 
 const getAdminDashboardStatusService = async () => {
-  return await adminRepo.getAdminDashboardStatusRepo();  
-}
+  return await adminRepo.getAdminDashboardStatusRepo();
+};
 
 const getAdminDashboardDealService = async () => {
-  return await adminRepo.getAdminDashboardDealRepo(); 
-}
+  return await adminRepo.getAdminDashboardDealRepo();
+};
 
 const getFeedbackService = async () => {
   return await adminRepo.getFeedbackRepo();
@@ -61,11 +70,11 @@ const getFeedbackService = async () => {
 
 const getHotelFeedbackService = async () => {
   return await adminRepo.getHotelFeedbackRepo();
-}
+};
 
 const getTop5MostBookedRoomsService = async (month, year) => {
   if (!month || !year) {
-    throw new Error('Month and year are required');
+    throw new Error("Month and year are required");
   }
   return await adminRepo.getTop5MostBookedRoomsRepo(month, year);
 };
@@ -82,7 +91,7 @@ const getGuestListService = async (page = 1, perPage = 10) => {
 
   return {
     guests,
-    pagination : {
+    pagination: {
       currentPage: page,
       perPage,
       totalPages,
@@ -92,24 +101,25 @@ const getGuestListService = async (page = 1, perPage = 10) => {
 };
 
 const updateUserStatusService = async (user_id, status) => {
-  if (!['active', 'blocked'].includes(status.toLowerCase())) {
-    throw new Error('Invalid status');
+  if (!["active", "blocked"].includes(status.toLowerCase())) {
+    throw new Error("Invalid status");
   }
   return await adminRepo.updateUserStatusRepo(user_id, status);
-}
-
+};
 
 const getRateService = async (page = 1, perPage = 10, month, year) => {
   const offset = (page - 1) * perPage;
   if (!month || !year) {
-      throw new Error('Month and year are required');
-    }
-  const [rate, totalItems, best_seller_room, total_nenevue] = await Promise.all([
-    adminRepo.getRateRepo(perPage, offset, month, year),
-    adminRepo.totalRoomRepo(),
-    adminRepo.getBestSellerRoomRepo(month, year),
-    adminRepo.getTotalRevenueRepo(month, year)
-  ]);
+    throw new Error("Month and year are required");
+  }
+  const [rate, totalItems, best_seller_room, total_nenevue] = await Promise.all(
+    [
+      adminRepo.getRateRepo(perPage, offset, month, year),
+      adminRepo.totalRoomRepo(month, year),
+      adminRepo.getBestSellerRoomRepo(month, year),
+      adminRepo.getTotalRevenueRepo(month, year),
+    ]
+  );
 
   const totalPages = Math.ceil(totalItems / perPage);
 
@@ -127,7 +137,12 @@ const getRateService = async (page = 1, perPage = 10, month, year) => {
   };
 };
 
-
+const getRateDetailService = async (room_id, month, year) => {
+  if (!room_id || !month || !year) {
+    throw new Error("Room ID, month, and year are required");
+  }
+  return await getRateDetailRepo(room_id, month, year);
+};
 
 module.exports = {
   getUserListService,
@@ -141,4 +156,5 @@ module.exports = {
   getGuestListService,
   updateUserStatusService,
   getRateService,
+  getRateDetailService,
 };

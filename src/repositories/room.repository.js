@@ -393,7 +393,7 @@ const roomRepository = {
           AND d.start_date <= CURRENT_DATE 
           AND d.end_date >= CURRENT_DATE
         LEFT JOIN booking_details bd ON r.room_id = bd.room_id
-        LEFT JOIN feedbacks fb ON bd.booking_detail_id = fb.booking_details_id
+        LEFT JOIN feedbacks fb ON bd.booking_detail_id = fb.booking_detail_id
         ${whereConditions}
         GROUP BY r.room_id
         ${havingClause}
@@ -426,7 +426,7 @@ const roomRepository = {
         ON r.deal_id = d.deal_id
         AND d.status = 'Ongoing'
       LEFT JOIN booking_details bd ON r.room_id = bd.room_id
-      LEFT JOIN feedbacks fb ON bd.booking_detail_id = fb.booking_details_id
+      LEFT JOIN feedbacks fb ON bd.booking_detail_id = fb.booking_detail_id
       ${whereConditions}
       GROUP BY 
         r.room_id, r.name, r.description,
@@ -659,7 +659,7 @@ LEFT JOIN LATERAL (
     )
   ) AS feedbacks
   FROM feedbacks f
-  JOIN booking_details bd ON f.booking_details_id = bd.booking_detail_id
+  JOIN booking_details bd ON f.booking_detail_id = bd.booking_detail_id
   JOIN bookings b ON bd.booking_id = b.booking_id
   JOIN users u ON b.user_id = u.user_id
   WHERE bd.room_id = r.room_id
