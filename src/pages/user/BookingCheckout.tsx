@@ -29,7 +29,7 @@ import { createBooking, getIdBookings, getUserBookings } from '@/services/bookin
 import { CreatePaymentDTO } from '@/types';
 import Loading from '@/components/common/Loading';
 import { clearRoomDetailFromLocalStorage, getRoomDetailFromLocalStorage } from '@/utils/storage';
-import PaymentMethodCard from '@/components/bookingCheckout/PaymentMethod';
+import PaymentMethodCard from '@/components/bookingCheckout/paymentMethod';
 
 const BookingSchema = z.object({
   firstName: z.string().min(1, 'Full name is required'),
