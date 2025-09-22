@@ -42,7 +42,7 @@ export default function LandingPage() {
       <div className="relative mb-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/20 to-slate-800/10"></div>
         <img
-          src={`public/assets/images/banner-guest.png`}
+          src={`/assets/images/banner-guest.png`}
           alt="Luxury Hotel Experience"
           className="w-full h-[60vh] object-cover"
         />
