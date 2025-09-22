@@ -92,7 +92,7 @@ export default function CustomerProfile() {
             src={
               user?.avatar_url
                 ? `${API_URL}${user.avatar_url}`
-                : "/public/assets/images/avatar.png"
+                : "/assets/images/avatar.png"
             }
             alt="avatar"
             className="object-cover w-12 h-12 rounded-full"

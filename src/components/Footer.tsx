@@ -47,10 +47,10 @@ export const socialLinks: { icon: LucideIcon; href: string }[] = [
 ];
 
 export const paymentLogos: { src: string; alt: string }[] = [
-  { src: './public/assets/images/visa-card.png', alt: 'Visa card' },
-  { src: './public/assets/images/american-express.png', alt: 'American Express' },
-  { src: './public/assets/images/master-card.png', alt: 'MasterCard' },
-  { src: './public/assets/images/paypal.png', alt: 'PayPal' },
+  { src: '/assets/images/visa-card.png', alt: 'Visa card' },
+  { src: '/assets/images/american-express.png', alt: 'American Express' },
+  { src: '/assets/images/master-card.png', alt: 'MasterCard' },
+  { src: '/assets/images/paypal.png', alt: 'PayPal' },
 ];
 
 export const bottomInfos: { icon: LucideIcon; text: string }[] = [

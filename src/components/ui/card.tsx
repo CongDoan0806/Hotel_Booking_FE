@@ -163,7 +163,7 @@ const Card = React.forwardRef<
         >
           {deal && deal.discount_rate > 0 && (
             <img
-              src={`/public/assets/images/offer-tag.png`}
+              src={`/assets/images/offer-tag.png`}
               alt="Offer Tag"
               className="absolute -top-2.5 -right-6 w-[147.32px] h-[150px] z-30"
             />
@@ -263,7 +263,7 @@ const Card = React.forwardRef<
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 px-2 py-2 mt-1 rounded-sm bg-root-primary-500">
                       <img
-                        src={`/public/assets/images/bill.png`}
+                        src={`/assets/images/bill.png`}
                         alt="Deal Icon"
                         className="object-contain w-5 h-5"
                         onError={(e) => {
@@ -277,7 +277,7 @@ const Card = React.forwardRef<
                     {deal.start_date && deal.end_date && (
                       <div className="flex items-center gap-1 text-xs text-gray-500">
                         <img
-                          src={`/public/assets/images/time.png`}
+                          src={`/assets/images/time.png`}
                           alt="Calendar Icon"
                           className="object-contain w-4 h-4"
                           onError={(e) => {

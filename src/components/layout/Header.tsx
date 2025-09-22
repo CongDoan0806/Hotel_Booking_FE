@@ -26,7 +26,7 @@ const Header: React.FC = () => {
         {/* Logo */}
         <NavLink to="/" aria-label="Home">
           <img
-            src="/public/assets/images/logo.png"
+            src="/assets/images/logo.png"
             alt="EasyStay24 Logo"
             className="w-auto h-12 md:h-66 md:w-91"
           />
@@ -38,7 +38,7 @@ const Header: React.FC = () => {
               <button className="flex items-center gap-3 cursor-pointer focus:outline-none">
                 <Avatar className="w-10 h-10">
                   <AvatarImage
-                    src={user.avatar_url ? `${API_URL}${user.avatar_url}` : '/public/assets/images/avatar.png'}
+                    src={user.avatar_url ? `${API_URL}${user.avatar_url}` : '/assets/images/avatar.png'}
                     alt={`${user.first_name} ${user.last_name}`}
                   />
                   <AvatarFallback>{user.first_name?.[0] ?? 'U'}</AvatarFallback>

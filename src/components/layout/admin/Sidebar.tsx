@@ -36,7 +36,7 @@ export default function Sidebar() {
   return (
     <aside className="h-full p-6 font-medium bg-white">
       <div className="mb-6">
-        <img src="/public/assets/images/logo.png" alt="Logo" className="h-10" />
+        <img src="/assets/images/logo.png" alt="Logo" className="h-10" />
       </div>
       <nav className="space-y-3">
         {navItems.map(({ to, label, icon: Icon }) => (

@@ -65,7 +65,7 @@ const Home: React.FC = () => {
   return (
     <>
       <img
-        src="/public/assets/images/banner-guest.png"
+        src="/assets/images/banner-guest.png"
         alt="Banner"
         className="block w-full h-auto"
       />
